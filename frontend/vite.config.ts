@@ -36,6 +36,22 @@ export default defineConfig({
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
+      '/admin-console': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      '/internal': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      '/satcom': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      '/firmware': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
     },
   },
 });
