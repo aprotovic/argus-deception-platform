@@ -24,42 +24,42 @@ The system is partitioned into three distinct network zones with strict egress a
 
 ```mermaid
 flowchart TD
-    subgraph Public Internet / Untrusted Zone
-        Attacker[Adversary / Automated Scanner]
-        LegitAnalyst[SOC Security Analyst / Admin]
+    subgraph Zone1["Public Internet / Untrusted Zone"]
+        Attacker["Adversary / Automated Scanner"]
+        LegitAnalyst["SOC Security Analyst / Admin"]
     end
 
-    subgraph Reverse Proxy / Ingress DMZ
-        Nginx[Hardened Reverse Proxy / TLS Termination]
+    subgraph Zone2["Reverse Proxy / Ingress DMZ"]
+        Nginx["Hardened Reverse Proxy / TLS Termination"]
     end
 
-    subgraph Decoy Network Zone [decoy-net]
-        DecoyContainer["ARGUS Decoy Service<br/>(Port 8080)<br/>• Unprivileged user (UID 10001)<br/>• Read-only root filesystem<br/>• Rate-limited"]
+    subgraph Zone3["Decoy Network Zone (decoy-net)"]
+        DecoyContainer["ARGUS Decoy Service<br/>Port 8080<br/>• Unprivileged user UID 10001<br/>• Read-only root filesystem<br/>• Rate-limited"]
     end
 
-    subgraph Internal Ingestion Bus [internal-ingest-net]
-        BackendCore["ARGUS Core API & Ingestion Engine<br/>(Port 8000)<br/>• JWT Authentication & RBAC<br/>• WebSocket Broadcaster<br/>• Structured Event Processor"]
+    subgraph Zone4["Internal Ingestion Bus (internal-ingest-net)"]
+        BackendCore["ARGUS Core API & Ingestion Engine<br/>Port 8000<br/>• JWT Authentication & RBAC<br/>• WebSocket Broadcaster<br/>• Structured Event Processor"]
     end
 
-    subgraph Secure Storage Zone [internal-data-net]
-        PostgresDB[(PostgreSQL 16 Database)]
-        QuarantineVol["Quarantine Storage Volume<br/>(chmod 700 / noexec)"]
+    subgraph Zone5["Secure Storage Zone (internal-data-net)"]
+        PostgresDB[("PostgreSQL 16 Database")]
+        QuarantineVol["Quarantine Storage Volume<br/>chmod 700 / noexec"]
     end
 
-    Attacker -->|HTTP / Malicious Traffic| Nginx
-    LegitAnalyst -->|HTTPS / Dashboard Auth| Nginx
+    Attacker -->|"HTTP / Malicious Traffic"| Nginx
+    LegitAnalyst -->|"HTTPS / Dashboard Auth"| Nginx
 
-    Nginx -->|Route / (Public)| DecoyContainer
-    Nginx -->|Route /admin, /api (Private)| BackendCore
+    Nginx -->|"Route / (Public)"| DecoyContainer
+    Nginx -->|"Route /admin, /api (Private)"| BackendCore
 
-    DecoyContainer -->|POST /api/v1/internal/ingest<br/>(HMAC Shared Token)| BackendCore
-    BackendCore -->|SQLAlchemy / Migrated| PostgresDB
-    BackendCore -->|Safe Stream Write| QuarantineVol
+    DecoyContainer -->|"POST Ingestion API (HMAC Token)"| BackendCore
+    BackendCore -->|"SQLAlchemy / Migrated"| PostgresDB
+    BackendCore -->|"Safe Stream Write"| QuarantineVol
 
     %% Strict Boundaries
-    DecoyContainer -.-x|Blocked: No DB Connection| PostgresDB
-    DecoyContainer -.-x|Blocked: No Host Docker Socket| HostDocker[(Host Docker Engine)]
-    DecoyContainer -.-x|Blocked: No Egress to Internet| PublicEgress[External Internet]
+    DecoyContainer -.->|"Blocked: No DB Connection"| PostgresDB
+    DecoyContainer -.->|"Blocked: No Host Docker Socket"| HostDocker[("Host Docker Engine")]
+    DecoyContainer -.->|"Blocked: No Egress to Internet"| PublicEgress["External Internet"]
 ```
 
 ---

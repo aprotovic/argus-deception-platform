@@ -24,13 +24,13 @@ ARGUS is a cyber deception and telemetry capture platform designed as a Software
 
 ```mermaid
 flowchart LR
-    Adversary[Adversary / Probe Scanner] -->|Port 8080| Decoy[ARGUS Decoy Service]
-    Decoy -->|POST /api/v1/internal/ingest| Backend[ARGUS Core Backend API]
-    Backend -->|SQLAlchemy| Postgres[(PostgreSQL 16)]
-    Backend -->|Safe Quarantine Write| Storage[(Quarantine Storage)]
+    Adversary["Adversary / Probe Scanner"] -->|"Port 8080 or /decoy"| Decoy["Nexis Defense Decoy Portal"]
+    Decoy -->|"Attack Telemetry Ingestion"| Backend["ARGUS Core Backend API"]
+    Backend -->|"SQLAlchemy Async ORM"| Postgres[("PostgreSQL 16")]
+    Backend -->|"Safe Quarantine Write"| Storage[("Evidence Locker")]
     
-    Analyst[SOC Analyst / Admin] -->|Port 3000| Dashboard[ARGUS React Dashboard]
-    Dashboard -->|REST / WebSocket (Port 8000)| Backend
+    Analyst["SOC Analyst / Admin"] -->|"Port 3000"| Dashboard["ARGUS React SOC Dashboard"]
+    Dashboard -->|"REST API / Live WebSockets"| Backend
 ```
 
 ---
@@ -71,4 +71,4 @@ docker compose up --build
 ---
 
 ## License
-Academic Graduation Project — Developed under the Software Engineering Department.
+Academic Graduation Project

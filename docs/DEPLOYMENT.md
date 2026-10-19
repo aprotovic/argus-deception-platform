@@ -8,23 +8,23 @@ ARGUS is designed for deployment on an isolated Virtual Private Server (VPS) or 
 ## 2. Network Topology & Firewall Configuration
 
 ```mermaid
-graph LR
-    Internet((Public Internet))
-    Firewall[Host Firewall / UFW / Cloud SG]
-    ReverseProxy[Nginx TLS Reverse Proxy]
-    Decoy[ARGUS Decoy Container :8080]
-    Backend[ARGUS Core Backend :8000]
-    Postgres[(PostgreSQL :5432)]
+flowchart LR
+    Internet(("Public Internet"))
+    Firewall["Host Firewall / UFW / Cloud SG"]
+    ReverseProxy["Nginx TLS Reverse Proxy"]
+    Decoy["ARGUS Decoy Container :8080"]
+    Backend["ARGUS Core Backend :8000"]
+    Postgres[("PostgreSQL :5432")]
 
-    Internet -->|Port 443 / 80| Firewall
-    Firewall -->|Forward 443| ReverseProxy
-    ReverseProxy -->|Proxy / and decoy paths| Decoy
-    ReverseProxy -->|Proxy /admin and /api (IP restricted / VPN)| Backend
-    Decoy -->|Internal Ingestion Only| Backend
-    Backend -->|Internal DB Net Only| Postgres
+    Internet -->|"Port 443 / 80"| Firewall
+    Firewall -->|"Forward 443"| ReverseProxy
+    ReverseProxy -->|"Proxy / and decoy paths"| Decoy
+    ReverseProxy -->|"Proxy /admin and /api (VPN Protected)"| Backend
+    Decoy -->|"Internal Ingestion Only"| Backend
+    Backend -->|"Internal DB Net Only"| Postgres
 
-    Firewall -.x|BLOCK direct 5432| Postgres
-    Firewall -.x|BLOCK direct 8000| Backend
+    Firewall -.->|"BLOCK direct 5432"| Postgres
+    Firewall -.->|"BLOCK direct 8000"| Backend
 ```
 
 ### 2.1 Firewall Rules (UFW / Linux)
