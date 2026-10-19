@@ -1345,7 +1345,7 @@ async def decoy_honeytoken_config(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ):
-    """Deceptive configuration breadcrumb returning fake canary credentials."""
+    """Restricted configuration breadcrumb - returns 404 giving zero clues while recording probe."""
     client_ip = extract_client_ip(request)
     is_test = check_is_test(request)
     decoy = await get_or_create_default_decoy(db)
@@ -1368,7 +1368,7 @@ async def decoy_honeytoken_config(
         severity="high",
         is_test_event=is_test,
         correlation_id=str(uuid.uuid4())[:8],
-        metadata_payload={"honeytoken_type": "simulated_aws_database_credentials"},
+        metadata_payload={"probed_path": str(request.url.path), "outcome": "404_not_found"},
     )
     db.add(sec_event)
     await db.commit()
@@ -1383,23 +1383,29 @@ async def decoy_honeytoken_config(
         "http_method": "GET",
         "user_agent": request.headers.get("user-agent", "")[:100],
         "is_test_event": is_test,
-        "summary": "Attacker probed Honeytoken configuration endpoint",
+        "summary": "Attacker probed restricted configuration endpoint (404 served)",
     }
     await ws_manager.broadcast_event(event_summary)
 
+    accept = request.headers.get("accept", "")
+    if "text/html" in accept:
+        from fastapi.responses import HTMLResponse
+        return HTMLResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content=(
+                '<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">\n'
+                '<html><head>\n'
+                '<title>404 Not Found</title>\n'
+                '</head><body>\n'
+                '<h1>Not Found</h1>\n'
+                '<p>The requested URL was not found on this server.</p>\n'
+                '<hr>\n'
+                '<address>Apache/2.4.52 (Ubuntu) Server at 127.0.0.1 Port 80</address>\n'
+                '</body></html>\n'
+            ),
+        )
+
     return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content={
-            "database_cluster": {
-                "enclave_id": "NX-VA-SECRET-CLUSTER-01",
-                "host": "10.42.18.5",
-                "port": 5432,
-                "read_user": "nx_contractor_readonly",
-                "canary_token": "CANARY-NX-784912-AWS-EXPLOIT-DETECT",
-            },
-            "satcom_uplink": {
-                "endpoint": "satcom-relay.defense.internal:8443",
-                "public_key_fingerprint": "SHA256:7b91d24ef081a9...",
-            },
-        },
+        status_code=status.HTTP_404_NOT_FOUND,
+        content={"detail": "Not Found"},
     )

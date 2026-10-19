@@ -96,18 +96,14 @@ async def serve_decoy_portal():
     return {"message": "Nexis Defense Systems - Secure Portal"}
 
 
-# Deceptive robots.txt breadcrumbs
+# Standard robots.txt
 @app.get("/robots.txt", tags=["Decoy Interface"])
 async def serve_decoy_robots():
-    """Serves deceptive robots.txt pointing to honeytoken endpoints."""
+    """Serves standard robots.txt without leaking sensitive or internal paths."""
     from fastapi.responses import PlainTextResponse
     robots_content = (
         "User-agent: *\n"
-        "Disallow: /admin-console/\n"
-        "Disallow: /internal/backups/\n"
-        "Disallow: /api/v1/decoy/honeytoken/config\n"
-        "Disallow: /firmware/releases/\n"
-        "Disallow: /satcom/uplink-keys/\n"
+        "Disallow:\n"
     )
     return PlainTextResponse(content=robots_content)
 
