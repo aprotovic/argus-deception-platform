@@ -128,3 +128,15 @@ export interface WebSocketEventMessage {
     summary: string;
   };
 }
+
+export interface NotificationItem {
+  id: string;
+  eventId: string;
+  timestamp: string;
+  source_ip: string;
+  event_type: EventType;
+  severity: Severity;
+  summary: string;
+  read: boolean;
+}
+

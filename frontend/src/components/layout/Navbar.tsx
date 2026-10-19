@@ -1,12 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useWebSocket } from '../../context/WebSocketContext';
-import { Shield, Radio, ExternalLink, LogOut, User as UserIcon, Clock } from 'lucide-react';
+import { useNotifications } from '../../context/NotificationContext';
+import { NotificationDrawer } from '../notifications/NotificationDrawer';
+import {
+  Shield,
+  Radio,
+  ExternalLink,
+  LogOut,
+  User as UserIcon,
+  Clock,
+  Bell,
+  Volume2,
+  VolumeX,
+} from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
   const { isConnected, liveEventCount } = useWebSocket();
+  const { soundEnabled, toggleSound, unreadCount } = useNotifications();
   const [utcTime, setUtcTime] = useState<string>('');
+  const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const updateTime = () => {
@@ -130,7 +144,79 @@ export const Navbar: React.FC = () => {
       </div>
 
       {/* Operator & Quick Action Links */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        {/* Sound Chime Toggle */}
+        <button
+          onClick={toggleSound}
+          title={soundEnabled ? 'Alert Audio: ON (Click to Mute)' : 'Alert Audio: MUTED (Click to Enable)'}
+          style={{
+            background: soundEnabled ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255, 255, 255, 0.03)',
+            border: `1px solid ${soundEnabled ? 'rgba(16, 185, 129, 0.3)' : 'var(--border-subtle)'}`,
+            borderRadius: '4px',
+            padding: '6px 9px',
+            color: soundEnabled ? '#34d399' : 'var(--text-dim)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontSize: '0.72rem',
+            fontFamily: "'Chakra Petch', sans-serif",
+            transition: 'all 0.15s',
+          }}
+        >
+          {soundEnabled ? <Volume2 size={15} color="#34d399" /> : <VolumeX size={15} color="#64748b" />}
+          <span style={{ display: 'inline-block' }}>{soundEnabled ? 'AUDIO' : 'MUTED'}</span>
+        </button>
+
+        {/* Real-Time Notification Bell & Dropdown */}
+        <div style={{ position: 'relative' }}>
+          <button
+            onClick={() => setDrawerOpen(!drawerOpen)}
+            title="Real-Time Threat Notifications"
+            style={{
+              background: unreadCount > 0 ? 'rgba(239, 68, 68, 0.12)' : 'rgba(255, 255, 255, 0.03)',
+              border: `1px solid ${unreadCount > 0 ? 'rgba(239, 68, 68, 0.4)' : 'var(--border-subtle)'}`,
+              borderRadius: '4px',
+              padding: '6px 10px',
+              color: unreadCount > 0 ? '#f87171' : 'var(--text-muted)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              position: 'relative',
+              transition: 'all 0.15s',
+            }}
+          >
+            <Bell size={16} />
+            {unreadCount > 0 && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '-4px',
+                  right: '-4px',
+                  background: '#ef4444',
+                  color: '#ffffff',
+                  fontSize: '0.62rem',
+                  fontWeight: 700,
+                  minWidth: '16px',
+                  height: '16px',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 0 8px rgba(239, 68, 68, 0.6)',
+                  fontFamily: "'JetBrains Mono', monospace",
+                  padding: '0 3px',
+                }}
+              >
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </button>
+
+          <NotificationDrawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
+        </div>
+
+        {/* Link to Decoy Portal */}
         <a
           href="/decoy"
           target="_blank"

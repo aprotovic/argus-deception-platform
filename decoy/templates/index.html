@@ -4,13 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nexis Defense Systems | Global Tactical Network Portal</title>
+  <!-- SECURITY NOTICE FOR CONTRACTORS:
+       Staging contractor account active for Node 04 diagnostics:
+       Username: c.miller
+       Passcode: Contractor2024!
+       WARNING: Enclave authentication uses legacy SQL string evaluation. DO NOT EXPOSE.
+  -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg-dark: #07090e;
-      --card-bg: rgba(13, 18, 30, 0.95);
+      --card-bg: rgba(13, 18, 30, 0.96);
       --border-color: rgba(0, 180, 216, 0.28);
       --border-glow: rgba(0, 180, 216, 0.5);
       --accent-cyan: #00b4d8;
@@ -33,7 +39,7 @@
     body {
       background-color: var(--bg-dark);
       background-image: 
-        radial-gradient(circle at 50% 0%, rgba(0, 180, 216, 0.15) 0%, transparent 65%),
+        radial-gradient(circle at 50% 0%, rgba(0, 180, 216, 0.14) 0%, transparent 65%),
         radial-gradient(circle at 90% 90%, rgba(192, 132, 252, 0.04) 0%, transparent 45%),
         linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
@@ -47,10 +53,10 @@
       padding: 16px 20px 40px;
     }
 
-    /* Tactical Top Classification Bar */
+    /* Top Classification Bar */
     .classification-bar {
       width: 100%;
-      max-width: 960px;
+      max-width: 1140px;
       background: rgba(245, 158, 11, 0.12);
       border: 1px solid rgba(245, 158, 11, 0.4);
       color: #fbbf24;
@@ -73,18 +79,22 @@
       font-size: 0.72rem;
     }
 
-    /* Main Tactical Portal Card */
+    /* Portal Cards */
     .portal-card {
       background: var(--card-bg);
       border: 1px solid var(--border-color);
       border-radius: 10px;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85), 0 0 30px rgba(0, 180, 216, 0.12);
       width: 100%;
-      max-width: 960px;
+      max-width: 1140px;
       padding: 28px 32px;
       backdrop-filter: blur(20px);
       position: relative;
       overflow: hidden;
+    }
+
+    #public-login-container.portal-card {
+      max-width: 540px;
     }
 
     .portal-card::before {
@@ -95,27 +105,25 @@
       background: linear-gradient(90deg, transparent, var(--accent-cyan), var(--accent-cyan-light), transparent);
     }
 
+    /* Login Specific Box */
+    .login-container {
+      max-width: 540px;
+      margin: 0 auto;
+    }
+
     .brand-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 22px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      flex-wrap: wrap;
-      gap: 12px;
+      text-align: center;
+      margin-bottom: 24px;
     }
 
     .brand-title {
       font-family: 'Chakra Petch', sans-serif;
-      font-size: 1.6rem;
+      font-size: 1.65rem;
       font-weight: 700;
       letter-spacing: 0.04em;
       color: #ffffff;
       text-transform: uppercase;
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      margin-top: 8px;
     }
 
     .brand-badge {
@@ -129,75 +137,6 @@
       color: var(--accent-cyan-light);
       padding: 3px 10px;
       border-radius: 9999px;
-    }
-
-    .telemetry-pills {
-      display: flex;
-      gap: 8px;
-      font-size: 0.72rem;
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    .pill {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      padding: 4px 10px;
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .dot-green { width: 6px; height: 6px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px #10b981; }
-    .dot-blue { width: 6px; height: 6px; border-radius: 50%; background: #00b4d8; box-shadow: 0 0 6px #00b4d8; }
-
-    /* Tactical Navigation Tabs */
-    .tabs-nav {
-      display: flex;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      margin-bottom: 24px;
-      gap: 4px;
-      overflow-x: auto;
-      scrollbar-width: thin;
-    }
-
-    .tab-btn {
-      background: none;
-      border: none;
-      padding: 10px 14px;
-      font-family: 'Chakra Petch', sans-serif;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      cursor: pointer;
-      position: relative;
-      transition: all 0.2s ease;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      white-space: nowrap;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .tab-btn:hover {
-      color: #ffffff;
-      background: rgba(255, 255, 255, 0.03);
-    }
-
-    .tab-btn.active {
-      color: var(--accent-cyan-light);
-    }
-
-    .tab-btn.active::after {
-      content: '';
-      position: absolute;
-      bottom: -1px;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: var(--accent-cyan-light);
-      box-shadow: 0 0 10px var(--accent-cyan);
     }
 
     .form-group {
@@ -258,6 +197,96 @@
       background: linear-gradient(135deg, #00b4d8 0%, #0096c7 100%);
       box-shadow: 0 0 16px rgba(0, 180, 216, 0.45);
       transform: translateY(-1px);
+    }
+
+    /* Internal Authenticated Intranet Styles */
+    .session-ribbon {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 10px 16px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .session-ribbon .operator-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      color: #34d399;
+      font-weight: 600;
+    }
+
+    .btn-logout {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: #f87171;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-family: 'Chakra Petch', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: all 0.15s;
+    }
+
+    .btn-logout:hover {
+      background: rgba(239, 68, 68, 0.3);
+      color: #ffffff;
+    }
+
+    /* Internal Navigation Tabs */
+    .tabs-nav {
+      display: flex;
+      flex-wrap: wrap;
+      border-bottom: 1px solid rgba(0, 180, 216, 0.25);
+      margin-bottom: 22px;
+      gap: 6px;
+      background: rgba(10, 14, 23, 0.5);
+      padding: 6px 8px 0;
+      border-radius: 6px 6px 0 0;
+    }
+
+    .tab-btn {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-bottom: none;
+      border-radius: 4px 4px 0 0;
+      padding: 9px 14px;
+      font-family: 'Chakra Petch', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tab-btn:hover {
+      color: #ffffff;
+      background: rgba(0, 180, 216, 0.08);
+      border-color: rgba(0, 180, 216, 0.25);
+    }
+
+    .tab-btn.active {
+      color: var(--accent-cyan-light);
+      background: rgba(0, 180, 216, 0.16);
+      border-color: rgba(0, 180, 216, 0.45);
+      border-bottom: 2px solid var(--accent-cyan-light);
+      box-shadow: 0 -2px 10px rgba(0, 180, 216, 0.15);
     }
 
     /* Honeytoken Vault Cards */
@@ -325,7 +354,7 @@
       color: #ffffff;
     }
 
-    /* Terminal Window Styles */
+    /* Terminal Styles */
     .terminal-box {
       background: #04060a;
       border: 1px solid rgba(0, 180, 216, 0.35);
@@ -340,18 +369,6 @@
       box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.95);
       display: flex;
       flex-direction: column;
-      position: relative;
-    }
-
-    .terminal-box.crt-effect::before {
-      content: " ";
-      display: block;
-      position: absolute;
-      top: 0; left: 0; bottom: 0; right: 0;
-      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-      z-index: 2;
-      background-size: 100% 2px, 3px 100%;
-      pointer-events: none;
     }
 
     .terminal-header {
@@ -377,7 +394,6 @@
       align-items: center;
       margin-top: 10px;
       gap: 6px;
-      z-index: 3;
     }
 
     .terminal-prompt {
@@ -483,7 +499,7 @@
       text-align: center;
       font-size: 0.72rem;
       color: #64748b;
-      max-width: 960px;
+      max-width: 1140px;
       line-height: 1.5;
     }
 
@@ -520,93 +536,106 @@
       <span>&bull;</span>
       <span>ENCLAVE: NODE-04-US-EAST</span>
     </div>
-    <div class="clock-tag" id="utc-clock">UTC 16:35:00</div>
+    <div class="clock-tag" id="utc-clock">UTC 18:20:00</div>
   </div>
 
-  <div class="portal-card">
+  <!-- ========================================================================= -->
+  <!-- STAGE 1: PUBLIC PERIMETER GATEWAY LOGIN (WHAT ATTACKERS INITIALLY ENCOUNTER) -->
+  <!-- ========================================================================= -->
+  <div id="public-login-container" class="portal-card login-container">
     <div class="brand-header">
-      <div>
-        <div class="brand-badge">TACTICAL PERIMETER GATEWAY // v4.2.1-SEC</div>
-        <h1 class="brand-title">Nexis Defense Systems</h1>
-        <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">
-          Global Tactical Enclave Asset Management & Satellite Link Gateway
-        </p>
+      <div class="brand-badge">TACTICAL PERIMETER GATEWAY // v4.2.1-SEC</div>
+      <h1 class="brand-title">Nexis Defense Systems</h1>
+      <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">
+        Tactical Enclave Access Control & PKI Verification Gateway
+      </p>
+    </div>
+
+    <form id="decoy-login-form" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label for="username">Operator Identifier / CAC ID</label>
+        <input type="text" id="username" name="username" placeholder="e.g. nx-op-8491, admin, c.miller" required autocomplete="username">
       </div>
 
-      <div class="telemetry-pills">
-        <div class="pill"><div class="dot-green"></div> ENCLAVE ONLINE</div>
-        <div class="pill"><div class="dot-blue"></div> KYBER-1024 HSM</div>
-        <div class="pill">STIG-PROFILE: ENGAGED</div>
+      <div class="form-group">
+        <label for="password">Security Enclave Passcode / PKI Token</label>
+        <input type="password" id="password" name="password" placeholder="••••••••••••••••" required autocomplete="current-password">
       </div>
+
+      <div class="form-group">
+        <label for="enclave-select">Enclave Gateway Destination</label>
+        <select id="enclave-select">
+          <option value="VA-01">VA-01 Pentagon Gateway (Primary)</option>
+          <option value="EU-02">EU-02 Frankfurt Defense Relay</option>
+          <option value="PAC-03">PAC-03 INDOPACOM Satellite Link</option>
+        </select>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-size: 0.75rem;">
+        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; text-transform: none; color: var(--text-muted); margin: 0;">
+          <input type="checkbox" id="piv-check"> Hardware SmartCard / CAC Attached
+        </label>
+        <a href="#" onclick="alert('Emergency Reset Ticket REQ-9941 created. Contact NOC Lead.'); return false;" style="color: #38bdf8; text-decoration: none;">Forgot Passcode?</a>
+      </div>
+
+      <button type="submit" id="login-submit-btn" class="btn-submit">
+        <span>Authenticate Operator</span> &rarr;
+      </button>
+
+      <!-- DoD / NIST Compliance Notice (Authentic Defense System Look) -->
+      <div style="margin-top: 20px; padding: 12px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 4px; font-size: 0.7rem; color: var(--text-dim); line-height: 1.45;">
+        <strong style="color: #fbbf24;">RESTRICTED GOVERNMENT & DEFENSE CONTRACTOR SYSTEM:</strong> Access is restricted solely to authorized DoD/NATO contractors possessing active PKI credentials. All sessions, credential queries, and network handshakes are continuously monitored and logged under NIST SP 800-171 & STIG profile standards.
+      </div>
+    </form>
+
+    <div id="login-alert" class="alert-box"></div>
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- STAGE 2: AUTHENTICATED INTERNAL INTRANET (UNLOCKED AFTER ATTACKER BYPASS) -->
+  <!-- ========================================================================= -->
+  <div id="internal-portal-container" class="portal-card" style="display: none;">
+    <!-- Logged-in Session Ribbon -->
+    <div class="session-ribbon">
+      <div class="operator-badge">
+        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px #10b981;"></span>
+        <span>OPERATOR: <span id="active-operator-name" style="color: #ffffff;">c.miller</span></span>
+        <span style="color: #64748b;">|</span>
+        <span style="color: #38bdf8;">ROLE: <span id="active-operator-role">RESTRICTED_CONTRACTOR_DIAGNOSTICS</span></span>
+        <span style="color: #64748b;">|</span>
+        <span style="color: #fbbf24;" id="bypass-mode-tag">STAGING_SESSION</span>
+      </div>
+
+      <button onclick="handleLogout()" class="btn-logout">
+        Terminate Session &rarr;
+      </button>
     </div>
 
     <!-- Navigation Tabs -->
     <div class="tabs-nav">
-      <button class="tab-btn active" id="tab-login-btn" onclick="switchTab('login')">
-        🔐 Operator Login
-      </button>
-      <button class="tab-btn" id="tab-vault-btn" onclick="switchTab('vault')">
+      <button class="tab-btn active" id="tab-vault-btn" onclick="switchInternalTab('vault')">
         📁 Classified Vault
       </button>
-      <button class="tab-btn" id="tab-ping-btn" onclick="switchTab('ping')">
+      <button class="tab-btn" id="tab-ping-btn" onclick="switchInternalTab('ping')">
         ⚡ Network Diagnostics
       </button>
-      <button class="tab-btn" id="tab-sensor-btn" onclick="switchTab('sensor')">
+      <button class="tab-btn" id="tab-sensor-btn" onclick="switchInternalTab('sensor')">
         🔍 Sensor Query
       </button>
-      <button class="tab-btn" id="tab-terminal-btn" onclick="switchTab('terminal')">
+      <button class="tab-btn" id="tab-terminal-btn" onclick="switchInternalTab('terminal')">
         💻 Tactical Shell
       </button>
-      <button class="tab-btn" id="tab-diag-btn" onclick="switchTab('diag')">
+      <button class="tab-btn" id="tab-diag-btn" onclick="switchInternalTab('diag')">
         📦 Crash Dump Upload
       </button>
-      <button class="tab-btn" id="tab-status-btn" onclick="switchTab('status')">
+      <button class="tab-btn" id="tab-status-btn" onclick="switchInternalTab('status')">
         📡 Enclave Topology
       </button>
     </div>
 
-    <!-- TAB 1: OPERATOR AUTHENTICATION & MFA -->
-    <div id="login-view">
-      <form id="decoy-login-form" onsubmit="handleLogin(event)">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-          <div class="form-group">
-            <label for="username">Operator Identifier / CAC ID</label>
-            <input type="text" id="username" name="username" placeholder="e.g. nx-op-8491, admin, c.miller" required autocomplete="username">
-          </div>
-
-          <div class="form-group">
-            <label for="enclave-select">Target Enclave Destination</label>
-            <select id="enclave-select">
-              <option value="VA-01">VA-01 Pentagon Gateway (Primary)</option>
-              <option value="EU-02">EU-02 Frankfurt Defense Relay</option>
-              <option value="PAC-03">PAC-03 INDOPACOM Satellite Link</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="password">Security Enclave Passcode / PKI Token</label>
-          <input type="password" id="password" name="password" placeholder="••••••••••••••••" required autocomplete="current-password">
-        </div>
-
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-size: 0.75rem; flex-wrap: gap;">
-          <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; text-transform: none; color: var(--text-muted); margin: 0;">
-            <input type="checkbox" id="piv-check"> Hardware SmartCard / CAC Attached
-          </label>
-          <div style="display: flex; gap: 12px;">
-            <a href="#" onclick="triggerMfaModal(); return false;" style="color: #c084fc; text-decoration: none;">Simulate Duo/CAC Challenge</a>
-            <a href="#" onclick="enterGuestSession(); return false;" style="color: #38bdf8; text-decoration: none;">Contractor Guest Diagnostics</a>
-          </div>
-        </div>
-
-        <button type="submit" id="login-submit-btn" class="btn-submit">
-          <span>Authenticate Operator</span> &rarr;
-        </button>
-      </form>
-    </div>
-
-    <!-- TAB 2: CLASSIFIED HONEYTOKEN VAULT -->
-    <div id="vault-view" style="display: none;">
+    <!-- TAB 1: CLASSIFIED HONEYTOKEN VAULT -->
+    <div id="vault-view">
       <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
         <span>Operational Repository: Node 04 Defense Vault (STIG Compartmented Storage)</span>
         <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #34d399;">5 Artifacts Cached</span>
@@ -715,10 +744,10 @@
       </div>
     </div>
 
-    <!-- TAB 3: NETWORK DIAGNOSTICS (COMMAND INJECTION TRAP) -->
+    <!-- TAB 2: NETWORK DIAGNOSTICS (COMMAND INJECTION TRAP) -->
     <div id="ping-view" style="display: none;">
       <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px;">
-        Enclave ICMP Ping & Traceroute Gateway. Test internal relay latency and connectivity across classified interfaces.
+        Internal Enclave ICMP Echo Gateway. Test internal relay latency and connectivity across classified interfaces.
       </div>
 
       <form id="decoy-ping-form" onsubmit="handlePing(event)">
@@ -734,11 +763,11 @@
       </form>
 
       <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
-        <span style="font-size: 0.72rem; color: var(--text-dim); align-self: center;">Quick Diagnostic Targets:</span>
+        <span style="font-size: 0.72rem; color: var(--text-dim); align-self: center;">Quick Test Injections:</span>
         <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem;" onclick="setPingTarget('10.42.18.1')">Gateway (10.42.18.1)</button>
         <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem;" onclick="setPingTarget('10.42.18.5')">DB Cluster (10.42.18.5)</button>
-        <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem;" onclick="setPingTarget('127.0.0.1; whoami')">Test Injection: whoami</button>
-        <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem;" onclick="setPingTarget('127.0.0.1; cat /etc/passwd')">Test Injection: cat /etc/passwd</button>
+        <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem; color: #f87171;" onclick="setPingTarget('127.0.0.1; whoami')">Test Injection: whoami</button>
+        <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem; color: #f87171;" onclick="setPingTarget('127.0.0.1; cat /etc/passwd')">Test Injection: cat /etc/passwd</button>
       </div>
 
       <div class="terminal-box" style="min-height: 180px; max-height: 260px;">
@@ -750,7 +779,7 @@
       </div>
     </div>
 
-    <!-- TAB 4: SENSOR QUERY (SQL INJECTION TRAP) -->
+    <!-- TAB 3: SENSOR QUERY (SQL INJECTION TRAP) -->
     <div id="sensor-view" style="display: none;">
       <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px;">
         Query tactical radar transponders and satellite telemetry telemetry cache directly from the enclave database.
@@ -771,8 +800,8 @@
       <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
         <span style="font-size: 0.72rem; color: var(--text-dim); align-self: center;">Preset Filters:</span>
         <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem;" onclick="setSensorQuery(\"sensor_id = 'RADAR-01'\")">Radar Standard</button>
-        <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem;" onclick="setSensorQuery(\"' OR '1'='1'\")">Test SQLi: ' OR '1'='1'</button>
-        <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem;" onclick="setSensorQuery(\"' UNION SELECT 1,2,3,4,5,6,7 --\")">Test SQLi: UNION SELECT</button>
+        <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem; color: #fbbf24;" onclick="setSensorQuery(\"' OR '1'='1'\")">Test SQLi: ' OR '1'='1'</button>
+        <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem; color: #fbbf24;" onclick="setSensorQuery(\"' UNION SELECT 1,2,3,4,5,6,7 --\")">Test SQLi: UNION SELECT</button>
       </div>
 
       <div id="sensor-results" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 14px; min-height: 140px; font-family: 'JetBrains Mono', monospace; font-size: 0.76rem; overflow-x: auto;">
@@ -780,18 +809,15 @@
       </div>
     </div>
 
-    <!-- TAB 5: TACTICAL INTERACTIVE SHELL -->
+    <!-- TAB 4: TACTICAL INTERACTIVE SHELL -->
     <div id="terminal-view" style="display: none;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
         <span style="font-size: 0.76rem; color: var(--text-muted);">
           Interactive unprivileged diagnostic shell. Use standard Linux commands (<span style="color: #38bdf8;">ls -la, cd, cat, whoami, id, uname, ps aux, df -h, ip a, help</span>).
         </span>
-        <label style="font-size: 0.72rem; color: var(--text-dim); display: flex; align-items: center; gap: 6px; cursor: pointer;">
-          <input type="checkbox" id="crt-toggle" onchange="toggleCrt(this)"> CRT Scanlines
-        </label>
       </div>
 
-      <div class="terminal-box crt-effect" id="term-container" onclick="document.getElementById('cli-input').focus()">
+      <div class="terminal-box" id="term-container" onclick="document.getElementById('cli-input').focus()">
         <div class="terminal-header">
           <span>NEXIS TACTICAL DIAGNOSTIC SHELL v4.2.1 [UNPRIVILEGED]</span>
           <span>NODE: nx-defense-node-4 &bull; TTY: pts/0</span>
@@ -806,7 +832,7 @@ Type 'help' for diagnostics commands or 'cat README.txt' for enclave policies.
       </div>
     </div>
 
-    <!-- TAB 6: CRASH DUMP & PATCH UPLOAD -->
+    <!-- TAB 5: CRASH DUMP & PATCH UPLOAD -->
     <div id="diag-view" style="display: none;">
       <form id="decoy-upload-form" onsubmit="handleUpload(event)">
         <div class="form-group">
@@ -842,7 +868,7 @@ Type 'help' for diagnostics commands or 'cat README.txt' for enclave policies.
       </form>
     </div>
 
-    <!-- TAB 7: ENCLAVE TOPOLOGY -->
+    <!-- TAB 6: ENCLAVE TOPOLOGY -->
     <div id="status-view" style="display: none;">
       <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 16px; line-height: 1.4;">
         Real-time telemetry and cryptographic status across authorized coalition defense communication relays.
@@ -879,20 +905,10 @@ Type 'help' for diagnostics commands or 'cat README.txt' for enclave policies.
           <div style="font-size: 0.68rem; color: #94a3b8; margin-top: 4px;">Cipher: MIL-SATCOM Encrypted</div>
         </div>
       </div>
-
-      <div style="margin-top: 16px; background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; padding: 14px; font-size: 0.75rem; color: var(--text-dim); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-        <div>
-          Crypto Core: <span style="color: #34d399;">Kyber-1024 HSM ACTIVE</span> &bull; 
-          Firewall Profile: <span style="color: #38bdf8;">STIG-DEFENSE-HARDENED-V4</span>
-        </div>
-        <div>
-          <a href="/api/v1/decoy/honeytoken/config" target="_blank" style="color: #00b4d8; text-decoration: none;">View Config Manifest (Internal) &rarr;</a>
-        </div>
-      </div>
     </div>
 
-    <!-- Alert Box for status / responses -->
-    <div id="status-alert" class="alert-box"></div>
+    <!-- Alert Box for internal responses -->
+    <div id="internal-alert" class="alert-box"></div>
   </div>
 
   <!-- Preview Modal for Classified Documents -->
@@ -912,6 +928,7 @@ Type 'help' for diagnostics commands or 'cat README.txt' for enclave policies.
     </div>
   </div>
 
+  <!-- Footer Legal & Recon Links -->
   <div class="footer-legal">
     Defense contractor portal protected by ARGUS Cyber Deception & Continuous Attack Monitoring System.
     <br>
@@ -940,9 +957,112 @@ Type 'help' for diagnostics commands or 'cat README.txt' for enclave policies.
 
     document.getElementById('session-hash').textContent = 'SEC-' + Math.random().toString(36).substring(2, 10).toUpperCase();
 
-    // Tab Navigation
-    function switchTab(tab) {
-      const views = ['login', 'vault', 'ping', 'sensor', 'terminal', 'diag', 'status'];
+    // Check if attacker has an active simulated session in localStorage
+    const savedSession = sessionStorage.getItem('nexis_operator_session');
+    if (savedSession) {
+      try {
+        const sessData = JSON.parse(savedSession);
+        unlockInternalPortal(sessData.username, sessData.role, sessData.bypass_mode);
+      } catch (e) {
+        sessionStorage.removeItem('nexis_operator_session');
+      }
+    }
+
+    function applyLoginPreset(u, p) {
+      document.getElementById('username').value = u;
+      document.getElementById('password').value = p;
+    }
+
+    // 1. Decoy Login Handler
+    async function handleLogin(e) {
+      e.preventDefault();
+      const btn = document.getElementById('login-submit-btn');
+      const alertBox = document.getElementById('login-alert');
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+
+      btn.disabled = true;
+      btn.innerHTML = '<span>Verifying Operator Clearance...</span>';
+      alertBox.className = 'alert-box';
+      alertBox.style.display = 'none';
+
+      try {
+        const formData = new FormData();
+        formData.append('username', username);
+        formData.append('password', password);
+
+        const res = await fetch('/api/v1/decoy/auth/login', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.status === 'success') {
+          // Attacker exploited SQLi or used contractor credentials!
+          alertBox.className = 'alert-box success';
+          alertBox.textContent = data.message || 'Authentication override successful! Initializing internal operations center...';
+          alertBox.style.display = 'block';
+
+          // Save session in sessionStorage
+          sessionStorage.setItem('nexis_operator_session', JSON.stringify({
+            username: data.username,
+            role: data.role,
+            bypass_mode: data.bypass_mode,
+          }));
+
+          // Transition to Internal Portal after short delay
+          setTimeout(() => {
+            unlockInternalPortal(data.username, data.role, data.bypass_mode);
+          }, 600);
+        } else {
+          // Failed attempt: Attacker is denied access realistically
+          alertBox.className = 'alert-box error';
+          alertBox.textContent = data.message || 'Access Denied: The specified operator credentials are not valid for this security enclave.';
+          alertBox.style.display = 'block';
+        }
+      } catch (err) {
+        alertBox.className = 'alert-box error';
+        alertBox.textContent = 'Gateway rejection: Handshake terminated by enclave controller.';
+        alertBox.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>Authenticate Operator</span> &rarr;';
+      }
+    }
+
+    // Transition from Public Login to Internal Intranet
+    function unlockInternalPortal(uname, role, bypassMode) {
+      document.getElementById('public-login-container').style.display = 'none';
+      document.getElementById('internal-portal-container').style.display = 'block';
+
+      // Hide Presentation Attack Presets when logged in so decoy feels completely genuine
+      const dock = document.getElementById('evaluator-dock');
+      if (dock) dock.style.display = 'none';
+
+      document.getElementById('active-operator-name').textContent = uname || 'c.miller';
+      document.getElementById('active-operator-role').textContent = role || 'RESTRICTED_CONTRACTOR';
+      document.getElementById('bypass-mode-tag').textContent = bypassMode || 'SESSION_ACTIVE';
+
+      // Default to vault tab
+      switchInternalTab('vault');
+    }
+
+    function handleLogout() {
+      sessionStorage.removeItem('nexis_operator_session');
+      document.getElementById('internal-portal-container').style.display = 'none';
+      document.getElementById('public-login-container').style.display = 'block';
+      document.getElementById('login-alert').style.display = 'none';
+      document.getElementById('password').value = '';
+
+      // Re-show Presentation Attack Presets on public login screen
+      const dock = document.getElementById('evaluator-dock');
+      if (dock) dock.style.display = 'block';
+    }
+
+    // Internal Tabs Navigation
+    function switchInternalTab(tab) {
+      const views = ['vault', 'ping', 'sensor', 'terminal', 'diag', 'status'];
       views.forEach(v => {
         const viewEl = document.getElementById(v + '-view');
         const btnEl = document.getElementById('tab-' + v + '-btn');
@@ -956,9 +1076,6 @@ Type 'help' for diagnostics commands or 'cat README.txt' for enclave policies.
           }
         }
       });
-      const alertBox = document.getElementById('status-alert');
-      alertBox.className = 'alert-box';
-      alertBox.textContent = '';
 
       if (tab === 'terminal') {
         setTimeout(() => document.getElementById('cli-input').focus(), 50);
@@ -972,87 +1089,7 @@ Type 'help' for diagnostics commands or 'cat README.txt' for enclave policies.
       }
     }
 
-    function toggleCrt(cb) {
-      const box = document.getElementById('term-container');
-      if (cb.checked) {
-        box.classList.add('crt-effect');
-      } else {
-        box.classList.remove('crt-effect');
-      }
-    }
-
-    // 1. Decoy Login Handler
-    async function handleLogin(e) {
-      e.preventDefault();
-      const btn = document.getElementById('login-submit-btn');
-      const alertBox = document.getElementById('status-alert');
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
-
-      btn.disabled = true;
-      btn.innerHTML = '<span>Verifying Operator Clearance...</span>';
-      alertBox.className = 'alert-box';
-
-      try {
-        const formData = new FormData();
-        formData.append('username', username);
-        formData.append('password', password);
-
-        const res = await fetch('/api/v1/decoy/auth/login', {
-          method: 'POST',
-          body: formData,
-        });
-
-        const data = await res.json();
-        alertBox.className = 'alert-box error';
-        alertBox.textContent = data.message || 'Authentication failed: Invalid security credentials.';
-      } catch (err) {
-        alertBox.className = 'alert-box error';
-        alertBox.textContent = 'Gateway rejection: Handshake terminated by enclave controller.';
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<span>Authenticate Operator</span> &rarr;';
-      }
-    }
-
-    // 2. Simulated MFA Token Prompt
-    async function triggerMfaModal() {
-      const token = prompt('NEXIS MFA CHALLENGE\nEnter 6-digit TOTP / YubiKey passcode or CAC SmartCard PIN:');
-      if (!token) return;
-
-      const alertBox = document.getElementById('status-alert');
-      alertBox.className = 'alert-box';
-      alertBox.textContent = 'Validating cryptographic MFA token...';
-      alertBox.style.display = 'block';
-
-      try {
-        const formData = new FormData();
-        formData.append('mfa_token', token);
-        formData.append('username', document.getElementById('username').value || 'unauthenticated_operator');
-
-        const res = await fetch('/api/v1/decoy/auth/mfa-challenge', {
-          method: 'POST',
-          body: formData,
-        });
-        const data = await res.json();
-        alertBox.className = 'alert-box error';
-        alertBox.textContent = data.message || 'MFA Challenge verification error.';
-      } catch (err) {
-        alertBox.className = 'alert-box error';
-        alertBox.textContent = 'Hardware Token Revoked (Policy 800-171).';
-      }
-    }
-
-    // 3. Contractor Guest Session (Quick Entrance for Evaluators / Attackers)
-    function enterGuestSession() {
-      document.getElementById('username').value = 'operator_guest';
-      document.getElementById('password').value = 'Contractor2026!Guest';
-      switchTab('terminal');
-      const out = document.getElementById('terminal-output');
-      out.textContent += '\n[SESSION INITIALIZED]: Attached as operator_guest (Contractor Diagnostic Mode).\nType \'cat contractor_notes.md\' to inspect handoff notes.\n';
-    }
-
-    // 4. Honeytoken Preview
+    // Honeytoken Preview
     async function previewHoneytoken(fname) {
       const modal = document.getElementById('preview-modal');
       const nameEl = document.getElementById('preview-filename');
@@ -1075,7 +1112,7 @@ Type 'help' for diagnostics commands or 'cat README.txt' for enclave policies.
       document.getElementById('preview-modal').style.display = 'none';
     }
 
-    // 5. Network Ping & Command Injection Trap Handler
+    // Network Ping & Command Injection Trap
     function setPingTarget(tgt) {
       document.getElementById('ping-target').value = tgt;
     }
@@ -1114,7 +1151,7 @@ Type 'help' for diagnostics commands or 'cat README.txt' for enclave policies.
       }
     }
 
-    // 6. Sensor Query & SQL Injection Trap Handler
+    // Sensor Query & SQL Injection Trap
     function setSensorQuery(q) {
       document.getElementById('sensor-filter').value = q;
     }
@@ -1168,7 +1205,7 @@ Type 'help' for diagnostics commands or 'cat README.txt' for enclave policies.
       }
     }
 
-    // 7. Tactical Terminal Shell Engine
+    // Tactical Shell Engine
     let currentTerminalDir = '/home/operator_guest';
     const commandHistory = [];
     let historyIndex = -1;
@@ -1176,7 +1213,6 @@ Type 'help' for diagnostics commands or 'cat README.txt' for enclave policies.
     async function handleTerminalKey(e) {
       const input = document.getElementById('cli-input');
 
-      // Command history navigation
       if (e.key === 'ArrowUp') {
         e.preventDefault();
         if (commandHistory.length > 0) {
@@ -1243,22 +1279,24 @@ Type 'help' for diagnostics commands or 'cat README.txt' for enclave policies.
       }
     }
 
-    // 8. Safe Crash Dump & Payload Upload Handler
+    // Safe File Upload
     async function handleUpload(e) {
       e.preventDefault();
       const btn = document.getElementById('upload-submit-btn');
-      const alertBox = document.getElementById('status-alert');
+      const alertBox = document.getElementById('internal-alert');
       const fileInput = document.getElementById('diag-file');
 
       if (!fileInput.files || !fileInput.files[0]) {
         alertBox.className = 'alert-box error';
         alertBox.textContent = 'Please select a diagnostic package to upload.';
+        alertBox.style.display = 'block';
         return;
       }
 
       btn.disabled = true;
       btn.innerHTML = '<span>Encrypting & Streaming Diagnostic Bundle...</span>';
       alertBox.className = 'alert-box';
+      alertBox.style.display = 'none';
 
       try {
         const formData = new FormData();
@@ -1273,20 +1311,79 @@ Type 'help' for diagnostics commands or 'cat README.txt' for enclave policies.
         if (res.ok) {
           alertBox.className = 'alert-box success';
           alertBox.textContent = (data.message || 'Diagnostic bundle received.') + ' SHA-256 Hash: ' + (data.artifact_hash ? data.artifact_hash.substring(0, 16) + '...' : '');
+          alertBox.style.display = 'block';
           fileInput.value = '';
           document.getElementById('selected-filename').textContent = '';
         } else {
           alertBox.className = 'alert-box error';
           alertBox.textContent = data.message || 'Upload rejected by security policy filter.';
+          alertBox.style.display = 'block';
         }
       } catch (err) {
         alertBox.className = 'alert-box error';
         alertBox.textContent = 'Transmission error: Connection terminated during upload.';
+        alertBox.style.display = 'block';
       } finally {
         btn.disabled = false;
         btn.innerHTML = '<span>Transmit Diagnostic Package</span> &rarr;';
       }
     }
+
+    // Evaluator / Presentation Demo Dock Toggle
+    function toggleEvaluatorPanel() {
+      const panel = document.getElementById('evaluator-panel');
+      const icon = document.getElementById('evaluator-toggle-icon');
+      if (panel.style.display === 'none' || !panel.style.display) {
+        panel.style.display = 'block';
+        icon.textContent = '▼';
+      } else {
+        panel.style.display = 'none';
+        icon.textContent = '▲';
+      }
+    }
+
+    function applyAndSubmitLoginPreset(u, p) {
+      document.getElementById('username').value = u;
+      document.getElementById('password').value = p;
+      // Trigger submit
+      const form = document.getElementById('decoy-login-form');
+      if (form) {
+        handleLogin(new Event('submit'));
+      }
+    }
   </script>
+
+  <!-- Collapsible Presentation Demo Assistant Dock (For Defense Presentation / Testing) -->
+  <div id="evaluator-dock" style="position: fixed; bottom: 18px; right: 18px; z-index: 1000; font-family: 'Inter', sans-serif;">
+    <div id="evaluator-panel" style="display: none; margin-bottom: 8px; width: 340px; background: rgba(10, 14, 24, 0.98); border: 1px solid rgba(0, 180, 216, 0.45); border-radius: 8px; padding: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.9); backdrop-filter: blur(16px);">
+      <div style="font-size: 0.72rem; font-weight: 700; color: #38bdf8; text-transform: uppercase; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+        <span>🎓 Presentation Attack Simulator</span>
+        <span style="font-size: 0.65rem; color: #10b981; background: rgba(16,185,129,0.15); padding: 2px 6px; border-radius: 4px;">LIVE DECOY</span>
+      </div>
+      <div style="font-size: 0.69rem; color: var(--text-muted); margin-bottom: 10px; line-height: 1.35;">
+        Simulate adversary stages on the login perimeter:
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <button type="button" class="btn-download" style="margin: 0; width: 100%; justify-content: flex-start; padding: 6px 10px; font-size: 0.72rem; color: #38bdf8; background: rgba(0,180,216,0.12);" onclick="applyAndSubmitLoginPreset('admin', 'WrongPass123!')">
+          🚫 1. Failed Login (SOC Chime & Alert)
+        </button>
+        <button type="button" class="btn-download" style="margin: 0; width: 100%; justify-content: flex-start; padding: 6px 10px; font-size: 0.72rem; color: #f87171; border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.1);" onclick="applyAndSubmitLoginPreset(&quot;' OR '1'='1' --&quot;, 'any')">
+          💥 2. SQLi Bypass & Unlock System (' OR '1'='1')
+        </button>
+        <button type="button" class="btn-download" style="margin: 0; width: 100%; justify-content: flex-start; padding: 6px 10px; font-size: 0.72rem; color: #fbbf24; border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.1);" onclick="applyAndSubmitLoginPreset('c.miller', 'Contractor2024!')">
+          🔑 3. Leaked Contractor Access (c.miller)
+        </button>
+      </div>
+      <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 0.68rem; color: var(--text-dim); display: flex; justify-content: space-between;">
+        <span>SOC Monitoring: Port 3000</span>
+        <a href="/" target="_blank" style="color: #38bdf8; text-decoration: none;">Open SOC Dashboard &rarr;</a>
+      </div>
+    </div>
+
+    <button id="evaluator-toggle-btn" onclick="toggleEvaluatorPanel()" style="background: rgba(13, 18, 30, 0.95); border: 1px solid var(--accent-cyan); color: var(--accent-cyan-light); padding: 8px 14px; border-radius: 20px; font-size: 0.74rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.6); backdrop-filter: blur(10px); float: right;">
+      <span>⚡ Attack Presets</span>
+      <span id="evaluator-toggle-icon">▲</span>
+    </button>
+  </div>
 </body>
 </html>

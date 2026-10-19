@@ -284,16 +284,57 @@ async def decoy_login(
     pwd_len = len(password)
     pwd_fingerprint = compute_password_fingerprint(password) if password else "empty_password"
 
-    # Determine severity based on targeted username
-    severity = "medium"
-    flagged = False
-    high_value_targets = {"root", "admin", "administrator", "sysadmin", "secops", "supervisor", "ciso"}
-    if username.strip().lower() in high_value_targets:
-        severity = "high"
-        flagged = True
+    # Check for SQL Injection login bypass exploit
+    sqli_signatures = ["' or '1'='1", "' or 1=1", "admin' --", "' or ''='", "union select", "' or 'a'='a", "' or 1=1 --", "' or 1=1 #"]
+    user_lower = username.strip().lower()
+    pass_lower = password.strip().lower()
+    is_sqli_bypass = any(sig in user_lower or sig in pass_lower for sig in sqli_signatures)
+
+    # Check for leaked contractor credentials (breadcrump in source code)
+    is_contractor_cred = (
+        user_lower in ["c.miller", "operator_guest"]
+        and password in ["Contractor2024!", "Contractor2026!", "guest123", "Contractor2026!Guest"]
+    )
 
     event_id = uuid.uuid4()
     now_utc = datetime.now(timezone.utc)
+
+    if is_sqli_bypass:
+        event_type = "sql_injection"
+        severity = "critical"
+        summary_msg = f"CRITICAL: SQL Injection Authentication Bypass from {client_ip} (payload: '{username[:40]}')"
+        login_success = True
+        failure_reason = "simulated_sqli_bypass"
+        metadata = {
+            "login_bypass_technique": "SQL_INJECTION",
+            "injected_payload": username[:200],
+            "password_length": pwd_len,
+            "simulated_outcome": "AUTHENTICATION_OVERRIDE_GRANTED",
+        }
+    elif is_contractor_cred:
+        event_type = "login_attempt"
+        severity = "high"
+        summary_msg = f"Attacker logged in using leaked contractor credentials: '{username}'"
+        login_success = True
+        failure_reason = "simulated_contractor_access"
+        metadata = {
+            "credential_profile": "LEAKED_STAGING_CONTRACTOR",
+            "username": username[:100],
+            "password_length": pwd_len,
+            "simulated_outcome": "CONTRACTOR_PORTAL_UNLOCKED",
+        }
+    else:
+        event_type = "login_attempt"
+        high_value_targets = {"root", "admin", "administrator", "sysadmin", "secops", "supervisor", "ciso"}
+        severity = "high" if user_lower in high_value_targets else "medium"
+        summary_msg = f"Decoy login attempt targeting user '{username or 'blank'}' (pwd len: {pwd_len})"
+        login_success = False
+        failure_reason = "invalid_operator_credentials"
+        metadata = {
+            "submitted_username": username[:100],
+            "password_length": pwd_len,
+            "simulated_outcome": "DENIED",
+        }
 
     # 1. Create central security event
     sec_event = SecurityEvent(
@@ -307,28 +348,24 @@ async def decoy_login(
         query_params=dict(request.query_params),
         headers_sanitized=sanitize_headers(dict(request.headers)),
         user_agent=request.headers.get("user-agent", "")[:500],
-        event_type="login_attempt",
+        event_type=event_type,
         severity=severity,
         is_test_event=is_test,
         correlation_id=request.headers.get("x-correlation-id") or str(uuid.uuid4())[:8],
-        metadata_payload={
-            "submitted_username": username[:100],
-            "password_length": pwd_len,
-            "simulated_outcome": "DENIED",
-        },
+        metadata_payload=metadata,
     )
     db.add(sec_event)
 
-    # 2. Create associated login attempt record
+    # 2. Create associated login attempt record (Zero Plaintext Invariant preserved)
     login_attempt = LoginAttempt(
         id=uuid.uuid4(),
         event_id=event_id,
         submitted_username=username[:255] if username else "(blank)",
         password_length=pwd_len,
         password_hmac_fingerprint=pwd_fingerprint,
-        is_flagged_credential=flagged,
-        success=False,  # Decoy NEVER grants access
-        failure_reason="invalid_operator_credentials",
+        is_flagged_credential=(severity in ["high", "critical"]),
+        success=login_success,
+        failure_reason=failure_reason,
         client_ip=client_ip,
         user_agent=request.headers.get("user-agent", "")[:500],
     )
@@ -341,20 +378,34 @@ async def decoy_login(
         "id": str(event_id),
         "timestamp": now_utc.isoformat(),
         "source_ip": client_ip,
-        "event_type": "login_attempt",
+        "event_type": event_type,
         "severity": severity,
         "request_path": str(request.url.path),
         "http_method": request.method,
         "user_agent": request.headers.get("user-agent", "")[:100],
         "is_test_event": is_test,
-        "summary": f"Decoy login attempt targeting user '{username or 'blank'}' (pwd len: {pwd_len})",
+        "summary": summary_msg,
     }
     await ws_manager.broadcast_event(event_summary)
 
     logger.info(
-        f"Captured decoy login attempt from {client_ip} for username '{username}'",
-        extra={"event_id": str(event_id), "source_ip": client_ip, "event_type": "login_attempt"},
+        f"Captured decoy login attempt from {client_ip} for username '{username}' (result: {login_success})",
+        extra={"event_id": str(event_id), "source_ip": client_ip, "event_type": event_type},
     )
+
+    if login_success:
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={
+                "status": "success",
+                "authenticated": True,
+                "role": "contractor_admin" if is_sqli_bypass else "contractor_diagnostics",
+                "username": username if not is_sqli_bypass else "admin_override",
+                "session_token": f"NX-SESSION-{str(event_id)[:8].upper()}",
+                "message": "Authentication successful. Initializing internal tactical operations console.",
+                "bypass_mode": "SQL_INJECTION_OVERRIDE" if is_sqli_bypass else "STAGING_CONTRACTOR_PROFILE",
+            },
+        )
 
     # Simulated realistic corporate authentication failure response
     return JSONResponse(
