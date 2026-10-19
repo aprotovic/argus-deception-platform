@@ -4,11 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nexis Defense Systems | Global Tactical Network Portal</title>
-  <!-- SECURITY NOTICE FOR CONTRACTORS:
-       Staging contractor account active for Node 04 diagnostics:
-       Username: c.miller
-       Passcode: Contractor2024!
-       WARNING: Enclave authentication uses legacy SQL string evaluation. DO NOT EXPOSE.
+  <!--
+    =============================================================================
+    NEXIS DEFENSE SYSTEMS // ENCLAVE NODE-04-US-EAST (STAGING GATEWAY)
+    SECURITY LEVEL: RESTRICTED // CONTRACTOR AUTHORIZED ACCESS ONLY
+    
+    Diagnostics Operator Account:
+      Username : c.miller
+      Passcode : Contractor2024!
+      
+    Sprint 14 Migration Advisory:
+      - Node-04 perimeter gateway currently runs on legacy SQL authentication parser.
+      - Enforce hardware CAC smartcard PKI requirement before Q3 production transition.
+      - Direct technical queries to NOC Lead: DSN 312-555-8491.
+    =============================================================================
   -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -512,18 +521,16 @@
     }
 
     .footer-links a {
-      color: #00b4d8;
+      color: #64748b;
       text-decoration: none;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.72rem;
-      padding: 2px 6px;
-      background: rgba(0, 180, 216, 0.08);
-      border-radius: 4px;
+      font-size: 0.7rem;
+      padding: 0 4px;
+      transition: color 0.15s;
     }
 
     .footer-links a:hover {
+      color: #38bdf8;
       text-decoration: underline;
-      background: rgba(0, 180, 216, 0.2);
     }
   </style>
 </head>
@@ -544,7 +551,7 @@
   <!-- ========================================================================= -->
   <div id="public-login-container" class="portal-card login-container">
     <div class="brand-header">
-      <div class="brand-badge">TACTICAL PERIMETER GATEWAY // v4.2.1-SEC</div>
+      <div class="brand-badge" ondblclick="toggleEvaluatorPanel()" title="Tactical Defense Enclave" style="cursor: default;">TACTICAL PERIMETER GATEWAY // v4.2.1-SEC</div>
       <h1 class="brand-title">Nexis Defense Systems</h1>
       <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">
         Tactical Enclave Access Control & PKI Verification Gateway
@@ -763,11 +770,11 @@
       </form>
 
       <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
-        <span style="font-size: 0.72rem; color: var(--text-dim); align-self: center;">Quick Test Injections:</span>
-        <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem;" onclick="setPingTarget('10.42.18.1')">Gateway (10.42.18.1)</button>
-        <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem;" onclick="setPingTarget('10.42.18.5')">DB Cluster (10.42.18.5)</button>
-        <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem; color: #f87171;" onclick="setPingTarget('127.0.0.1; whoami')">Test Injection: whoami</button>
-        <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem; color: #f87171;" onclick="setPingTarget('127.0.0.1; cat /etc/passwd')">Test Injection: cat /etc/passwd</button>
+        <span style="font-size: 0.72rem; color: var(--text-dim); align-self: center;">Target Host Quicklinks:</span>
+        <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem;" onclick="setPingTarget('10.42.18.1')">Pentagon Relay (10.42.18.1)</button>
+        <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem;" onclick="setPingTarget('10.42.18.5')">Internal DB Cluster (10.42.18.5)</button>
+        <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem;" onclick="setPingTarget('10.42.88.2')">SATCOM Transponder (10.42.88.2)</button>
+        <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem;" onclick="setPingTarget('10.42.18.50')">Syslog Node (10.42.18.50)</button>
       </div>
 
       <div class="terminal-box" style="min-height: 180px; max-height: 260px;">
@@ -798,12 +805,11 @@
       </form>
 
       <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
-        <span style="font-size: 0.72rem; color: var(--text-dim); align-self: center;">Preset Filters:</span>
-        <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem;" onclick="setSensorQuery(\"sensor_id = 'RADAR-01'\")">Radar Standard</button>
-        <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem; color: #fbbf24;" onclick="setSensorQuery(\"' OR '1'='1'\")">Test SQLi: ' OR '1'='1'</button>
-        <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem; color: #fbbf24;" onclick="setSensorQuery(\"' UNION SELECT 1,2,3,4,5,6,7 --\")">Test SQLi: UNION SELECT</button>
+        <span style="font-size: 0.72rem; color: var(--text-dim); align-self: center;">Operational Query Presets:</span>
+        <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem;" onclick="setSensorQuery('sensor_id = \'RADAR-01\'')">Radar Array: RADAR-01</button>
+        <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem;" onclick="setSensorQuery('status = \'ACTIVE\' AND freq_band = \'X\'')">Active X-Band Sensors</button>
+        <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem;" onclick="setSensorQuery('node_id = \'NX-VA-04\' ORDER BY timestamp DESC')">Node 04 Telemetry Logs</button>
       </div>
-
       <div id="sensor-results" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 14px; min-height: 140px; font-family: 'JetBrains Mono', monospace; font-size: 0.76rem; overflow-x: auto;">
         <div style="color: var(--text-dim);">Execute query to inspect sensor records.</div>
       </div>
@@ -928,18 +934,19 @@ Type 'help' for diagnostics commands or 'cat README.txt' for enclave policies.
     </div>
   </div>
 
-  <!-- Footer Legal & Recon Links -->
+  <!-- Authentic Enterprise Defense Contractor Footer -->
   <div class="footer-legal">
-    Defense contractor portal protected by ARGUS Cyber Deception & Continuous Attack Monitoring System.
-    <br>
-    Perimeter Node: <span id="session-hash" style="font-family: 'JetBrains Mono', monospace;"></span> &bull; Classification: TOP SECRET // NOFORN
+    <div>
+      <strong>Nexis Defense Systems</strong> &bull; Defense Information Systems Agency (DISA) STIG Profile Enclave &bull; Node NX-VA-EAST-04
+    </div>
+    <div style="font-size: 0.7rem; color: #64748b; margin-top: 4px;">
+      Classification: TOP SECRET // NOFORN // CUI &bull; Cryptographic Module: FIPS 140-3 Validated Suite B &bull; Session: <span id="session-hash" style="font-family: 'JetBrains Mono', monospace; color: #94a3b8;"></span>
+    </div>
     <div class="footer-links">
-      <a href="/robots.txt" target="_blank">/robots.txt</a>
-      <a href="/.env" target="_blank">/.env</a>
-      <a href="/.git/HEAD" target="_blank">/.git/HEAD</a>
-      <a href="/actuator/health" target="_blank">/actuator/health</a>
-      <a href="/api/v1/decoy/honeytoken/config" target="_blank">/api/v1/decoy/honeytoken/config</a>
-      <a href="/api/v1/decoy/network/status" target="_blank">/api/v1/decoy/network/status</a>
+      <a href="#" onclick="alert('Access strictly restricted to authorized defense contractors under DoD Directive 8500.01 & NIST SP 800-171.'); return false;">Security Policy</a>
+      <a href="#" onclick="alert('Enclave PKI Certificate Authority: DoD Root CA-4 / Kyber-1024 hybrid certificate active.'); return false;">PKI Certificate Status</a>
+      <a href="#" onclick="alert('Emergency Network Operations Center (NOC): Node East Dispatch DSN 312-555-8491.'); return false;">NOC Operations</a>
+      <a href="#" onclick="alert('System Authorization: Continuous Authority to Operate (cATO) under DISA Mission Assurance Category I.'); return false;">System Authorization</a>
     </div>
   </div>
 
@@ -1332,13 +1339,11 @@ Type 'help' for diagnostics commands or 'cat README.txt' for enclave policies.
     // Evaluator / Presentation Demo Dock Toggle
     function toggleEvaluatorPanel() {
       const panel = document.getElementById('evaluator-panel');
-      const icon = document.getElementById('evaluator-toggle-icon');
+      if (!panel) return;
       if (panel.style.display === 'none' || !panel.style.display) {
         panel.style.display = 'block';
-        icon.textContent = '▼';
       } else {
         panel.style.display = 'none';
-        icon.textContent = '▲';
       }
     }
 
@@ -1353,15 +1358,15 @@ Type 'help' for diagnostics commands or 'cat README.txt' for enclave policies.
     }
   </script>
 
-  <!-- Collapsible Presentation Demo Assistant Dock (For Defense Presentation / Testing) -->
+  <!-- Stealth Presentation Assistant Dock (Hidden by default; open with Ctrl+Shift+D or double-clicking the version badge) -->
   <div id="evaluator-dock" style="position: fixed; bottom: 18px; right: 18px; z-index: 1000; font-family: 'Inter', sans-serif;">
-    <div id="evaluator-panel" style="display: none; margin-bottom: 8px; width: 340px; background: rgba(10, 14, 24, 0.98); border: 1px solid rgba(0, 180, 216, 0.45); border-radius: 8px; padding: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.9); backdrop-filter: blur(16px);">
+    <div id="evaluator-panel" style="display: none; width: 340px; background: rgba(10, 14, 24, 0.98); border: 1px solid rgba(0, 180, 216, 0.45); border-radius: 8px; padding: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.9); backdrop-filter: blur(16px);">
       <div style="font-size: 0.72rem; font-weight: 700; color: #38bdf8; text-transform: uppercase; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
-        <span>🎓 Presentation Attack Simulator</span>
-        <span style="font-size: 0.65rem; color: #10b981; background: rgba(16,185,129,0.15); padding: 2px 6px; border-radius: 4px;">LIVE DECOY</span>
+        <span>🎓 Presentation Assistant</span>
+        <button onclick="toggleEvaluatorPanel()" style="background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 0.85rem; padding: 2px 6px;">✕</button>
       </div>
       <div style="font-size: 0.69rem; color: var(--text-muted); margin-bottom: 10px; line-height: 1.35;">
-        Simulate adversary stages on the login perimeter:
+        Simulate adversary stages on the login perimeter (Press Esc to close):
       </div>
       <div style="display: flex; flex-direction: column; gap: 6px;">
         <button type="button" class="btn-download" style="margin: 0; width: 100%; justify-content: flex-start; padding: 6px 10px; font-size: 0.72rem; color: #38bdf8; background: rgba(0,180,216,0.12);" onclick="applyAndSubmitLoginPreset('admin', 'WrongPass123!')">
@@ -1375,15 +1380,25 @@ Type 'help' for diagnostics commands or 'cat README.txt' for enclave policies.
         </button>
       </div>
       <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 0.68rem; color: var(--text-dim); display: flex; justify-content: space-between;">
-        <span>SOC Monitoring: Port 3000</span>
+        <span>Hotkeys: Ctrl+Shift+D / Esc</span>
         <a href="/" target="_blank" style="color: #38bdf8; text-decoration: none;">Open SOC Dashboard &rarr;</a>
       </div>
     </div>
-
-    <button id="evaluator-toggle-btn" onclick="toggleEvaluatorPanel()" style="background: rgba(13, 18, 30, 0.95); border: 1px solid var(--accent-cyan); color: var(--accent-cyan-light); padding: 8px 14px; border-radius: 20px; font-size: 0.74rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.6); backdrop-filter: blur(10px); float: right;">
-      <span>⚡ Attack Presets</span>
-      <span id="evaluator-toggle-icon">▲</span>
-    </button>
   </div>
+
+  <script>
+    // Stealth hotkey listener: Ctrl+Shift+D or Alt+D toggles presentation assistant
+    document.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey && e.shiftKey && (e.key === 'D' || e.key === 'd')) || (e.altKey && (e.key === 'D' || e.key === 'd'))) {
+        e.preventDefault();
+        toggleEvaluatorPanel();
+      } else if (e.key === 'Escape') {
+        const panel = document.getElementById('evaluator-panel');
+        if (panel && panel.style.display !== 'none') {
+          panel.style.display = 'none';
+        }
+      }
+    });
+  </script>
 </body>
 </html>
