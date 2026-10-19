@@ -1,5 +1,14 @@
 export type Severity = 'low' | 'medium' | 'high' | 'critical';
-export type EventType = 'login_attempt' | 'file_upload' | 'recon_probe' | 'unauthorized_access' | 'malformed_request';
+export type EventType =
+  | 'login_attempt'
+  | 'file_upload'
+  | 'recon_probe'
+  | 'unauthorized_access'
+  | 'malformed_request'
+  | 'command_injection'
+  | 'honeytoken_accessed'
+  | 'sql_injection'
+  | 'terminal_execution';
 export type UserRole = 'admin' | 'analyst' | 'auditor';
 
 export interface User {

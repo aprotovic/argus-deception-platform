@@ -199,6 +199,10 @@ export const LiveStreamView: React.FC = () => {
           <option value="">All Event Types</option>
           <option value="login_attempt">Login Attempt</option>
           <option value="file_upload">File Upload</option>
+          <option value="command_injection">⚡ Command Injection</option>
+          <option value="honeytoken_accessed">🍯 Honeytoken Access</option>
+          <option value="sql_injection">💉 SQL Injection</option>
+          <option value="terminal_execution">💻 Terminal Execution</option>
           <option value="recon_probe">Recon Probe</option>
           <option value="unauthorized_access">Unauthorized Access</option>
         </select>
@@ -306,13 +310,31 @@ export const LiveStreamView: React.FC = () => {
 
                       {/* Event Type */}
                       <td style={{ padding: '12px 16px' }}>
-                        <span style={{
-                          color: '#38bdf8',
-                          fontWeight: 500,
-                          textTransform: 'capitalize',
-                        }}>
-                          {ev.event_type.replace('_', ' ')}
-                        </span>
+                        {ev.event_type === 'command_injection' ? (
+                          <span style={{ color: '#ef4444', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(239, 68, 68, 0.12)', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+                            ⚡ Cmd Injection
+                          </span>
+                        ) : ev.event_type === 'honeytoken_accessed' ? (
+                          <span style={{ color: '#c084fc', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(192, 132, 252, 0.12)', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(192, 132, 252, 0.3)' }}>
+                            🍯 Honeytoken
+                          </span>
+                        ) : ev.event_type === 'sql_injection' ? (
+                          <span style={{ color: '#fb923c', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(251, 146, 60, 0.12)', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(251, 146, 60, 0.3)' }}>
+                            💉 SQL Injection
+                          </span>
+                        ) : ev.event_type === 'terminal_execution' ? (
+                          <span style={{ color: '#2dd4bf', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(45, 212, 191, 0.12)', padding: '2px 8px', borderRadius: '4px' }}>
+                            💻 Terminal Exec
+                          </span>
+                        ) : (
+                          <span style={{
+                            color: '#38bdf8',
+                            fontWeight: 500,
+                            textTransform: 'capitalize',
+                          }}>
+                            {ev.event_type.replace('_', ' ')}
+                          </span>
+                        )}
                       </td>
 
                       {/* Target Path */}

@@ -114,6 +114,117 @@ async def serve_decoy_robots():
     return PlainTextResponse(content=robots_content)
 
 
+# ============================================================================
+# ROOT DOMAIN SCANNER TRAPS & HONEYTOKEN HONEYTRAPS
+# ============================================================================
+async def record_root_trap(request: Request, path: str, severity: str = "high", honeytoken_info: dict = None):
+    """Captures direct scanner recon probes at the domain root into security telemetry."""
+    try:
+        from app.database import AsyncSessionLocal
+        from app.models.security_event import SecurityEvent
+        from app.core.security import extract_client_ip, sanitize_headers
+        from app.core.websocket_manager import ws_manager
+        import uuid
+        from datetime import datetime, timezone
+
+        client_ip = extract_client_ip(request)
+        is_test = bool(request.headers.get("x-argus-test-token") or request.query_params.get("test") in ["1", "true"])
+        event_id = uuid.uuid4()
+        now_utc = datetime.now(timezone.utc)
+
+        metadata = {"probed_path": path}
+        if honeytoken_info:
+            metadata.update(honeytoken_info)
+
+        async with AsyncSessionLocal() as session:
+            sec_event = SecurityEvent(
+                id=event_id,
+                timestamp=now_utc,
+                source_ip=client_ip,
+                source_port=request.client.port if request.client else None,
+                http_method=request.method,
+                request_path=path,
+                query_params=dict(request.query_params),
+                headers_sanitized=sanitize_headers(dict(request.headers)),
+                user_agent=request.headers.get("user-agent", "")[:500],
+                event_type="recon_probe",
+                severity=severity,
+                is_test_event=is_test,
+                correlation_id=str(uuid.uuid4())[:8],
+                metadata_payload=metadata,
+            )
+            session.add(sec_event)
+            await session.commit()
+
+        await ws_manager.broadcast_event({
+            "id": str(event_id),
+            "timestamp": now_utc.isoformat(),
+            "source_ip": client_ip,
+            "event_type": "recon_probe",
+            "severity": severity,
+            "request_path": path,
+            "http_method": request.method,
+            "user_agent": request.headers.get("user-agent", "")[:100],
+            "is_test_event": is_test,
+            "summary": f"Scanner reconnaissance probe on '{path}'",
+        })
+    except Exception as e:
+        logger.error(f"Error recording root trap for {path}: {e}")
+
+
+@app.get("/.env", tags=["Decoy Traps"])
+async def trap_env(request: Request):
+    from fastapi.responses import PlainTextResponse
+    await record_root_trap(request, "/.env", severity="high", honeytoken_info={"canary_token": "CANARY-ENV-NX784912"})
+    return PlainTextResponse(
+        "DATABASE_URL=postgresql://nx_admin:CanaryP@ssword2026!@10.42.18.5:5432/defense_ops\n"
+        "AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE_NXCANARY\n"
+        "AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY\n"
+        "JWT_SECRET=super_secret_defense_enclave_key_do_not_share\n"
+    )
+
+
+@app.get("/.git/HEAD", tags=["Decoy Traps"])
+async def trap_git_head(request: Request):
+    from fastapi.responses import PlainTextResponse
+    await record_root_trap(request, "/.git/HEAD", severity="high")
+    return PlainTextResponse("ref: refs/heads/main\n")
+
+
+@app.get("/.git/config", tags=["Decoy Traps"])
+async def trap_git_config(request: Request):
+    from fastapi.responses import PlainTextResponse
+    await record_root_trap(request, "/.git/config", severity="high")
+    return PlainTextResponse(
+        "[core]\n\trepositoryformatversion = 0\n\tfilemode = true\n\tbare = false\n"
+        "[remote \"origin\"]\n\turl = git@git.defense.internal:nexis/tactical-portal.git\n\tfetch = +refs/heads/*:refs/remotes/origin/*\n"
+    )
+
+
+@app.get("/.aws/credentials", tags=["Decoy Traps"])
+async def trap_aws_credentials(request: Request):
+    from fastapi.responses import PlainTextResponse
+    await record_root_trap(request, "/.aws/credentials", severity="high", honeytoken_info={"canary_token": "NX-CANARY-AWS-CRED-01"})
+    return PlainTextResponse(
+        "[default]\n"
+        "aws_access_key_id = AKIA4DEFENSE7CANARY1\n"
+        "aws_secret_access_key = 9aF81k2m3L4p5Q6r7S8t9U0v1W2x3Y4z\n"
+    )
+
+
+@app.api_route("/wp-login.php", methods=["GET", "POST"], tags=["Decoy Traps"])
+async def trap_wp_login(request: Request):
+    from fastapi.responses import PlainTextResponse
+    await record_root_trap(request, "/wp-login.php", severity="medium")
+    return PlainTextResponse("WordPress 6.4.2 maintenance mode: database connection unavailable.", status_code=503)
+
+
+@app.api_route("/actuator/{path:path}", methods=["GET", "POST"], tags=["Decoy Traps"])
+async def trap_actuator(request: Request, path: str):
+    await record_root_trap(request, f"/actuator/{path}", severity="medium")
+    return JSONResponse(content={"status": "UP", "enclave": "defense-node-4", "canary_build": "v4.2.1-NX-CANARY"})
+
+
 # Include API v1 Router
 app.include_router(api_v1_router)
 

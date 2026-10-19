@@ -16,6 +16,26 @@ export default defineConfig({
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
+      '/robots.txt': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      '/.env': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      '/.git': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      '/actuator': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      '/wp-login.php': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
     },
   },
 });

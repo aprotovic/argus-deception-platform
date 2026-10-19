@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import {
   X,
   Shield,
+  ShieldAlert,
   Clock,
   Terminal,
   FileCode,
@@ -369,6 +370,112 @@ export const EventInvestigationModal: React.FC<EventInvestigationModalProps> = (
                       </div>
                     </div>
                   </div>
+                </div>
+              )}
+
+              {/* Advanced Deception Forensic Payload Analysis */}
+              {detail.metadata_payload && (
+                detail.metadata_payload.command_injection_payload ||
+                detail.metadata_payload.honeytoken_filename ||
+                detail.metadata_payload.injected_sql ||
+                detail.metadata_payload.interactive_command
+              ) && (
+                <div className="glass-panel" style={{
+                  padding: '20px',
+                  borderLeft: `4px solid ${
+                    detail.metadata_payload.command_injection_payload ? '#ef4444' :
+                    detail.metadata_payload.honeytoken_filename ? '#c084fc' :
+                    detail.metadata_payload.injected_sql ? '#fb923c' : '#2dd4bf'
+                  }`,
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                    <ShieldAlert size={18} color={
+                      detail.metadata_payload.command_injection_payload ? '#ef4444' :
+                      detail.metadata_payload.honeytoken_filename ? '#c084fc' :
+                      detail.metadata_payload.injected_sql ? '#fb923c' : '#2dd4bf'
+                    } />
+                    <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: '0.9rem', color: '#ffffff' }}>
+                      {detail.metadata_payload.command_injection_payload ? 'DETECTED COMMAND INJECTION EXPLOIT' :
+                       detail.metadata_payload.honeytoken_filename ? 'HONEYTOKEN CANARY ACCESS FORENSICS' :
+                       detail.metadata_payload.injected_sql ? 'DETECTED SQL INJECTION QUERY ATTEMPT' :
+                       'INTERACTIVE TERMINAL HONEYPOT EXECUTION'}
+                    </span>
+                  </div>
+
+                  {detail.metadata_payload.command_injection_payload && (
+                    <div>
+                      <div style={{ color: 'var(--text-dim)', fontSize: '0.72rem', textTransform: 'uppercase' }}>EXTRACTED INJECTION PAYLOAD</div>
+                      <div style={{
+                        fontFamily: "'JetBrains Mono', monospace",
+                        color: '#f87171',
+                        background: 'rgba(0, 0, 0, 0.45)',
+                        padding: '10px',
+                        borderRadius: '4px',
+                        marginTop: '4px',
+                        fontSize: '0.85rem',
+                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                      }}>
+                        {detail.metadata_payload.command_injection_payload}
+                      </div>
+                      {detail.metadata_payload.detected_technique && (
+                        <div style={{ fontSize: '0.75rem', color: '#fbbf24', marginTop: '6px' }}>
+                          Technique: <span style={{ fontFamily: "'JetBrains Mono', monospace" }}>{detail.metadata_payload.detected_technique}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {detail.metadata_payload.honeytoken_filename && (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+                      <div>
+                        <div style={{ color: 'var(--text-dim)', fontSize: '0.72rem' }}>TRIPPED CANARY FILE</div>
+                        <div style={{ fontFamily: "'JetBrains Mono', monospace", color: '#c084fc', fontWeight: 600, marginTop: '2px' }}>
+                          {detail.metadata_payload.honeytoken_filename}
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ color: 'var(--text-dim)', fontSize: '0.72rem' }}>CANARY TOKEN ID</div>
+                        <div style={{ fontFamily: "'JetBrains Mono', monospace", color: '#fbbf24', fontSize: '0.78rem', marginTop: '2px' }}>
+                          {detail.metadata_payload.canary_id || 'NX-CANARY-ACTIVE'}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {detail.metadata_payload.injected_sql && (
+                    <div>
+                      <div style={{ color: 'var(--text-dim)', fontSize: '0.72rem' }}>INTERCEPTED SQL INJECTION</div>
+                      <div style={{
+                        fontFamily: "'JetBrains Mono', monospace",
+                        color: '#fb923c',
+                        background: 'rgba(0, 0, 0, 0.45)',
+                        padding: '10px',
+                        borderRadius: '4px',
+                        marginTop: '4px',
+                        fontSize: '0.82rem',
+                        border: '1px solid rgba(251, 146, 60, 0.3)',
+                      }}>
+                        {detail.metadata_payload.injected_sql}
+                      </div>
+                    </div>
+                  )}
+
+                  {detail.metadata_payload.interactive_command && (
+                    <div>
+                      <div style={{ color: 'var(--text-dim)', fontSize: '0.72rem' }}>SANDBOX COMMAND EXECUTED</div>
+                      <div style={{
+                        fontFamily: "'JetBrains Mono', monospace",
+                        color: '#2dd4bf',
+                        background: 'rgba(0, 0, 0, 0.45)',
+                        padding: '8px',
+                        borderRadius: '4px',
+                        marginTop: '4px',
+                        fontSize: '0.82rem',
+                      }}>
+                        $ {detail.metadata_payload.interactive_command}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

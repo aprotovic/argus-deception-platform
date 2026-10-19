@@ -6,17 +6,18 @@
   <title>Nexis Defense Systems | Global Tactical Network Portal</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg-dark: #07090e;
-      --card-bg: rgba(14, 19, 31, 0.92);
+      --card-bg: rgba(13, 18, 30, 0.95);
       --border-color: rgba(0, 180, 216, 0.28);
       --border-glow: rgba(0, 180, 216, 0.5);
       --accent-cyan: #00b4d8;
       --accent-cyan-light: #38bdf8;
       --accent-amber: #f59e0b;
       --accent-red: #ef4444;
+      --accent-purple: #c084fc;
       --accent-green: #10b981;
       --text-main: #f1f5f9;
       --text-muted: #94a3b8;
@@ -32,10 +33,10 @@
     body {
       background-color: var(--bg-dark);
       background-image: 
-        radial-gradient(circle at 50% 0%, rgba(0, 180, 216, 0.14) 0%, transparent 60%),
-        radial-gradient(circle at 10% 90%, rgba(139, 92, 246, 0.05) 0%, transparent 40%),
-        linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+        radial-gradient(circle at 50% 0%, rgba(0, 180, 216, 0.15) 0%, transparent 65%),
+        radial-gradient(circle at 90% 90%, rgba(192, 132, 252, 0.04) 0%, transparent 45%),
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
       background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
       color: var(--text-main);
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -43,38 +44,45 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 24px;
+      padding: 16px 20px 40px;
     }
 
-    .banner-warning {
+    /* Tactical Top Classification Bar */
+    .classification-bar {
+      width: 100%;
+      max-width: 960px;
       background: rgba(245, 158, 11, 0.12);
-      border: 1px solid rgba(245, 158, 11, 0.35);
+      border: 1px solid rgba(245, 158, 11, 0.4);
       color: #fbbf24;
-      font-size: 0.76rem;
-      letter-spacing: 0.07em;
+      font-size: 0.74rem;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       font-family: 'Chakra Petch', sans-serif;
-      padding: 8px 18px;
+      padding: 8px 16px;
       border-radius: 4px;
-      margin-bottom: 20px;
-      text-align: center;
-      max-width: 820px;
+      margin-bottom: 16px;
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 10px;
+      justify-content: space-between;
+      gap: 12px;
     }
 
+    .classification-bar .clock-tag {
+      font-family: 'JetBrains Mono', monospace;
+      color: #f1f5f9;
+      font-size: 0.72rem;
+    }
+
+    /* Main Tactical Portal Card */
     .portal-card {
       background: var(--card-bg);
       border: 1px solid var(--border-color);
       border-radius: 10px;
-      box-shadow: 0 16px 50px rgba(0, 0, 0, 0.8), 0 0 25px rgba(0, 180, 216, 0.1);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85), 0 0 30px rgba(0, 180, 216, 0.12);
       width: 100%;
-      max-width: 760px;
-      padding: 32px;
-      backdrop-filter: blur(16px);
+      max-width: 960px;
+      padding: 28px 32px;
+      backdrop-filter: blur(20px);
       position: relative;
       overflow: hidden;
     }
@@ -88,8 +96,26 @@
     }
 
     .brand-header {
-      text-align: center;
-      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 22px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .brand-title {
+      font-family: 'Chakra Petch', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: #ffffff;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
     .brand-badge {
@@ -97,29 +123,33 @@
       align-items: center;
       gap: 6px;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.72rem;
-      background: rgba(0, 180, 216, 0.1);
+      font-size: 0.7rem;
+      background: rgba(0, 180, 216, 0.12);
       border: 1px solid rgba(0, 180, 216, 0.35);
       color: var(--accent-cyan-light);
-      padding: 4px 12px;
+      padding: 3px 10px;
       border-radius: 9999px;
-      margin-bottom: 10px;
     }
 
-    .brand-title {
-      font-family: 'Chakra Petch', sans-serif;
-      font-size: 1.7rem;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      color: #ffffff;
-      text-transform: uppercase;
+    .telemetry-pills {
+      display: flex;
+      gap: 8px;
+      font-size: 0.72rem;
+      font-family: 'JetBrains Mono', monospace;
     }
 
-    .brand-subtitle {
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      margin-top: 4px;
+    .pill {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 4px 10px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
+
+    .dot-green { width: 6px; height: 6px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px #10b981; }
+    .dot-blue { width: 6px; height: 6px; border-radius: 50%; background: #00b4d8; box-shadow: 0 0 6px #00b4d8; }
 
     /* Tactical Navigation Tabs */
     .tabs-nav {
@@ -128,6 +158,7 @@
       margin-bottom: 24px;
       gap: 4px;
       overflow-x: auto;
+      scrollbar-width: thin;
     }
 
     .tab-btn {
@@ -135,7 +166,7 @@
       border: none;
       padding: 10px 14px;
       font-family: 'Chakra Petch', sans-serif;
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       font-weight: 600;
       color: var(--text-muted);
       cursor: pointer;
@@ -175,7 +206,7 @@
 
     label {
       display: block;
-      font-size: 0.75rem;
+      font-size: 0.74rem;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.06em;
@@ -208,16 +239,19 @@
       background: linear-gradient(135deg, #0096c7 0%, #0077b6 100%);
       border: 1px solid rgba(0, 180, 216, 0.5);
       border-radius: 4px;
-      padding: 13px;
+      padding: 12px;
       color: #ffffff;
       font-family: 'Chakra Petch', sans-serif;
-      font-size: 0.92rem;
+      font-size: 0.9rem;
       font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       cursor: pointer;
       transition: all 0.2s;
-      margin-top: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
 
     .btn-submit:hover {
@@ -226,21 +260,98 @@
       transform: translateY(-1px);
     }
 
+    /* Honeytoken Vault Cards */
+    .vault-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 14px;
+    }
+
+    .vault-card {
+      background: rgba(10, 14, 24, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.2s;
+    }
+
+    .vault-card:hover {
+      border-color: var(--accent-cyan);
+      background: rgba(14, 20, 34, 0.9);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    .tag-classification {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .tag-ts { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .tag-cui { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .tag-conf { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+
+    .btn-download {
+      background: rgba(0, 180, 216, 0.12);
+      border: 1px solid rgba(0, 180, 216, 0.35);
+      color: #38bdf8;
+      border-radius: 4px;
+      padding: 7px 12px;
+      font-family: 'Chakra Petch', sans-serif;
+      font-size: 0.76rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+      align-self: flex-start;
+      transition: all 0.2s;
+    }
+
+    .btn-download:hover {
+      background: rgba(0, 180, 216, 0.25);
+      border-color: var(--accent-cyan);
+      color: #ffffff;
+    }
+
     /* Terminal Window Styles */
     .terminal-box {
-      background: #06090f;
+      background: #04060a;
       border: 1px solid rgba(0, 180, 216, 0.35);
       border-radius: 6px;
       padding: 16px;
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.82rem;
       color: #38bdf8;
-      min-height: 280px;
-      max-height: 380px;
+      min-height: 320px;
+      max-height: 420px;
       overflow-y: auto;
-      box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
+      box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.95);
       display: flex;
       flex-direction: column;
+      position: relative;
+    }
+
+    .terminal-box.crt-effect::before {
+      content: " ";
+      display: block;
+      position: absolute;
+      top: 0; left: 0; bottom: 0; right: 0;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+      z-index: 2;
+      background-size: 100% 2px, 3px 100%;
+      pointer-events: none;
     }
 
     .terminal-header {
@@ -266,6 +377,7 @@
       align-items: center;
       margin-top: 10px;
       gap: 6px;
+      z-index: 3;
     }
 
     .terminal-prompt {
@@ -288,7 +400,7 @@
     /* Status Grid */
     .status-grid {
       display: grid;
-      grid-templateColumns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 14px;
     }
 
@@ -296,7 +408,7 @@
       background: rgba(10, 14, 23, 0.7);
       border: 1px solid var(--border-color);
       border-radius: 6px;
-      padding: 14px;
+      padding: 16px;
     }
 
     .alert-box {
@@ -322,46 +434,110 @@
       color: #6ee7b7;
     }
 
+    /* Modal for File Preview */
+    .preview-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .preview-content {
+      background: #0a0e1a;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      width: 100%;
+      max-width: 720px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
+    }
+
+    .preview-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .preview-body {
+      padding: 20px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      white-space: pre-wrap;
+      line-height: 1.5;
+      color: #e2e8f0;
+      background: #060810;
+    }
+
     .footer-legal {
       margin-top: 24px;
       text-align: center;
       font-size: 0.72rem;
       color: #64748b;
-      max-width: 760px;
+      max-width: 960px;
       line-height: 1.5;
     }
 
     .footer-links {
-      margin-top: 8px;
+      margin-top: 10px;
       display: flex;
       justify-content: center;
       gap: 16px;
+      flex-wrap: wrap;
     }
 
     .footer-links a {
       color: #00b4d8;
       text-decoration: none;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.7rem;
+      font-size: 0.72rem;
+      padding: 2px 6px;
+      background: rgba(0, 180, 216, 0.08);
+      border-radius: 4px;
     }
 
     .footer-links a:hover {
       text-decoration: underline;
+      background: rgba(0, 180, 216, 0.2);
     }
   </style>
 </head>
 <body>
 
-  <div class="banner-warning">
-    <span>⚠️</span>
-    <span>RESTRICTED ACCESS: Department of Defense & Coalition Contractor System. Unauthorized access is prohibited by federal law (18 U.S.C. § 1030).</span>
+  <!-- Top Tactical Classification Banner -->
+  <div class="classification-bar">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span>🛡️ RESTRICTED // DEFENSE CONTRACTOR SPECIFICATION 800-171</span>
+      <span>&bull;</span>
+      <span>ENCLAVE: NODE-04-US-EAST</span>
+    </div>
+    <div class="clock-tag" id="utc-clock">UTC 16:35:00</div>
   </div>
 
   <div class="portal-card">
     <div class="brand-header">
-      <div class="brand-badge">ENCLAVE SEC-NET // 4.2.1-MIL</div>
-      <h1 class="brand-title">Nexis Defense Systems</h1>
-      <p class="brand-subtitle">Tactical Asset Management & Perimeter Gateway</p>
+      <div>
+        <div class="brand-badge">TACTICAL PERIMETER GATEWAY // v4.2.1-SEC</div>
+        <h1 class="brand-title">Nexis Defense Systems</h1>
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">
+          Global Tactical Enclave Asset Management & Satellite Link Gateway
+        </p>
+      </div>
+
+      <div class="telemetry-pills">
+        <div class="pill"><div class="dot-green"></div> ENCLAVE ONLINE</div>
+        <div class="pill"><div class="dot-blue"></div> KYBER-1024 HSM</div>
+        <div class="pill">STIG-PROFILE: ENGAGED</div>
+      </div>
     </div>
 
     <!-- Navigation Tabs -->
@@ -369,23 +545,43 @@
       <button class="tab-btn active" id="tab-login-btn" onclick="switchTab('login')">
         🔐 Operator Login
       </button>
-      <button class="tab-btn" id="tab-status-btn" onclick="switchTab('status')">
-        📡 Enclave Status
+      <button class="tab-btn" id="tab-vault-btn" onclick="switchTab('vault')">
+        📁 Classified Vault
+      </button>
+      <button class="tab-btn" id="tab-ping-btn" onclick="switchTab('ping')">
+        ⚡ Network Diagnostics
+      </button>
+      <button class="tab-btn" id="tab-sensor-btn" onclick="switchTab('sensor')">
+        🔍 Sensor Query
+      </button>
+      <button class="tab-btn" id="tab-terminal-btn" onclick="switchTab('terminal')">
+        💻 Tactical Shell
       </button>
       <button class="tab-btn" id="tab-diag-btn" onclick="switchTab('diag')">
         📦 Crash Dump Upload
       </button>
-      <button class="tab-btn" id="tab-terminal-btn" onclick="switchTab('terminal')">
-        💻 Tactical Terminal
+      <button class="tab-btn" id="tab-status-btn" onclick="switchTab('status')">
+        📡 Enclave Topology
       </button>
     </div>
 
-    <!-- VIEW 1: LOGIN -->
+    <!-- TAB 1: OPERATOR AUTHENTICATION & MFA -->
     <div id="login-view">
       <form id="decoy-login-form" onsubmit="handleLogin(event)">
-        <div class="form-group">
-          <label for="username">Operator Identifier / CAC ID</label>
-          <input type="text" id="username" name="username" placeholder="e.g. nx-op-8491, admin, or sysadmin" required autocomplete="username">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div class="form-group">
+            <label for="username">Operator Identifier / CAC ID</label>
+            <input type="text" id="username" name="username" placeholder="e.g. nx-op-8491, admin, c.miller" required autocomplete="username">
+          </div>
+
+          <div class="form-group">
+            <label for="enclave-select">Target Enclave Destination</label>
+            <select id="enclave-select">
+              <option value="VA-01">VA-01 Pentagon Gateway (Primary)</option>
+              <option value="EU-02">EU-02 Frankfurt Defense Relay</option>
+              <option value="PAC-03">PAC-03 INDOPACOM Satellite Link</option>
+            </select>
+          </div>
         </div>
 
         <div class="form-group">
@@ -393,18 +589,260 @@
           <input type="password" id="password" name="password" placeholder="••••••••••••••••" required autocomplete="current-password">
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-size: 0.75rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-size: 0.75rem; flex-wrap: gap;">
           <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; text-transform: none; color: var(--text-muted); margin: 0;">
             <input type="checkbox" id="piv-check"> Hardware SmartCard / CAC Attached
           </label>
-          <a href="#" onclick="alert('Emergency Bypass Token Request: Incident ticket REQ-' + Math.random().toString(36).substring(2,8).toUpperCase() + ' created. Contact Defense NOC lead.'); return false;" style="color: #38bdf8; text-decoration: none;">Request Token Bypass</a>
+          <div style="display: flex; gap: 12px;">
+            <a href="#" onclick="triggerMfaModal(); return false;" style="color: #c084fc; text-decoration: none;">Simulate Duo/CAC Challenge</a>
+            <a href="#" onclick="enterGuestSession(); return false;" style="color: #38bdf8; text-decoration: none;">Contractor Guest Diagnostics</a>
+          </div>
         </div>
 
-        <button type="submit" id="login-submit-btn" class="btn-submit">Authenticate Operator</button>
+        <button type="submit" id="login-submit-btn" class="btn-submit">
+          <span>Authenticate Operator</span> &rarr;
+        </button>
       </form>
     </div>
 
-    <!-- VIEW 2: NETWORK & ENCLAVE STATUS -->
+    <!-- TAB 2: CLASSIFIED HONEYTOKEN VAULT -->
+    <div id="vault-view" style="display: none;">
+      <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+        <span>Operational Repository: Node 04 Defense Vault (STIG Compartmented Storage)</span>
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #34d399;">5 Artifacts Cached</span>
+      </div>
+
+      <div class="vault-grid">
+        <div class="vault-card">
+          <div>
+            <span class="tag-classification tag-ts">TOP SECRET // NOFORN</span>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 700; color: #ffffff;">
+              SATELLITE_UPLINK_COMM_KEYS_2026.pem
+            </div>
+            <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 6px;">
+              Tactical RSA-4096 ground station private key for SATCOM transponder telemetry downlink.
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <a href="/api/v1/decoy/honeytoken/download/SATELLITE_UPLINK_COMM_KEYS_2026.pem" class="btn-download">
+              ⬇ Download Key
+            </a>
+            <button onclick="previewHoneytoken('SATELLITE_UPLINK_COMM_KEYS_2026.pem')" class="btn-download" style="background: rgba(255,255,255,0.06); color: #e2e8f0;">
+              Preview
+            </button>
+          </div>
+        </div>
+
+        <div class="vault-card">
+          <div>
+            <span class="tag-classification tag-ts">TOP SECRET // CUI</span>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 700; color: #ffffff;">
+              PROJECT_ARGUS_FIREWALL_RULES_TOP_SECRET.cfg
+            </div>
+            <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 6px;">
+              Military enclave perimeter iptables table and Pentagon relay tunnel configuration.
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <a href="/api/v1/decoy/honeytoken/download/PROJECT_ARGUS_FIREWALL_RULES_TOP_SECRET.cfg" class="btn-download">
+              ⬇ Download Rules
+            </a>
+            <button onclick="previewHoneytoken('PROJECT_ARGUS_FIREWALL_RULES_TOP_SECRET.cfg')" class="btn-download" style="background: rgba(255,255,255,0.06); color: #e2e8f0;">
+              Preview
+            </button>
+          </div>
+        </div>
+
+        <div class="vault-card">
+          <div>
+            <span class="tag-classification tag-cui">RESTRICTED // LES</span>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 700; color: #ffffff;">
+              EMPLOYEE_CLEARANCE_DIRECTORY.csv
+            </div>
+            <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 6px;">
+              Internal defense personnel roster with security clearance levels, phone numbers, and emails.
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <a href="/api/v1/decoy/honeytoken/download/EMPLOYEE_CLEARANCE_DIRECTORY.csv" class="btn-download">
+              ⬇ Download CSV
+            </a>
+            <button onclick="previewHoneytoken('EMPLOYEE_CLEARANCE_DIRECTORY.csv')" class="btn-download" style="background: rgba(255,255,255,0.06); color: #e2e8f0;">
+              Preview
+            </button>
+          </div>
+        </div>
+
+        <div class="vault-card">
+          <div>
+            <span class="tag-classification tag-cui">RESTRICTED // CUI</span>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 700; color: #ffffff;">
+              DATABASE_PRODUCTION_DUMP.sql.bak
+            </div>
+            <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 6px;">
+              Nightly SQL database backup containing encrypted operator credentials and clearance hashes.
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <a href="/api/v1/decoy/honeytoken/download/DATABASE_PRODUCTION_DUMP.sql.bak" class="btn-download">
+              ⬇ Download SQL
+            </a>
+            <button onclick="previewHoneytoken('DATABASE_PRODUCTION_DUMP.sql.bak')" class="btn-download" style="background: rgba(255,255,255,0.06); color: #e2e8f0;">
+              Preview
+            </button>
+          </div>
+        </div>
+
+        <div class="vault-card">
+          <div>
+            <span class="tag-classification tag-conf">CONFIDENTIAL</span>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 700; color: #ffffff;">
+              VPN_GATEWAY_CONFIG.ovpn
+            </div>
+            <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 6px;">
+              Tactical OpenVPN client configuration profile with embedded coalition client certs.
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <a href="/api/v1/decoy/honeytoken/download/VPN_GATEWAY_CONFIG.ovpn" class="btn-download">
+              ⬇ Download Profile
+            </a>
+            <button onclick="previewHoneytoken('VPN_GATEWAY_CONFIG.ovpn')" class="btn-download" style="background: rgba(255,255,255,0.06); color: #e2e8f0;">
+              Preview
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: NETWORK DIAGNOSTICS (COMMAND INJECTION TRAP) -->
+    <div id="ping-view" style="display: none;">
+      <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px;">
+        Enclave ICMP Ping & Traceroute Gateway. Test internal relay latency and connectivity across classified interfaces.
+      </div>
+
+      <form id="decoy-ping-form" onsubmit="handlePing(event)">
+        <div class="form-group">
+          <label for="ping-target">Target Gateway Hostname or IP Address</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="ping-target" name="target_host" value="10.42.18.1" style="font-family: 'JetBrains Mono', monospace;">
+            <button type="submit" id="ping-btn" class="btn-submit" style="width: auto; padding: 0 24px; white-space: nowrap;">
+              Execute Diagnostic Ping
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+        <span style="font-size: 0.72rem; color: var(--text-dim); align-self: center;">Quick Diagnostic Targets:</span>
+        <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem;" onclick="setPingTarget('10.42.18.1')">Gateway (10.42.18.1)</button>
+        <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem;" onclick="setPingTarget('10.42.18.5')">DB Cluster (10.42.18.5)</button>
+        <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem;" onclick="setPingTarget('127.0.0.1; whoami')">Test Injection: whoami</button>
+        <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem;" onclick="setPingTarget('127.0.0.1; cat /etc/passwd')">Test Injection: cat /etc/passwd</button>
+      </div>
+
+      <div class="terminal-box" style="min-height: 180px; max-height: 260px;">
+        <div class="terminal-header">
+          <span>ICMP ECHO DIAGNOSTIC OUTPUT</span>
+          <span id="ping-status">STANDBY</span>
+        </div>
+        <div id="ping-output" class="terminal-output">Ready for diagnostic probe. Enter target host above.</div>
+      </div>
+    </div>
+
+    <!-- TAB 4: SENSOR QUERY (SQL INJECTION TRAP) -->
+    <div id="sensor-view" style="display: none;">
+      <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px;">
+        Query tactical radar transponders and satellite telemetry telemetry cache directly from the enclave database.
+      </div>
+
+      <form id="decoy-query-form" onsubmit="handleQuery(event)">
+        <div class="form-group">
+          <label for="sensor-filter">SQL Sensor Filter Criteria</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="sensor-filter" name="query_filter" value="sensor_id = 'RADAR-01'" style="font-family: 'JetBrains Mono', monospace;">
+            <button type="submit" id="query-btn" class="btn-submit" style="width: auto; padding: 0 24px; white-space: nowrap;">
+              Query Sensors
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+        <span style="font-size: 0.72rem; color: var(--text-dim); align-self: center;">Preset Filters:</span>
+        <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem;" onclick="setSensorQuery(\"sensor_id = 'RADAR-01'\")">Radar Standard</button>
+        <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem;" onclick="setSensorQuery(\"' OR '1'='1'\")">Test SQLi: ' OR '1'='1'</button>
+        <button type="button" class="btn-download" style="margin-top: 0; padding: 4px 8px; font-size: 0.7rem;" onclick="setSensorQuery(\"' UNION SELECT 1,2,3,4,5,6,7 --\")">Test SQLi: UNION SELECT</button>
+      </div>
+
+      <div id="sensor-results" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 14px; min-height: 140px; font-family: 'JetBrains Mono', monospace; font-size: 0.76rem; overflow-x: auto;">
+        <div style="color: var(--text-dim);">Execute query to inspect sensor records.</div>
+      </div>
+    </div>
+
+    <!-- TAB 5: TACTICAL INTERACTIVE SHELL -->
+    <div id="terminal-view" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <span style="font-size: 0.76rem; color: var(--text-muted);">
+          Interactive unprivileged diagnostic shell. Use standard Linux commands (<span style="color: #38bdf8;">ls -la, cd, cat, whoami, id, uname, ps aux, df -h, ip a, help</span>).
+        </span>
+        <label style="font-size: 0.72rem; color: var(--text-dim); display: flex; align-items: center; gap: 6px; cursor: pointer;">
+          <input type="checkbox" id="crt-toggle" onchange="toggleCrt(this)"> CRT Scanlines
+        </label>
+      </div>
+
+      <div class="terminal-box crt-effect" id="term-container" onclick="document.getElementById('cli-input').focus()">
+        <div class="terminal-header">
+          <span>NEXIS TACTICAL DIAGNOSTIC SHELL v4.2.1 [UNPRIVILEGED]</span>
+          <span>NODE: nx-defense-node-4 &bull; TTY: pts/0</span>
+        </div>
+        <div id="terminal-output" class="terminal-output">Nexis Defense Systems Tactical CLI [Restricted Guest Session]
+Type 'help' for diagnostics commands or 'cat README.txt' for enclave policies.
+</div>
+        <div class="terminal-input-row">
+          <span class="terminal-prompt" id="cli-prompt">operator_guest@nx-defense-node4:/home/operator_guest$ </span>
+          <input type="text" id="cli-input" class="terminal-input" autocomplete="off" spellcheck="false" onkeydown="handleTerminalKey(event)">
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 6: CRASH DUMP & PATCH UPLOAD -->
+    <div id="diag-view" style="display: none;">
+      <form id="decoy-upload-form" onsubmit="handleUpload(event)">
+        <div class="form-group">
+          <label>Diagnostic Bundle Classification</label>
+          <select id="dump-type" style="margin-bottom: 12px;">
+            <option value="kernel">Kernel Panic / Core Crash Dump (.dmp)</option>
+            <option value="pcap">Network Packet Capture Audit (.pcap)</option>
+            <option value="firmware">Firmware / EEPROM Binary Image (.bin)</option>
+            <option value="syslog">Automated Sysdiagnose Package (.tar.gz, .log)</option>
+          </select>
+
+          <label>Encrypted System Diagnostics / Crash Dump</label>
+          <div class="file-input-wrapper" onclick="document.getElementById('diag-file').click()" style="
+            border: 1px dashed rgba(0, 180, 216, 0.4);
+            background: rgba(0, 180, 216, 0.04);
+            padding: 28px;
+            border-radius: 6px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+          ">
+            <div style="font-size: 2rem; margin-bottom: 8px;">📦</div>
+            <div style="font-size: 0.88rem; font-weight: 500; color: #cbd5e1;">Click or drop diagnostic bundle to upload</div>
+            <div style="font-size: 0.72rem; color: #64748b; margin-top: 4px;">Supported: .log, .dmp, .tar.gz, .bin, .pdf, .sh (Max 10MB)</div>
+            <input type="file" id="diag-file" name="file" style="display: none;" onchange="updateFileName(this)">
+          </div>
+          <div id="selected-filename" style="font-size: 0.78rem; color: #00b4d8; margin-top: 8px; font-family: 'JetBrains Mono', monospace;"></div>
+        </div>
+
+        <button type="submit" id="upload-submit-btn" class="btn-submit">
+          <span>Transmit Diagnostic Package</span> &rarr;
+        </button>
+      </form>
+    </div>
+
+    <!-- TAB 7: ENCLAVE TOPOLOGY -->
     <div id="status-view" style="display: none;">
       <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 16px; line-height: 1.4;">
         Real-time telemetry and cryptographic status across authorized coalition defense communication relays.
@@ -442,92 +880,80 @@
         </div>
       </div>
 
-      <div style="margin-top: 16px; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; padding: 12px; font-size: 0.75rem; color: var(--text-dim);">
-        Crypto Core: <span style="color: #34d399;">Kyber-1024 HSM ACTIVE</span> &bull; 
-        Firewall Profile: <span style="color: #38bdf8;">STIG-DEFENSE-HARDENED-V4</span> &bull;
-        Subsystem Cluster: <a href="/api/v1/decoy/honeytoken/config" target="_blank" style="color: #00b4d8; text-decoration: none;">View Config Manifest (Internal)</a>
-      </div>
-    </div>
-
-    <!-- VIEW 3: FILE UPLOAD -->
-    <div id="diag-view" style="display: none;">
-      <form id="decoy-upload-form" onsubmit="handleUpload(event)">
-        <div class="form-group">
-          <label>Diagnostic Bundle Classification</label>
-          <select id="dump-type" style="margin-bottom: 12px;">
-            <option value="kernel">Kernel Panic / Core Crash Dump (.dmp)</option>
-            <option value="pcap">Network Packet Capture Audit (.pcap)</option>
-            <option value="firmware">Firmware / EEPROM Binary Image (.bin)</option>
-            <option value="syslog">Automated Sysdiagnose Package (.tar.gz, .log)</option>
-          </select>
-
-          <label>Encrypted System Diagnostics / Crash Dump</label>
-          <div class="file-input-wrapper" onclick="document.getElementById('diag-file').click()" style="
-            border: 1px dashed rgba(0, 180, 216, 0.4);
-            background: rgba(0, 180, 216, 0.04);
-            padding: 24px;
-            border-radius: 6px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-          ">
-            <div style="font-size: 1.8rem; margin-bottom: 8px;">📦</div>
-            <div style="font-size: 0.85rem; font-weight: 500; color: #cbd5e1;">Click to select payload package</div>
-            <div style="font-size: 0.72rem; color: #64748b; margin-top: 4px;">Supported: .log, .dmp, .tar.gz, .bin, .pdf, .sh (Max 10MB)</div>
-            <input type="file" id="diag-file" name="file" style="display: none;" onchange="updateFileName(this)">
-          </div>
-          <div id="selected-filename" style="font-size: 0.78rem; color: #00b4d8; margin-top: 8px; font-family: 'JetBrains Mono', monospace;"></div>
+      <div style="margin-top: 16px; background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; padding: 14px; font-size: 0.75rem; color: var(--text-dim); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+        <div>
+          Crypto Core: <span style="color: #34d399;">Kyber-1024 HSM ACTIVE</span> &bull; 
+          Firewall Profile: <span style="color: #38bdf8;">STIG-DEFENSE-HARDENED-V4</span>
         </div>
-
-        <button type="submit" id="upload-submit-btn" class="btn-submit">Transmit Diagnostic Package</button>
-      </form>
-    </div>
-
-    <!-- VIEW 4: TACTICAL DIAGNOSTIC TERMINAL -->
-    <div id="terminal-view" style="display: none;">
-      <div class="terminal-box" onclick="document.getElementById('cli-input').focus()">
-        <div class="terminal-header">
-          <span>NEXIS TACTICAL DIAGNOSTIC SHELL v4.2.1 [UNPRIVILEGED]</span>
-          <span>NODE: nx-defense-node-4</span>
-        </div>
-        <div id="terminal-output" class="terminal-output">Nexis Defense Systems Tactical CLI [Restricted Guest Session]
-Type 'help' for diagnostics commands or 'status' for enclave telemetry.
-</div>
-        <div class="terminal-input-row">
-          <span class="terminal-prompt">operator_guest@nx-sec-node-4:~$ </span>
-          <input type="text" id="cli-input" class="terminal-input" autocomplete="off" spellcheck="false" onkeydown="handleTerminalKey(event)">
+        <div>
+          <a href="/api/v1/decoy/honeytoken/config" target="_blank" style="color: #00b4d8; text-decoration: none;">View Config Manifest (Internal) &rarr;</a>
         </div>
       </div>
     </div>
 
+    <!-- Alert Box for status / responses -->
     <div id="status-alert" class="alert-box"></div>
   </div>
 
+  <!-- Preview Modal for Classified Documents -->
+  <div id="preview-modal" class="preview-modal" onclick="closePreview(event)">
+    <div class="preview-content" onclick="event.stopPropagation()">
+      <div class="preview-header">
+        <div>
+          <div style="font-size: 0.7rem; color: #f87171; font-weight: 700; text-transform: uppercase;">RESTRICTED COMPARTMENT PREVIEW</div>
+          <div id="preview-filename" style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; font-weight: 700; color: #ffffff;">FILENAME</div>
+        </div>
+        <button onclick="closePreview()" style="background: none; border: none; color: #94a3b8; font-size: 1.2rem; cursor: pointer;">&times;</button>
+      </div>
+      <div id="preview-body" class="preview-body"></div>
+      <div style="padding: 12px 20px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: flex-end;">
+        <button onclick="closePreview()" class="btn-download" style="margin-top: 0;">Close Preview</button>
+      </div>
+    </div>
+  </div>
+
   <div class="footer-legal">
-    All interactions, socket frames, and payload hashes are correlated by ARGUS Cyber Deception Enclave.
+    Defense contractor portal protected by ARGUS Cyber Deception & Continuous Attack Monitoring System.
     <br>
-    Session ID: <span id="session-hash" style="font-family: 'JetBrains Mono', monospace;"></span> &bull; Security Level: TOP SECRET // NOFORN
+    Perimeter Node: <span id="session-hash" style="font-family: 'JetBrains Mono', monospace;"></span> &bull; Classification: TOP SECRET // NOFORN
     <div class="footer-links">
-      <a href="/robots.txt" target="_blank">[robots.txt]</a>
-      <a href="/api/v1/decoy/honeytoken/config" target="_blank">[cluster-config]</a>
-      <a href="/api/v1/decoy/network/status" target="_blank">[telemetry-api]</a>
+      <a href="/robots.txt" target="_blank">/robots.txt</a>
+      <a href="/.env" target="_blank">/.env</a>
+      <a href="/.git/HEAD" target="_blank">/.git/HEAD</a>
+      <a href="/actuator/health" target="_blank">/actuator/health</a>
+      <a href="/api/v1/decoy/honeytoken/config" target="_blank">/api/v1/decoy/honeytoken/config</a>
+      <a href="/api/v1/decoy/network/status" target="_blank">/api/v1/decoy/network/status</a>
     </div>
   </div>
 
   <script>
+    // Live UTC Clock
+    function updateClock() {
+      const now = new Date();
+      const h = String(now.getUTCHours()).padStart(2, '0');
+      const m = String(now.getUTCMinutes()).padStart(2, '0');
+      const s = String(now.getUTCSeconds()).padStart(2, '0');
+      document.getElementById('utc-clock').textContent = `UTC ${h}:${m}:${s}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
     document.getElementById('session-hash').textContent = 'SEC-' + Math.random().toString(36).substring(2, 10).toUpperCase();
 
+    // Tab Navigation
     function switchTab(tab) {
-      const views = ['login', 'status', 'diag', 'terminal'];
+      const views = ['login', 'vault', 'ping', 'sensor', 'terminal', 'diag', 'status'];
       views.forEach(v => {
         const viewEl = document.getElementById(v + '-view');
         const btnEl = document.getElementById('tab-' + v + '-btn');
-        if (v === tab) {
-          viewEl.style.display = 'block';
-          btnEl.classList.add('active');
-        } else {
-          viewEl.style.display = 'none';
-          btnEl.classList.remove('active');
+        if (viewEl && btnEl) {
+          if (v === tab) {
+            viewEl.style.display = 'block';
+            btnEl.classList.add('active');
+          } else {
+            viewEl.style.display = 'none';
+            btnEl.classList.remove('active');
+          }
         }
       });
       const alertBox = document.getElementById('status-alert');
@@ -546,6 +972,16 @@ Type 'help' for diagnostics commands or 'status' for enclave telemetry.
       }
     }
 
+    function toggleCrt(cb) {
+      const box = document.getElementById('term-container');
+      if (cb.checked) {
+        box.classList.add('crt-effect');
+      } else {
+        box.classList.remove('crt-effect');
+      }
+    }
+
+    // 1. Decoy Login Handler
     async function handleLogin(e) {
       e.preventDefault();
       const btn = document.getElementById('login-submit-btn');
@@ -554,7 +990,7 @@ Type 'help' for diagnostics commands or 'status' for enclave telemetry.
       const password = document.getElementById('password').value;
 
       btn.disabled = true;
-      btn.textContent = 'Verifying Operator Clearance...';
+      btn.innerHTML = '<span>Verifying Operator Clearance...</span>';
       alertBox.className = 'alert-box';
 
       try {
@@ -575,10 +1011,239 @@ Type 'help' for diagnostics commands or 'status' for enclave telemetry.
         alertBox.textContent = 'Gateway rejection: Handshake terminated by enclave controller.';
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Authenticate Operator';
+        btn.innerHTML = '<span>Authenticate Operator</span> &rarr;';
       }
     }
 
+    // 2. Simulated MFA Token Prompt
+    async function triggerMfaModal() {
+      const token = prompt('NEXIS MFA CHALLENGE\nEnter 6-digit TOTP / YubiKey passcode or CAC SmartCard PIN:');
+      if (!token) return;
+
+      const alertBox = document.getElementById('status-alert');
+      alertBox.className = 'alert-box';
+      alertBox.textContent = 'Validating cryptographic MFA token...';
+      alertBox.style.display = 'block';
+
+      try {
+        const formData = new FormData();
+        formData.append('mfa_token', token);
+        formData.append('username', document.getElementById('username').value || 'unauthenticated_operator');
+
+        const res = await fetch('/api/v1/decoy/auth/mfa-challenge', {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await res.json();
+        alertBox.className = 'alert-box error';
+        alertBox.textContent = data.message || 'MFA Challenge verification error.';
+      } catch (err) {
+        alertBox.className = 'alert-box error';
+        alertBox.textContent = 'Hardware Token Revoked (Policy 800-171).';
+      }
+    }
+
+    // 3. Contractor Guest Session (Quick Entrance for Evaluators / Attackers)
+    function enterGuestSession() {
+      document.getElementById('username').value = 'operator_guest';
+      document.getElementById('password').value = 'Contractor2026!Guest';
+      switchTab('terminal');
+      const out = document.getElementById('terminal-output');
+      out.textContent += '\n[SESSION INITIALIZED]: Attached as operator_guest (Contractor Diagnostic Mode).\nType \'cat contractor_notes.md\' to inspect handoff notes.\n';
+    }
+
+    // 4. Honeytoken Preview
+    async function previewHoneytoken(fname) {
+      const modal = document.getElementById('preview-modal');
+      const nameEl = document.getElementById('preview-filename');
+      const bodyEl = document.getElementById('preview-body');
+
+      nameEl.textContent = fname;
+      bodyEl.textContent = 'Decrypting and retrieving compartment artifact...';
+      modal.style.display = 'flex';
+
+      try {
+        const res = await fetch('/api/v1/decoy/honeytoken/download/' + encodeURIComponent(fname));
+        const text = await res.text();
+        bodyEl.textContent = text;
+      } catch (err) {
+        bodyEl.textContent = 'Error loading artifact: Network partition.';
+      }
+    }
+
+    function closePreview(e) {
+      document.getElementById('preview-modal').style.display = 'none';
+    }
+
+    // 5. Network Ping & Command Injection Trap Handler
+    function setPingTarget(tgt) {
+      document.getElementById('ping-target').value = tgt;
+    }
+
+    async function handlePing(e) {
+      e.preventDefault();
+      const target = document.getElementById('ping-target').value.trim();
+      const btn = document.getElementById('ping-btn');
+      const out = document.getElementById('ping-output');
+      const st = document.getElementById('ping-status');
+
+      if (!target) return;
+      btn.disabled = true;
+      st.textContent = 'PROBING...';
+      st.style.color = '#fbbf24';
+      out.textContent = `Pinging ${target}...\n`;
+
+      try {
+        const formData = new FormData();
+        formData.append('target_host', target);
+
+        const res = await fetch('/api/v1/decoy/network/ping', {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await res.json();
+        out.textContent = data.output || 'No response packets received.';
+        st.textContent = data.is_injection_emulated ? 'INJECTION EXEC' : 'COMPLETE';
+        st.style.color = data.is_injection_emulated ? '#ef4444' : '#34d399';
+      } catch (err) {
+        out.textContent = 'Ping gateway error: Socket timeout.';
+        st.textContent = 'ERROR';
+        st.style.color = '#ef4444';
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // 6. Sensor Query & SQL Injection Trap Handler
+    function setSensorQuery(q) {
+      document.getElementById('sensor-filter').value = q;
+    }
+
+    async function handleQuery(e) {
+      e.preventDefault();
+      const filter = document.getElementById('sensor-filter').value.trim();
+      const btn = document.getElementById('query-btn');
+      const resContainer = document.getElementById('sensor-results');
+
+      if (!filter) return;
+      btn.disabled = true;
+      resContainer.innerHTML = '<div style="color: #fbbf24;">Executing database query on cluster-va-pg16.internal...</div>';
+
+      try {
+        const formData = new FormData();
+        formData.append('query_filter', filter);
+
+        const res = await fetch('/api/v1/decoy/query/telemetry', {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await res.json();
+
+        if (data.records && data.records.length > 0) {
+          let html = `<div style="color: #34d399; margin-bottom: 8px;">Query returned ${data.row_count} records from ${data.database_cluster}:</div>`;
+          html += '<table style="width: 100%; border-collapse: collapse; text-align: left;">';
+          html += '<tr style="border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--text-dim);">';
+          const keys = Object.keys(data.records[0]);
+          keys.forEach(k => html += `<th style="padding: 6px 8px;">${k}</th>`);
+          html += '</tr>';
+
+          data.records.forEach(row => {
+            html += '<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">';
+            keys.forEach(k => {
+              const val = row[k];
+              const isCanary = String(val).includes('CANARY');
+              html += `<td style="padding: 6px 8px; color: ${isCanary ? '#c084fc; font-weight: 700;' : '#e2e8f0;'}">${val}</td>`;
+            });
+            html += '</tr>';
+          });
+          html += '</table>';
+          resContainer.innerHTML = html;
+        } else {
+          resContainer.innerHTML = '<div style="color: var(--text-dim);">No sensor records matched the specified filter criteria.</div>';
+        }
+      } catch (err) {
+        resContainer.innerHTML = '<div style="color: #ef4444;">Query execution error: Database connection severed.</div>';
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // 7. Tactical Terminal Shell Engine
+    let currentTerminalDir = '/home/operator_guest';
+    const commandHistory = [];
+    let historyIndex = -1;
+
+    async function handleTerminalKey(e) {
+      const input = document.getElementById('cli-input');
+
+      // Command history navigation
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (commandHistory.length > 0) {
+          if (historyIndex === -1) historyIndex = commandHistory.length - 1;
+          else if (historyIndex > 0) historyIndex--;
+          input.value = commandHistory[historyIndex] || '';
+        }
+        return;
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (historyIndex !== -1) {
+          if (historyIndex < commandHistory.length - 1) {
+            historyIndex++;
+            input.value = commandHistory[historyIndex] || '';
+          } else {
+            historyIndex = -1;
+            input.value = '';
+          }
+        }
+        return;
+      }
+
+      if (e.key === 'Enter') {
+        const output = document.getElementById('terminal-output');
+        const promptEl = document.getElementById('cli-prompt');
+        const cmd = input.value.trim();
+        if (!cmd) return;
+
+        commandHistory.push(cmd);
+        historyIndex = -1;
+        input.value = '';
+
+        output.textContent += '\n' + promptEl.textContent + cmd + '\n';
+
+        if (cmd === 'clear') {
+          output.textContent = '';
+          return;
+        }
+
+        try {
+          const formData = new FormData();
+          formData.append('command', cmd);
+          formData.append('current_dir', currentTerminalDir);
+
+          const res = await fetch('/api/v1/decoy/terminal/exec', {
+            method: 'POST',
+            body: formData,
+          });
+
+          const data = await res.json();
+          output.textContent += (data.output || '') + '\n';
+          if (data.current_dir) {
+            currentTerminalDir = data.current_dir;
+          }
+          if (data.prompt) {
+            promptEl.textContent = data.prompt;
+          }
+        } catch (err) {
+          output.textContent += '[ENCLAVE ERROR]: Handshake timeout on diagnostic bus.\n';
+        }
+
+        const box = document.getElementById('term-container');
+        box.scrollTop = box.scrollHeight;
+      }
+    }
+
+    // 8. Safe Crash Dump & Payload Upload Handler
     async function handleUpload(e) {
       e.preventDefault();
       const btn = document.getElementById('upload-submit-btn');
@@ -592,7 +1257,7 @@ Type 'help' for diagnostics commands or 'status' for enclave telemetry.
       }
 
       btn.disabled = true;
-      btn.textContent = 'Encrypting & Streaming Diagnostic Bundle...';
+      btn.innerHTML = '<span>Encrypting & Streaming Diagnostic Bundle...</span>';
       alertBox.className = 'alert-box';
 
       try {
@@ -607,7 +1272,7 @@ Type 'help' for diagnostics commands or 'status' for enclave telemetry.
         const data = await res.json();
         if (res.ok) {
           alertBox.className = 'alert-box success';
-          alertBox.textContent = (data.message || 'Diagnostic bundle received.') + ' Artifact Hash: ' + (data.artifact_hash ? data.artifact_hash.substring(0, 16) + '...' : '');
+          alertBox.textContent = (data.message || 'Diagnostic bundle received.') + ' SHA-256 Hash: ' + (data.artifact_hash ? data.artifact_hash.substring(0, 16) + '...' : '');
           fileInput.value = '';
           document.getElementById('selected-filename').textContent = '';
         } else {
@@ -619,42 +1284,7 @@ Type 'help' for diagnostics commands or 'status' for enclave telemetry.
         alertBox.textContent = 'Transmission error: Connection terminated during upload.';
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Transmit Diagnostic Package';
-      }
-    }
-
-    async function handleTerminalKey(e) {
-      if (e.key === 'Enter') {
-        const input = document.getElementById('cli-input');
-        const output = document.getElementById('terminal-output');
-        const cmd = input.value.trim();
-        if (!cmd) return;
-
-        input.value = '';
-        output.textContent += '\noperator_guest@nx-sec-node-4:~$ ' + cmd + '\n';
-
-        if (cmd === 'clear') {
-          output.textContent = '';
-          return;
-        }
-
-        try {
-          const formData = new FormData();
-          formData.append('command', cmd);
-
-          const res = await fetch('/api/v1/decoy/terminal/exec', {
-            method: 'POST',
-            body: formData,
-          });
-
-          const data = await res.json();
-          output.textContent += (data.output || '') + '\n';
-        } catch (err) {
-          output.textContent += '[ENCLAVE ERROR]: Handshake timeout on diagnostic bus.\n';
-        }
-
-        const box = document.querySelector('.terminal-box');
-        box.scrollTop = box.scrollHeight;
+        btn.innerHTML = '<span>Transmit Diagnostic Package</span> &rarr;';
       }
     }
   </script>

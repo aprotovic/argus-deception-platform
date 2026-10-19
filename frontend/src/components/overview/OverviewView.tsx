@@ -299,10 +299,12 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {[
-              { type: 'login_attempt', label: 'Decoy Login Attempt', count: metrics?.events_by_type.login_attempt ?? 0, color: '#f59e0b' },
-              { type: 'file_upload', label: 'Quarantined Upload', count: metrics?.events_by_type.file_upload ?? 0, color: '#ef4444' },
-              { type: 'recon_probe', label: 'Reconnaissance Probe', count: metrics?.events_by_type.recon_probe ?? 0, color: '#38bdf8' },
-              { type: 'unauthorized_access', label: 'Unauthorized Enclave Access', count: metrics?.events_by_type.unauthorized_access ?? 0, color: '#8b5cf6' },
+              { type: 'login_attempt', label: 'Decoy Login Attempt', count: (metrics?.events_by_type as any)?.login_attempt ?? 0, color: '#f59e0b' },
+              { type: 'command_injection', label: 'Command Injection Traps', count: (metrics?.events_by_type as any)?.command_injection ?? 0, color: '#f43f5e' },
+              { type: 'honeytoken_accessed', label: 'Honeytoken Canary Alerts', count: (metrics?.events_by_type as any)?.honeytoken_accessed ?? 0, color: '#c084fc' },
+              { type: 'file_upload', label: 'Quarantined Upload', count: (metrics?.events_by_type as any)?.file_upload ?? 0, color: '#ef4444' },
+              { type: 'recon_probe', label: 'Reconnaissance Probe', count: (metrics?.events_by_type as any)?.recon_probe ?? 0, color: '#38bdf8' },
+              { type: 'unauthorized_access', label: 'Unauthorized Enclave Access', count: (metrics?.events_by_type as any)?.unauthorized_access ?? 0, color: '#8b5cf6' },
             ].map((item) => (
               <div
                 key={item.type}

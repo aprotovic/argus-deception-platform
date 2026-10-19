@@ -120,3 +120,112 @@ async def test_decoy_scanner_probe_trap(client: AsyncClient, db_session: AsyncSe
     assert event is not None
     assert event.severity == "high"
     assert event.is_test_event is True
+
+
+@pytest.mark.asyncio
+async def test_decoy_command_injection_trap(client: AsyncClient, db_session: AsyncSession):
+    """Verifies that command injection in the network ping tool is safely trapped and logged as CRITICAL."""
+    response = await client.post(
+        "/api/v1/decoy/network/ping",
+        data={"target_host": "127.0.0.1; whoami"},
+        headers={"X-Argus-Test-Token": "test"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "success"
+    assert data["is_injection_emulated"] is True
+    assert "root" in data["output"]
+
+    # Verify CRITICAL command_injection event in database
+    stmt = (
+        select(SecurityEvent)
+        .where(SecurityEvent.event_type == "command_injection")
+        .order_by(SecurityEvent.timestamp.desc())
+    )
+    result = await db_session.execute(stmt)
+    event = result.scalar_one_or_none()
+
+    assert event is not None
+    assert event.severity == "critical"
+    assert event.metadata_payload.get("command_injection_payload") == "whoami"
+
+
+@pytest.mark.asyncio
+async def test_decoy_sql_injection_trap(client: AsyncClient, db_session: AsyncSession):
+    """Verifies that SQL injection in sensor query console is trapped and returns canary honeytoken."""
+    response = await client.post(
+        "/api/v1/decoy/query/telemetry",
+        data={"query_filter": "sensor_id = 'RADAR-01' OR '1'='1'"},
+        headers={"X-Argus-Test-Token": "test"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "success"
+    assert len(data["records"]) > 0
+    # Leaked mock record contains canary
+    assert "CANARY" in str(data["records"])
+
+    stmt = (
+        select(SecurityEvent)
+        .where(SecurityEvent.event_type == "sql_injection")
+        .order_by(SecurityEvent.timestamp.desc())
+    )
+    result = await db_session.execute(stmt)
+    event = result.scalar_one_or_none()
+
+    assert event is not None
+    assert event.severity == "high"
+
+
+@pytest.mark.asyncio
+async def test_decoy_honeytoken_classified_download(client: AsyncClient, db_session: AsyncSession):
+    """Verifies downloading classified files trips canary alerts and returns military mock contents."""
+    filename = "SATELLITE_UPLINK_COMM_KEYS_2026.pem"
+    response = await client.get(
+        f"/api/v1/decoy/honeytoken/download/{filename}",
+        headers={"X-Argus-Test-Token": "test"},
+    )
+
+    assert response.status_code == 200
+    assert "RSA PRIVATE KEY" in response.text
+    assert "CANARY_TOKEN" in response.text
+
+    stmt = (
+        select(SecurityEvent)
+        .where(SecurityEvent.event_type == "honeytoken_accessed")
+        .order_by(SecurityEvent.timestamp.desc())
+    )
+    result = await db_session.execute(stmt)
+    event = result.scalar_one_or_none()
+
+    assert event is not None
+    assert event.severity == "critical"
+    assert event.metadata_payload.get("honeytoken_filename") == filename
+
+
+@pytest.mark.asyncio
+async def test_decoy_stateful_terminal_execution(client: AsyncClient, db_session: AsyncSession):
+    """Verifies terminal command execution emulates Unix shell without executing host code."""
+    response = await client.post(
+        "/api/v1/decoy/terminal/exec",
+        data={"command": "cat README.txt", "current_dir": "/home/operator_guest"},
+        headers={"X-Argus-Test-Token": "test"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "executed"
+    assert "NEXIS DEFENSE SYSTEMS" in data["output"]
+
+    stmt = (
+        select(SecurityEvent)
+        .where(SecurityEvent.event_type == "terminal_execution")
+        .order_by(SecurityEvent.timestamp.desc())
+    )
+    result = await db_session.execute(stmt)
+    event = result.scalar_one_or_none()
+
+    assert event is not None
+
