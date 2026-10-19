@@ -102,8 +102,6 @@ async def serve_decoy_robots():
     """Serves deceptive robots.txt pointing to honeytoken endpoints."""
     from fastapi.responses import PlainTextResponse
     robots_content = (
-        "# Nexis Tactical Defense Perimeter Gateway\n"
-        "# Restricted System Notice: Automated indexing strictly forbidden.\n"
         "User-agent: *\n"
         "Disallow: /admin-console/\n"
         "Disallow: /internal/backups/\n"
@@ -241,96 +239,22 @@ async def trap_actuator(request: Request, path: str):
 DECOY_404_HTML = """<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
 <html><head>
 <title>404 Not Found</title>
-<style>
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: #070b14;
-    color: #94a3b8;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    margin: 0;
-    padding: 24px;
-    box-sizing: border-box;
-  }
-  .error-card {
-    background: #0f172a;
-    border: 1px solid #1e293b;
-    border-radius: 8px;
-    padding: 40px;
-    max-width: 500px;
-    width: 100%;
-    text-align: center;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-  }
-  .code {
-    display: inline-block;
-    font-size: 11px;
-    font-family: monospace;
-    color: #ef4444;
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.25);
-    padding: 4px 10px;
-    border-radius: 4px;
-    margin-bottom: 16px;
-    letter-spacing: 0.05em;
-  }
-  h1 {
-    color: #f8fafc;
-    font-size: 22px;
-    font-weight: 700;
-    margin: 0 0 8px 0;
-  }
-  p {
-    font-size: 13px;
-    line-height: 1.6;
-    margin: 0 0 24px 0;
-    color: #64748b;
-  }
-  .btn {
-    display: inline-block;
-    background: #0284c7;
-    color: #ffffff;
-    text-decoration: none;
-    padding: 11px 22px;
-    border-radius: 6px;
-    font-weight: 600;
-    font-size: 13px;
-    transition: background 0.2s, box-shadow 0.2s;
-  }
-  .btn:hover {
-    background: #0369a1;
-    box-shadow: 0 0 12px rgba(2, 132, 199, 0.4);
-  }
-  .footer {
-    margin-top: 24px;
-    font-size: 11px;
-    color: #475569;
-    font-family: monospace;
-    border-top: 1px solid #1e293b;
-    padding-top: 16px;
-  }
-</style>
 </head><body>
-<div class="error-card">
-  <div class="code">HTTP 404 // RESTRICTED RESOURCE</div>
-  <h1>Resource Not Found</h1>
-  <p>The requested endpoint is not accessible or has been restricted under perimeter defense rules. Telemetry for this traversal probe has been recorded by intrusion monitoring.</p>
-  <a href="/decoy" class="btn">Return to Tactical Portal</a>
-  <div class="footer">NEXIS DEFENSE SYSTEMS &bull; PERIMETER GATEWAY</div>
-</div>
+<h1>Not Found</h1>
+<p>The requested URL was not found on this server.</p>
+<hr>
+<address>Apache/2.4.52 (Ubuntu) Server at 127.0.0.1 Port 80</address>
 </body></html>
 """
 
 
 def return_decoy_404(request: Request, path: str):
-    """Returns an authentic 404 response with navigation back to the decoy portal."""
+    """Returns a completely generic 404 response giving zero clues to the attacker."""
     accept = request.headers.get("accept", "")
     if "application/json" in accept and "text/html" not in accept:
         return JSONResponse(
             status_code=status.HTTP_404_NOT_FOUND,
-            content={"detail": "Not Found", "message": f"Resource '{path}' does not exist on this gateway."},
+            content={"detail": "Not Found"},
         )
     return HTMLResponse(content=DECOY_404_HTML, status_code=status.HTTP_404_NOT_FOUND)
 
