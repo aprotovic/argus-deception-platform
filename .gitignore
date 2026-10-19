@@ -39,6 +39,7 @@ htmlcov/
 # Data & Quarantine (Do not commit captured payloads or local DBs)
 data/quarantine/*
 !data/quarantine/.gitkeep
+data/test_quarantine/*
 data/postgres/*
 *.db
 *.sqlite
