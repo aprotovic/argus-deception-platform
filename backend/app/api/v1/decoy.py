@@ -342,3 +342,240 @@ async def decoy_scanner_trap(
         status_code=status.HTTP_404_NOT_FOUND,
         content={"status": "error", "message": f"Resource '/{probe_path}' not found on this host."},
     )
+
+
+@router.get("/network/status")
+async def decoy_network_status():
+    """Returns enticing simulated tactical defense network topology and node telemetry."""
+    return {
+        "network_id": "NX-TACTICAL-SEC-NET-04",
+        "classification": "TOP SECRET // DEFENSE CONTRACTOR ENCLAVE",
+        "active_enclaves": [
+            {
+                "id": "ENCLAVE-VA-01",
+                "name": "US-East Pentagon Gateway Relay",
+                "status": "OPERATIONAL",
+                "latency_ms": 14,
+                "ip_range": "10.42.18.0/24",
+                "active_tunnels": 8,
+                "encryption": "AES-256-GCM / Kyber-1024",
+            },
+            {
+                "id": "ENCLAVE-EU-02",
+                "name": "EU-Central Frankfurt Defense Exchange",
+                "status": "OPERATIONAL",
+                "latency_ms": 86,
+                "ip_range": "10.42.34.0/24",
+                "active_tunnels": 5,
+                "encryption": "AES-256-GCM / Post-Quantum Layer",
+            },
+            {
+                "id": "ENCLAVE-PAC-03",
+                "name": "Pacific-INDOPACOM Satellite Link",
+                "status": "HIGH LOAD",
+                "latency_ms": 142,
+                "ip_range": "10.42.88.0/24",
+                "active_tunnels": 12,
+                "encryption": "SATCOM Suite B Military",
+            },
+        ],
+        "system_load": {"cpu_utilization": "18.4%", "memory_used": "4.2 GB / 64 GB", "crypto_engine": "ONLINE"},
+        "firewall_profile": "STIG-DEFENSE-HARDENED-V4",
+    }
+
+
+@router.post("/terminal/exec")
+async def decoy_terminal_exec(
+    request: Request,
+    command: str = Form(default=""),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Deceptive Interactive Terminal honeypot sandbox.
+    Captures raw attacker command execution attempts, logs them to security telemetry,
+    and returns realistic simulated command output without EVER executing code on the host OS.
+    """
+    client_ip = extract_client_ip(request)
+    is_test = check_is_test(request)
+    decoy = await get_or_create_default_decoy(db)
+
+    cmd_clean = command.strip()
+    cmd_lower = cmd_clean.lower()
+    event_id = uuid.uuid4()
+    now_utc = datetime.now(timezone.utc)
+
+    # Classify severity based on malicious intent
+    severity = "medium"
+    malicious_indicators = ["cat /etc", "passwd", "shadow", "wget", "curl", "nc", "bash", "sh", "python", "rm", "sudo", "chmod", "iptables", "docker"]
+    if any(ind in cmd_lower for ind in malicious_indicators):
+        severity = "high"
+
+    # Virtual Sandbox Response Generation (Zero Host Execution)
+    output = ""
+    if not cmd_clean:
+        output = ""
+    elif cmd_lower in ["help", "?"]:
+        output = (
+            "Nexis Tactical Defense Diagnostic Shell v4.2.1 [Restricted Guest Mode]\n"
+            "Available diagnostics commands:\n"
+            "  status         - Display operational node telemetry\n"
+            "  nodes          - List enclave connection matrix\n"
+            "  whoami         - Print current operator identity\n"
+            "  id             - Show security UID/GID clearances\n"
+            "  uname -a       - Display tactical kernel parameters\n"
+            "  cat /etc/issue - View OS enclave distribution\n"
+            "  env            - Display environment configuration parameters\n"
+            "  netstat        - List local network sockets\n"
+            "  clear          - Clear terminal display buffer\n"
+        )
+    elif cmd_lower == "whoami":
+        output = "operator_guest@nx-defense-node-4"
+    elif cmd_lower in ["id", "id -a"]:
+        output = "uid=1042(operator_guest) gid=1042(contractors) groups=1042(contractors),100(users)"
+    elif cmd_lower in ["uname -a", "uname"]:
+        output = "Linux nx-defense-node4 6.8.0-31-generic #31-Ubuntu SMP PREEMPT_DYNAMIC x86_64 GNU/Linux"
+    elif cmd_lower in ["cat /etc/issue", "cat /etc/os-release"]:
+        output = "Nexis Tactical Defense OS v4.2.1-SEC (DoD STIG Profile Enclave)\nKernel 6.8.0-31-generic on an x86_64"
+    elif cmd_lower in ["status", "system_status"]:
+        output = (
+            "[SYSTEM DIAGNOSTIC TELEMETRY - NODE 04]\n"
+            "Host: nx-tactical-east.defense.internal\n"
+            "Status: OPERATIONAL (Enclave Isolation: ENGAGED)\n"
+            "Crypto Engine: Suite B Kyber-1024 Hardware HSM Active\n"
+            "Active Tunnels: 8 IPsec / 4 WireGuard Enclaves"
+        )
+    elif cmd_lower in ["nodes", "list_nodes"]:
+        output = (
+            "ENCLAVE ID    REGION             STATUS       LATENCY    ENCRYPTION\n"
+            "VA-01         US-East Relay      ACTIVE       14ms       Kyber-1024\n"
+            "EU-02         Frankfurt Node     ACTIVE       86ms       AES-256-GCM\n"
+            "PAC-03        INDOPACOM Link     HIGH-LOAD    142ms      Suite B MIL\n"
+        )
+    elif cmd_lower in ["env", "printenv", "cat .env"]:
+        output = (
+            "ENCLAVE_ENVIRONMENT=tactical_production\n"
+            "SECURITY_ZONE=RESTRICTED_CUI_TIER3\n"
+            "INTERNAL_GATEWAY=10.42.18.1\n"
+            "CANARY_TOKEN=NX-CANARY-TOKEN-784912-AWS-EXPLOIT-DETECT\n"
+            "LOG_DESTINATION=syslog.defense.internal:514\n"
+            "READ_ONLY_ACCESS=TRUE\n"
+        )
+    elif cmd_lower in ["netstat", "ss", "netstat -tuln"]:
+        output = (
+            "Active Internet connections (only servers)\n"
+            "Proto Recv-Q Send-Q Local Address           Foreign Address         State\n"
+            "tcp        0      0 0.0.0.0:8080            0.0.0.0:*               LISTEN\n"
+            "tcp        0      0 127.0.0.1:5432          0.0.0.0:*               LISTEN\n"
+            "tcp        0      0 10.42.18.4:2222         0.0.0.0:*               LISTEN\n"
+        )
+    elif "cat /etc/passwd" in cmd_lower:
+        output = (
+            "root:x:0:0:root:/root:/bin/bash\n"
+            "daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\n"
+            "satcom_sync:x:998:998:SATCOM Sync Service:/var/lib/satcom:/usr/sbin/nologin\n"
+            "nx_admin:x:1000:1000:Nexis Admin:/home/nx_admin:/bin/bash\n"
+            "secops:x:1001:1001:SecOps Lead:/home/secops:/bin/bash\n"
+            "operator_guest:x:1042:1042:Guest Diagnostic Operator:/home/operator_guest:/bin/bash\n"
+        )
+    else:
+        output = f"[RESTRICTED ACCESS VIOLATION]: Command '{cmd_clean}' intercepted by enclave policy engine. Incident logged."
+
+    # Record security telemetry event in PostgreSQL
+    sec_event = SecurityEvent(
+        id=event_id,
+        decoy_service_id=decoy.id,
+        timestamp=now_utc,
+        source_ip=client_ip,
+        source_port=request.client.port if request.client else None,
+        http_method="POST",
+        request_path="/api/v1/decoy/terminal/exec",
+        query_params=dict(request.query_params),
+        headers_sanitized=sanitize_headers(dict(request.headers)),
+        user_agent=request.headers.get("user-agent", "")[:500],
+        event_type="recon_probe",
+        severity=severity,
+        is_test_event=is_test,
+        correlation_id=str(uuid.uuid4())[:8],
+        metadata_payload={
+            "interactive_command": cmd_clean,
+            "session_type": "decoy_diagnostic_terminal",
+        },
+    )
+    db.add(sec_event)
+    await db.commit()
+
+    # Broadcast command execution live to SOC dashboard
+    event_summary = {
+        "id": str(event_id),
+        "timestamp": now_utc.isoformat(),
+        "source_ip": client_ip,
+        "event_type": "recon_probe",
+        "severity": severity,
+        "request_path": "/api/v1/decoy/terminal/exec",
+        "http_method": "POST",
+        "user_agent": request.headers.get("user-agent", "")[:100],
+        "is_test_event": is_test,
+        "summary": f"Decoy Terminal command executed: '{cmd_clean[:50]}'",
+    }
+    await ws_manager.broadcast_event(event_summary)
+
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content={
+            "status": "executed",
+            "output": output,
+            "prompt": "operator_guest@nx-sec-node-4:~$ ",
+        },
+    )
+
+
+@router.get("/honeytoken/config")
+async def decoy_honeytoken_config(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Deceptive configuration breadcrumb returning fake canary credentials."""
+    client_ip = extract_client_ip(request)
+    is_test = check_is_test(request)
+    decoy = await get_or_create_default_decoy(db)
+
+    event_id = uuid.uuid4()
+    now_utc = datetime.now(timezone.utc)
+
+    sec_event = SecurityEvent(
+        id=event_id,
+        decoy_service_id=decoy.id,
+        timestamp=now_utc,
+        source_ip=client_ip,
+        source_port=request.client.port if request.client else None,
+        http_method="GET",
+        request_path=str(request.url.path),
+        query_params=dict(request.query_params),
+        headers_sanitized=sanitize_headers(dict(request.headers)),
+        user_agent=request.headers.get("user-agent", "")[:500],
+        event_type="recon_probe",
+        severity="high",
+        is_test_event=is_test,
+        correlation_id=str(uuid.uuid4())[:8],
+        metadata_payload={"honeytoken_type": "simulated_aws_database_credentials"},
+    )
+    db.add(sec_event)
+    await db.commit()
+
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content={
+            "database_cluster": {
+                "enclave_id": "NX-VA-SECRET-CLUSTER-01",
+                "host": "10.42.18.5",
+                "port": 5432,
+                "read_user": "nx_contractor_readonly",
+                "canary_token": "CANARY-NX-784912-AWS-EXPLOIT-DETECT",
+            },
+            "satcom_uplink": {
+                "endpoint": "satcom-relay.defense.internal:8443",
+                "public_key_fingerprint": "SHA256:7b91d24ef081a9...",
+            },
+        },
+    )
+
