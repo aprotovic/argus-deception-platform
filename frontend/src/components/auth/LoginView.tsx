@@ -1,13 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Shield, KeyRound, AlertCircle } from 'lucide-react';
 
 export const LoginView: React.FC = () => {
   const { login } = useAuth();
-  const [username, setUsername] = useState<string>('argus_admin');
-  const [password, setPassword] = useState<string>('ArgusAdmin2026!ChangeMe');
+  const [username, setUsername] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [showPresets, setShowPresets] = useState<boolean>(false);
+
+  // Hidden shortcut (Ctrl + Shift + A) to toggle operator presets for demonstrations
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
+        e.preventDefault();
+        setShowPresets((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,17 +78,22 @@ export const LoginView: React.FC = () => {
       }}>
         {/* Header Icon & Brand */}
         <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '56px',
-            height: '56px',
-            borderRadius: '12px',
-            background: 'linear-gradient(135deg, rgba(0, 180, 216, 0.2), rgba(139, 92, 246, 0.2))',
-            border: '1px solid var(--border-accent)',
-            marginBottom: '16px',
-          }}>
+          <div
+            onClick={() => setShowPresets((prev) => !prev)}
+            title="Defense Network Gateway"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '56px',
+              height: '56px',
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, rgba(0, 180, 216, 0.2), rgba(139, 92, 246, 0.2))',
+              border: '1px solid var(--border-accent)',
+              marginBottom: '16px',
+              cursor: 'pointer',
+            }}
+          >
             <Shield size={28} color="#00b4d8" />
           </div>
 
@@ -87,10 +105,10 @@ export const LoginView: React.FC = () => {
             color: '#ffffff',
             textTransform: 'uppercase',
           }}>
-            ARGUS COMMAND CENTER
+            ARGUS DEFENSE NETWORK
           </h1>
           <p style={{ fontSize: '0.82rem', color: 'var(--text-dim)', marginTop: '4px' }}>
-            Cyber Deception Telemetry & Defense Platform
+            Tactical Security Operations Command Center
           </p>
         </div>
 
@@ -131,6 +149,7 @@ export const LoginView: React.FC = () => {
               onChange={(e) => setUsername(e.target.value)}
               className="input-tactical"
               style={{ width: '100%' }}
+              placeholder="Operator Call-Sign / ID"
               required
               autoComplete="username"
             />
@@ -154,6 +173,7 @@ export const LoginView: React.FC = () => {
               onChange={(e) => setPassword(e.target.value)}
               className="input-tactical"
               style={{ width: '100%' }}
+              placeholder="••••••••••••••••"
               required
               autoComplete="current-password"
             />
@@ -175,54 +195,56 @@ export const LoginView: React.FC = () => {
           </button>
         </form>
 
-        {/* Preset Evaluator Buttons */}
-        <div style={{ marginTop: '24px', paddingTop: '18px', borderTop: '1px solid var(--border-subtle)' }}>
-          <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginBottom: '8px', textAlign: 'center' }}>
-            DEMONSTRATION QUICK-CONNECT PRESETS:
+        {/* Optional Evaluator Presets - Only visible via Ctrl+Shift+A or double-clicking shield */}
+        {showPresets && (
+          <div style={{ marginTop: '24px', paddingTop: '18px', borderTop: '1px solid var(--border-subtle)' }}>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginBottom: '8px', textAlign: 'center' }}>
+              OPERATOR QUICK-CONNECT PRESETS:
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={() => setPresetUser('argus_admin', 'ArgusAdmin2026!ChangeMe')}
+                style={{
+                  flex: 1,
+                  background: 'rgba(239, 68, 68, 0.08)',
+                  border: '1px solid rgba(239, 68, 68, 0.25)',
+                  borderRadius: '4px',
+                  padding: '6px',
+                  color: '#f87171',
+                  fontSize: '0.72rem',
+                  fontFamily: "'Chakra Petch', sans-serif",
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                ADMINISTRATOR
+              </button>
+              <button
+                type="button"
+                onClick={() => setPresetUser('analyst', 'Analyst2026!SecOps')}
+                style={{
+                  flex: 1,
+                  background: 'rgba(0, 180, 216, 0.08)',
+                  border: '1px solid rgba(0, 180, 216, 0.25)',
+                  borderRadius: '4px',
+                  padding: '6px',
+                  color: '#38bdf8',
+                  fontSize: '0.72rem',
+                  fontFamily: "'Chakra Petch', sans-serif",
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                SOC ANALYST
+              </button>
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              type="button"
-              onClick={() => setPresetUser('argus_admin', 'ArgusAdmin2026!ChangeMe')}
-              style={{
-                flex: 1,
-                background: 'rgba(239, 68, 68, 0.08)',
-                border: '1px solid rgba(239, 68, 68, 0.25)',
-                borderRadius: '4px',
-                padding: '6px',
-                color: '#f87171',
-                fontSize: '0.72rem',
-                fontFamily: "'Chakra Petch', sans-serif",
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              ADMINISTRATOR
-            </button>
-            <button
-              type="button"
-              onClick={() => setPresetUser('analyst', 'Analyst2026!SecOps')}
-              style={{
-                flex: 1,
-                background: 'rgba(0, 180, 216, 0.08)',
-                border: '1px solid rgba(0, 180, 216, 0.25)',
-                borderRadius: '4px',
-                padding: '6px',
-                color: '#38bdf8',
-                fontSize: '0.72rem',
-                fontFamily: "'Chakra Petch', sans-serif",
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              SOC ANALYST
-            </button>
-          </div>
-        </div>
+        )}
       </div>
 
-      <div style={{ marginTop: '24px', fontSize: '0.75rem', color: 'var(--text-dim)', textAlign: 'center' }}>
-        ARGUS Cyber Deception System &bull; Academic Graduation Project
+      <div style={{ marginTop: '24px', fontSize: '0.75rem', color: 'var(--text-dim)', textAlign: 'center', letterSpacing: '0.04em' }}>
+        RESTRICTED ACCESS &bull; DISA STIG COMPLIANT &bull; AUTHORIZED DEFENSE OPERATORS ONLY
       </div>
     </div>
   );
