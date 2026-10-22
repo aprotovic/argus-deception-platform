@@ -28,6 +28,7 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
+    image: argus-app:latest   # built once here; the decoy reuses this exact image
     container_name: argus-backend
     restart: unless-stopped
     environment:
@@ -54,13 +55,12 @@ services:
           cpus: "1.5"
           memory: 1024M
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
 
   # Public-Facing Decoy Honeypot (Strictly isolated from PostgreSQL db-net)
   argus-decoy:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
+    image: argus-app:latest   # same image as the backend, no second build
+    pull_policy: never        # never try to pull argus-app from Docker Hub
     container_name: argus-decoy
     restart: unless-stopped
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
@@ -74,6 +74,12 @@ services:
       - no-new-privileges:true
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=64m
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/live"]
+      interval: 15s
+      timeout: 5s
+      start_period: 5s
+      retries: 3
     volumes:
       - quarantine_data:/var/lib/argus/quarantine
     networks:
@@ -87,7 +93,7 @@ services:
           cpus: "1.0"
           memory: 512M
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
 
   # SOC Operations Dashboard (React + TypeScript + Nginx)
   argus-dashboard:
@@ -99,7 +105,7 @@ services:
     networks:
       - backend-internal
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     depends_on:
       - argus-backend
     deploy:
