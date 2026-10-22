@@ -13,6 +13,7 @@ from pathlib import Path
 from fastapi import APIRouter, Request, status
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 
+from app.core.event_sink import get_event_sink
 from app.logging_config import logger
 
 router = APIRouter()
@@ -31,10 +32,8 @@ async def record_root_trap(
 ):
     """Captures direct scanner recon probes at the domain root into security telemetry."""
     try:
-        from app.database import AsyncSessionLocal
         from app.models.security_event import SecurityEvent
         from app.core.security import extract_client_ip, sanitize_headers
-        from app.core.websocket_manager import ws_manager
         import uuid
         from datetime import datetime, timezone
 
@@ -49,27 +48,24 @@ async def record_root_trap(
 
         msg = summary or f"Scanner reconnaissance probe on '{path}'"
 
-        async with AsyncSessionLocal() as session:
-            sec_event = SecurityEvent(
-                id=event_id,
-                timestamp=now_utc,
-                source_ip=client_ip,
-                source_port=request.client.port if request.client else None,
-                http_method=request.method,
-                request_path=path,
-                query_params=dict(request.query_params),
-                headers_sanitized=sanitize_headers(dict(request.headers)),
-                user_agent=request.headers.get("user-agent", "")[:500],
-                event_type=event_type,
-                severity=severity,
-                is_test_event=is_test,
-                correlation_id=str(uuid.uuid4())[:8],
-                metadata_payload=metadata,
-            )
-            session.add(sec_event)
-            await session.commit()
+        sec_event = SecurityEvent(
+            id=event_id,
+            timestamp=now_utc,
+            source_ip=client_ip,
+            source_port=request.client.port if request.client else None,
+            http_method=request.method,
+            request_path=path,
+            query_params=dict(request.query_params),
+            headers_sanitized=sanitize_headers(dict(request.headers)),
+            user_agent=request.headers.get("user-agent", "")[:500],
+            event_type=event_type,
+            severity=severity,
+            is_test_event=is_test,
+            correlation_id=str(uuid.uuid4())[:8],
+            metadata_payload=metadata,
+        )
 
-        await ws_manager.broadcast_event({
+        broadcast_summary = {
             "id": str(event_id),
             "timestamp": now_utc.isoformat(),
             "source_ip": client_ip,
@@ -80,7 +76,9 @@ async def record_root_trap(
             "user_agent": request.headers.get("user-agent", "")[:100],
             "is_test_event": is_test,
             "summary": msg,
-        })
+        }
+
+        await get_event_sink().persist([sec_event], broadcast_summary=broadcast_summary)
     except Exception as e:
         logger.error(f"Error recording root trap for {path}: {e}")
 
