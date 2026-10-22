@@ -28,8 +28,8 @@ router = APIRouter(prefix="/decoy", tags=["Decoy Portal"])
 
 # ============================================================================
 # FAKE PERSONNEL TABLE  (module-level constant — no DB, no file, no network)
-# These rows are entirely fictional. Several contain embedded canary tokens
-# so the SOC can detect if an attacker exfiltrates and acts on the data.
+# These rows are entirely fictional. The badge_id field contains a unique
+# identifier per employee that the SOC can use to detect exfiltration.
 # ============================================================================
 _FAKE_PERSONNEL: list[dict[str, Any]] = [
     {
@@ -41,7 +41,7 @@ _FAKE_PERSONNEL: list[dict[str, Any]] = [
         "email": "h.blake@defense.internal",
         "office_ext": "DSN-312-555-0101",
         "location": "Enclave VA-01 // Pentagon Annex B",
-        "canary_token": "NX-CANARY-PERS-BLAKE-001",
+        "badge_id": "NX-7F3A-1001-B9",
     },
     {
         "employee_id": "NX-1008",
@@ -52,7 +52,7 @@ _FAKE_PERSONNEL: list[dict[str, Any]] = [
         "email": "s.reeves@defense.internal",
         "office_ext": "DSN-312-555-0108",
         "location": "Enclave VA-01 // SCIF Lab 3",
-        "canary_token": "NX-CANARY-PERS-REEVES-008",
+        "badge_id": "NX-A2C8-1008-F1",
     },
     {
         "employee_id": "NX-1015",
@@ -63,7 +63,7 @@ _FAKE_PERSONNEL: list[dict[str, Any]] = [
         "email": "m.webb@satcom.defense.internal",
         "office_ext": "DSN-312-555-0115",
         "location": "Enclave PAC-03 // Remote Node",
-        "canary_token": "NX-CANARY-PERS-WEBB-015",
+        "badge_id": "NX-3D91-1015-C4",
     },
     {
         "employee_id": "NX-1022",
@@ -74,7 +74,7 @@ _FAKE_PERSONNEL: list[dict[str, Any]] = [
         "email": "e.vasquez@soc.defense.internal",
         "office_ext": "DSN-312-555-0122",
         "location": "Enclave VA-01 // SOC Floor 2",
-        "canary_token": "NX-CANARY-PERS-VASQUEZ-022",
+        "badge_id": "NX-B5E0-1022-D7",
     },
     {
         "employee_id": "NX-1031",
@@ -85,7 +85,7 @@ _FAKE_PERSONNEL: list[dict[str, Any]] = [
         "email": "t.alnasir@defense.internal",
         "office_ext": "DSN-312-555-0131",
         "location": "Enclave EU-02 // Frankfurt Node",
-        "canary_token": "NX-CANARY-PERS-ALNASIR-031",
+        "badge_id": "NX-9F12-1031-A3",
     },
     {
         "employee_id": "NX-1042",
@@ -96,7 +96,7 @@ _FAKE_PERSONNEL: list[dict[str, Any]] = [
         "email": "c.miller@defense.internal",
         "office_ext": "DSN-312-555-0142",
         "location": "Enclave VA-01 // Server Farm B",
-        "canary_token": "NX-CANARY-PERS-MILLER-042",
+        "badge_id": "NX-C4B7-1042-E2",
     },
     {
         "employee_id": "NX-1058",
@@ -107,7 +107,7 @@ _FAKE_PERSONNEL: list[dict[str, Any]] = [
         "email": "d.park@compliance.defense.internal",
         "office_ext": "DSN-312-555-0158",
         "location": "Enclave VA-01 // Admin Wing",
-        "canary_token": "NX-CANARY-PERS-PARK-058",
+        "badge_id": "NX-E8D3-1058-61",
     },
     {
         "employee_id": "NX-1067",
@@ -118,13 +118,13 @@ _FAKE_PERSONNEL: list[dict[str, Any]] = [
         "email": "j.okoro@hsm.defense.internal",
         "office_ext": "DSN-312-555-0167",
         "location": "Enclave VA-01 // SCIF Lab 1",
-        "canary_token": "NX-CANARY-PERS-OKORO-067",
+        "badge_id": "NX-F1A6-1067-22",
     },
 ]
 
 # Columns returned for normal (non-injection) queries.
-# canary_token is intentionally excluded from normal results so it only
-# leaks on a simulated SQLi "dump", making it a useful tripwire.
+# badge_id is intentionally excluded from normal results so it only
+# leaks on a simulated SQLi dump, making it a useful tripwire.
 _PUBLIC_COLUMNS = [
     "employee_id",
     "full_name",
@@ -164,7 +164,7 @@ def _safe_rows_for_normal_query(q: str) -> list[dict[str, Any]]:
     """
     Filters the fake personnel table by plain case-insensitive substring match
     against name, title, department, or employee_id.
-    Returns only the public columns — canary_token is never included.
+    Returns only the public columns — badge_id is never included.
     Never formats q into a query string or evaluates it.
     """
     needle = q.strip().lower()
@@ -181,7 +181,7 @@ def _safe_rows_for_normal_query(q: str) -> list[dict[str, Any]]:
 
 def _leaked_rows_for_sqli() -> list[dict[str, Any]]:
     """
-    Returns all columns including canary_token, simulating a full table dump
+    Returns all columns including badge_id, simulating a full table dump
     from a successful SQL injection. Used only when SQLi is detected.
     """
     return [dict(row) for row in _FAKE_PERSONNEL]
@@ -200,13 +200,13 @@ async def decoy_personnel_search(
     Deceptive internal personnel directory search.
 
     Normal query: returns filtered rows (public columns only).
-    SQLi payload:  returns all columns including canary tokens, simulating
+    SQLi payload:  returns all columns including badge_id values, simulating
                    a database dump, then logs a high-severity sql_injection event.
 
     Security guarantees:
     - q is NEVER formatted into a SQL string or evaluated.
     - Raw attacker input is truncated to 200 chars before storage.
-    - canary_token values are only returned on simulated SQLi to act as tripwires.
+    - badge_id values are only returned on simulated SQLi to act as tripwires.
     - No real database tables are involved; all data is the module-level constant.
     """
     client_ip = extract_client_ip(request)
@@ -217,10 +217,13 @@ async def decoy_personnel_search(
     raw_q = q.strip()
     stored_q = raw_q[:200]
 
+    # Compute once and reuse — avoids scanning the payload twice.
+    sqli = _is_sqli(raw_q)
+
     event_id = uuid.uuid4()
     now_utc = datetime.now(timezone.utc)
 
-    if _is_sqli(raw_q):
+    if sqli:
         event_type = "sql_injection"
         severity = "high"
         records = _leaked_rows_for_sqli()
@@ -232,7 +235,7 @@ async def decoy_personnel_search(
             "injected_query": stored_q,
             "simulated_engine": "PostgreSQL 16 Enterprise (STIG Enclave)",
             "table_dumped": "nx_personnel_directory",
-            "canary_leaked": True,
+            "badge_id_leaked": True,
         }
     else:
         event_type = "recon_probe"
@@ -250,6 +253,7 @@ async def decoy_personnel_search(
     # -----------------------------------------------------------------------
     # DB write — ONLY db.add() and await db.commit(), compatible with
     # EventForwarderSession used in decoy_main.py after the split.
+    # correlation_id capped at 64 chars (column is String(64) in the model).
     # -----------------------------------------------------------------------
     sec_event = SecurityEvent(
         id=event_id,
@@ -265,7 +269,9 @@ async def decoy_personnel_search(
         event_type=event_type,
         severity=severity,
         is_test_event=is_test,
-        correlation_id=request.headers.get("x-correlation-id") or str(uuid.uuid4())[:8],
+        correlation_id=(
+            request.headers.get("x-correlation-id") or str(uuid.uuid4())[:8]
+        )[:64],
         metadata_payload=metadata,
     )
     db.add(sec_event)
@@ -292,7 +298,7 @@ async def decoy_personnel_search(
         extra={"event_id": str(event_id), "source_ip": client_ip, "event_type": event_type},
     )
 
-    if _is_sqli(raw_q):
+    if sqli:
         return JSONResponse(
             status_code=200,
             content={
@@ -302,7 +308,6 @@ async def decoy_personnel_search(
                 "records": records,
                 "database_cluster": "cluster-va-pg16.internal",
                 "table": "nx_personnel_directory",
-                "note": "Full table returned due to unrestricted query scope.",
             },
         )
 
