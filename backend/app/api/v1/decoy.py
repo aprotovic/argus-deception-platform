@@ -223,6 +223,8 @@ HONEYTOKEN_FILES = {
 # ============================================================================
 async def get_or_create_default_decoy(db: AsyncSession) -> DecoyService:
     """Retrieves or creates the primary decoy service descriptor."""
+    if hasattr(db, "default_decoy"):
+        return db.default_decoy
     stmt = select(DecoyService).where(DecoyService.is_active == True).limit(1)
     result = await db.execute(stmt)
     decoy = result.scalar_one_or_none()
