@@ -32,8 +32,8 @@ COPY alembic.ini /app/alembic.ini
 WORKDIR /app
 
 # Ensure quarantine storage exists with restrictive permissions
-RUN mkdir -p /var/lib/argus/quarantine /app/data && \
-    chown -R argus:argus /app /var/lib/argus/quarantine /app/data && \
+RUN mkdir -p /var/lib/argus/quarantine /var/lib/argus/decoy_spool /app/data && \
+    chown -R argus:argus /app /var/lib/argus/quarantine /var/lib/argus/decoy_spool /app/data && \
     chmod 700 /var/lib/argus/quarantine
 
 # Run as unprivileged user
