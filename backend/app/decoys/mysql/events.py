@@ -6,22 +6,29 @@ Builds SecurityEvent (+optional LoginAttempt) objects for the two event
 types emitted by the MySQL decoy:
 
   db_connection    — one per TCP connection, logged at close.
-                     severity: low  (no login attempt made)
-                                low  (login failed: unknown user, no username)
-                                medium (login failed: username known)
-                                high   (bait credential matched)
+                     severity: low    (no login attempt, or loopback healthcheck
+                                       probe with zero bytes — see server.py)
+                               medium (login attempt made but credentials did not
+                                       match any bait credential)
+                               high   (bait credential matched)
 
   db_login_attempt — one per AUTH exchange (built inside handle_connection
                      before the final OK/ERR is sent so the id is known).
+                     severity: medium (wrong credentials)
+                               high   (bait credential matched)
                      Carries a LoginAttempt child with the HMAC fingerprint.
 
 All string fields are truncated to their ingest-model limits BEFORE creating
 ORM objects so the ForwardingEventSink serialiser never rejects a value.
 
-Severity matrix (point 5 of task-4 instructions):
-  - Probe with no username (no login packet sent) → low
-  - Failed login (username present, not a bait credential) → medium
-  - Successful bait login → high
+Severity matrix (matches db_connection code at line ~88, db_login_attempt at ~137):
+  db_connection:
+    - Probe with no username (no login packet sent) → low
+    - Failed login (username present, did not match bait) → medium
+    - Successful bait login → high
+  db_login_attempt:
+    - Any failed attempt → medium
+    - Bait credential matched → high
 """
 
 from __future__ import annotations
