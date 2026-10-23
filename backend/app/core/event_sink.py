@@ -286,14 +286,32 @@ class ForwardingEventSink(EventSink):
 
     # -- worker loop --------------------------------------------------------
     async def _worker_loop(self) -> None:
-        """Background worker: pull from queue, batch, POST to backend."""
+        """Background worker: pull from queue, batch, POST to backend.
+
+        When the spool is non-empty, uses asyncio.wait_for with a timeout
+        so the worker wakes periodically to retry replay even without new
+        traffic. When the spool is empty, blocks normally on queue.get().
+        """
         import httpx
 
         batch: List[Dict[str, Any]] = []
         backoff = 1.0
+        # Replay interval: 5 seconds, capped by backoff
+        replay_timeout = 5.0
 
         while True:
-            item = await self._queue.get()
+            # If spool is non-empty, wait with a timeout so we can retry
+            if self._spool_file.exists():
+                try:
+                    item = await asyncio.wait_for(
+                        self._queue.get(), timeout=replay_timeout
+                    )
+                except asyncio.TimeoutError:
+                    # No new traffic arrived — retry spool replay
+                    await self._replay_spool(httpx)
+                    continue
+            else:
+                item = await self._queue.get()
 
             # None sentinel = shutdown
             if item is None:

@@ -275,3 +275,82 @@ async def test_sink_reuses_event_id_on_retry(tmp_path):
     assert sink._spool_file.exists()
     content = sink._spool_file.read_text()
     assert str(event_id) in content
+
+@pytest.mark.asyncio
+async def test_sink_replays_spool_on_timer_without_new_traffic(tmp_path):
+    """After a backend outage, spooled events are replayed on a timer
+    even when NO new traffic arrives.
+
+    1. Start sink with _send_batch failing (backend down).
+    2. Send an event — it spools.
+    3. Restore _send_batch to succeed (backend up).
+    4. Send NOTHING else.
+    5. Assert the spooled event is delivered within ~15 seconds.
+    """
+    import asyncio
+    from datetime import datetime, timezone
+    from types import SimpleNamespace
+
+    sink = ForwardingEventSink()
+    sink._spool_dir = tmp_path
+    sink._spool_file = tmp_path / "events.jsonl"
+    sink._spool_max_bytes = 10 * 1024 * 1024
+
+    event_id = uuid.uuid4()
+    delivered_batches = []
+
+    async def fail_send(httpx_mod, batch):
+        return False
+
+    async def succeed_send(httpx_mod, batch):
+        delivered_batches.append(list(batch))
+        return True
+
+    sink._send_batch = lambda httpx_mod, batch: fail_send(httpx_mod, batch)
+
+    set_event_sink(sink)
+    sink.start_worker()
+    try:
+        # Phase 1: backend down — send event, it spools
+        ev = SimpleNamespace(
+            id=event_id, decoy_service_id=None,
+            timestamp=datetime.now(timezone.utc), source_ip="1.2.3.4",
+            source_port=99, http_method="GET", request_path="/timer-replay-test",
+            query_params={}, headers_sanitized={}, user_agent="",
+            event_type="recon_probe", severity="low", is_test_event=True,
+            correlation_id=None, metadata_payload={},
+        )
+        session = EventForwarderSession()
+        session.add(ev)
+        await session.commit()
+
+        # Wait for the worker to process and spool
+        await asyncio.sleep(2.0)
+        assert sink._spool_file.exists(), "Spool should exist after backend failure"
+
+        # Phase 2: backend up — send NOTHING, wait for timer-based replay
+        sink._send_batch = lambda httpx_mod, batch: succeed_send(httpx_mod, batch)
+
+        # Wait up to 15 seconds for the timer-based replay to deliver
+        deadline = asyncio.get_event_loop().time() + 15.0
+        while asyncio.get_event_loop().time() < deadline:
+            await asyncio.sleep(0.5)
+            if delivered_batches:
+                break
+
+        assert len(delivered_batches) >= 1, \
+            "Spooled event should be delivered within 15s without new traffic"
+
+        # Verify it's our event
+        all_events = []
+        for batch_items in delivered_batches:
+            all_events.extend(batch_items)
+        assert any(item.get("event", {}).get("id") == str(event_id) for item in all_events), \
+            "The spooled event id should be in the delivered batch"
+
+        # Spool should be cleared after successful replay
+        assert not sink._spool_file.exists() or sink._spool_file.stat().st_size == 0, \
+            "Spool should be empty after successful replay"
+    finally:
+        await sink.stop_worker()
+        set_event_sink(DbEventSink())
