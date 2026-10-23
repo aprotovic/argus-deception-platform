@@ -15,9 +15,10 @@ from contextlib import asynccontextmanager
 from types import SimpleNamespace
 
 from fastapi import FastAPI, Request, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.api.root_traps import router as root_traps_router
+from app.api.root_traps import router as root_traps_router, DECOY_404_HTML
 from app.api.v1.decoy import router as decoy_router
 from app.api.v1.decoy_personnel import router as decoy_personnel_router
 from app.config import settings
@@ -78,11 +79,11 @@ async def _get_forwarder_db():
 
 app.dependency_overrides[get_db] = _get_forwarder_db
 
-# Health check (no database connectivity needed)
+# Health check (no database connectivity needed, no service name leaked)
 @app.get("/health/live", tags=["Health"])
 async def liveness_probe():
-    """Liveness probe — always alive if the process is running."""
-    return {"status": "alive", "service": "argus-decoy"}
+    """Liveness probe — returns minimal JSON, no service name."""
+    return {"status": "ok"}
 
 # Root traps (/, /decoy, /robots.txt, honeytokens, scanner traps)
 app.include_router(root_traps_router)
@@ -94,6 +95,24 @@ _decoy_v1 = APIRouter(prefix="/api/v1")
 _decoy_v1.include_router(decoy_router)
 _decoy_v1.include_router(decoy_personnel_router)
 app.include_router(_decoy_v1)
+
+# Unified 404/405 handler — every unmatched path returns the same Apache-style
+# HTML 404 body, regardless of whether it's an admin path, /docs, /openapi.json,
+# or a genuinely unknown path. This prevents FastAPI's default JSON 404 from
+# revealing the framework.
+@app.exception_handler(StarletteHTTPException)
+async def unified_http_exception_handler(request: Request, exc: StarletteHTTPException):
+    if exc.status_code in (404, 405):
+        return HTMLResponse(
+            content=DECOY_404_HTML,
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    # Non-404/405 HTTP exceptions pass through as-is
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+        headers=getattr(exc, "headers", None),
+    )
 
 # Global Exception Handler (same as main app)
 @app.exception_handler(Exception)

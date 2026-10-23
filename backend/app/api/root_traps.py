@@ -126,10 +126,10 @@ async def serve_decoy_robots():
 # ============================================================================
 @router.get("/.env", tags=["Decoy Traps"])
 async def trap_env(request: Request):
-    await record_root_trap(request, "/.env", severity="high", honeytoken_info={"canary_token": "CANARY-ENV-NX784912"})
+    await record_root_trap(request, "/.env", severity="high", honeytoken_info={"badge_token": "ENV-NX784912"})
     return PlainTextResponse(
-        "DATABASE_URL=postgresql://nx_admin:CanaryP@ssword2026!@10.42.18.5:5432/defense_ops\n"
-        "AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE_NXCANARY\n"
+        "DATABASE_URL=postgresql://nx_admin:N3x1sP@ssword2026!@10.42.18.5:5432/defense_ops\n"
+        "AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE_NX784912\n"
         "AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY\n"
         "JWT_SECRET=super_secret_defense_enclave_key_do_not_share\n"
     )
@@ -152,10 +152,10 @@ async def trap_git_config(request: Request):
 
 @router.get("/.aws/credentials", tags=["Decoy Traps"])
 async def trap_aws_credentials(request: Request):
-    await record_root_trap(request, "/.aws/credentials", severity="high", honeytoken_info={"canary_token": "NX-CANARY-AWS-CRED-01"})
+    await record_root_trap(request, "/.aws/credentials", severity="high", honeytoken_info={"badge_token": "AWS-CRED-01"})
     return PlainTextResponse(
         "[default]\n"
-        "aws_access_key_id = AKIA4DEFENSE7CANARY1\n"
+        "aws_access_key_id = AKIA4DEFENSE7B901\n"
         "aws_secret_access_key = 9aF81k2m3L4p5Q6r7S8t9U0v1W2x3Y4z\n"
     )
 
@@ -169,7 +169,7 @@ async def trap_wp_login(request: Request):
 @router.api_route("/actuator/{path:path}", methods=["GET", "POST"], tags=["Decoy Traps"])
 async def trap_actuator(request: Request, path: str):
     await record_root_trap(request, f"/actuator/{path}", severity="medium")
-    return JSONResponse(content={"status": "UP", "enclave": "defense-node-4", "canary_build": "v4.2.1-NX-CANARY"})
+    return JSONResponse(content={"status": "UP", "enclave": "defense-node-4", "build_id": "v4.2.1-SEC"})
 
 
 # ============================================================================
