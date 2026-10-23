@@ -118,6 +118,9 @@ services:
       # NO DATABASE_URL, no POSTGRES_* — no database access
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=32m
     healthcheck:
