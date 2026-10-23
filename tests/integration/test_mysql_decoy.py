@@ -264,7 +264,10 @@ async def test_severity_high_on_bait_login(mysql_server):
 
 @pytest.mark.asyncio
 async def test_severity_low_probe_no_login(mysql_server):
-    """A client that connects but never sends a login packet → db_connection low."""
+    """A client that connects from 127.0.0.1 and never sends a login packet
+    must NOT generate an event (healthcheck suppression, item 3).
+    Low-severity events from non-loopback addresses are tested in
+    tests/unit/test_mysql_healthcheck.py::test_gateway_zero_bytes_logs_event."""
     port, sink_path = mysql_server
 
     c = RawMySQLClient("127.0.0.1", port)
@@ -274,11 +277,10 @@ async def test_severity_low_probe_no_login(mysql_server):
     await c.close()
     await asyncio.sleep(0.5)  # wait for handshake timeout to fire
 
-    with open(sink_path) as f:
-        events = [json.loads(l) for l in f if l.strip()]
-
-    conn_events = [e for e in events if e["event_type"] == "db_connection"]
-    assert any(e["severity"] == "low" for e in conn_events)
+    # The event is suppressed for loopback + zero bytes
+    import os
+    assert not os.path.exists(sink_path) or os.path.getsize(sink_path) == 0, \
+        "127.0.0.1 with zero bytes must not generate an event (healthcheck suppression)"
 
 
 # ---------------------------------------------------------------------------
@@ -415,3 +417,7 @@ async def test_connection_cap_closes_extra_connections(capped_server):
             await asyncio.wait_for(w.wait_closed(), timeout=1.0)
         except Exception:
             pass
+
+# ---------------------------------------------------------------------------
+# Healthcheck noise tests — moved to tests/unit/test_mysql_healthcheck.py
+# ---------------------------------------------------------------------------

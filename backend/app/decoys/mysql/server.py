@@ -305,7 +305,15 @@ async def _command_phase(
 
 
 async def _persist_connection_event(ctx: ConnectionContext, sink):
-    """Build and persist the db_connection event at connection close."""
+    """Build and persist the db_connection event at connection close.
+
+    Skips loopback connections with zero bytes received — these are
+    Docker healthcheck TCP probes and would generate one event every
+    15 seconds. Real scans from the host appear as the Docker gateway
+    IP (e.g. 172.x.x.x), not 127.0.0.1/::1, so they are still logged.
+    """
+    if ctx.bytes_in == 0 and ctx.peer_ip in ("127.0.0.1", "::1"):
+        return
     try:
         duration = time.monotonic() - ctx.start_time
         conn_ev = build_connection_event(
