@@ -1,59 +1,67 @@
 """MySQL decoy server — asyncio TCP server with limits and timeouts.
 
-Task 3 of db-decoy spec (R1, R3.1, R4).
+Tasks 3 + 4 of db-decoy spec (R1, R3.1, R4).
 
 Entry point: python -m app.decoys.mysql.server
-Starts a ForwardingEventSink (or JSONL stub sink for local testing),
-listens on the configured port, and handles connections.
+Starts a ForwardingEventSink (BACKEND_INGEST_URL set) or JSONL stub sink.
 
 Safety:
-- Every read has asyncio.wait_for with the idle timeout.
-- Packet length checked before reading payload.
-- All errors caught; connection always closed cleanly.
-- No outbound connections, no file reads except spool.
-- Bait credentials from settings, never hardcoded.
+- HANDSHAKE_TIMEOUT (10s default): covers TCP-connect → login-packet.
+- IDLE_TIMEOUT (30s default): covers each command after login.
+- Packet length checked before payload is read.
+- 201st connection is closed immediately (not queued on a semaphore).
+- All errors caught; writer always closed in finally.
+- No LOCAL INFILE, SSL or compression advertised.
+- Bait credentials from settings / env, never hardcoded.
 """
 
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 import secrets
-import struct
 import time
+import uuid
 from datetime import datetime, timezone
-from typing import Optional
+from typing import List, Optional, Tuple
 
-from app.decoys.mysql.auth import native_password_scramble, verify_native_password
+from app.decoys.mysql.auth import verify_native_password
+from app.decoys.mysql.events import (
+    build_connection_event,
+    build_login_attempt_event,
+    _serialize_for_stub,
+)
 from app.decoys.mysql.protocol import (
     MAX_PACKET_BYTES,
     build_err_packet,
     build_handshake_v10,
     build_ok_packet,
     build_packet,
-    read_packet,
     parse_handshake_response_41,
+    read_packet,
 )
 from app.logging_config import logger
 
 
-# Defaults (can be overridden by settings or env vars)
-DEFAULT_PORT = 3306
-MAX_CONNECTIONS = 200
-IDLE_TIMEOUT = 30.0  # seconds
-CONN_LIFETIME = 300.0  # 5 minutes
-MAX_COMMANDS = 200
-MAX_PACKET = MAX_PACKET_BYTES
+# ---------------------------------------------------------------------------
+# Configuration helpers (read from settings or env vars)
+# ---------------------------------------------------------------------------
+def _get_settings():
+    try:
+        from app.config import settings
+        return settings
+    except Exception:
+        return None
 
 
-def _get_bait_credentials():
-    """Read bait credentials from settings env var.
+def _cfg(attr: str, default):
+    s = _get_settings()
+    return getattr(s, attr, default) if s else default
 
-    Format: JSON string like [{"username": "root", "password": "bait_pw"}, ...]
-    Falls back to a test value if not set (for local testing only).
-    """
-    import json
-    raw = os.environ.get("MYSQL_DECOY_BAIT_CREDENTIALS", "[]")
+
+def _get_bait_credentials() -> List[Tuple[str, str]]:
+    raw = _cfg("MYSQL_DECOY_BAIT_CREDENTIALS", "[]")
     try:
         creds = json.loads(raw)
         return [(c["username"], c["password"]) for c in creds]
@@ -61,249 +69,281 @@ def _get_bait_credentials():
         return []
 
 
-def _get_version_string():
-    """Read the MySQL version string from env or default."""
-    return os.environ.get("MYSQL_DECOY_VERSION_STRING", "8.0.36-0ubuntu0.22.04.1")
-
-
-def _get_port():
-    return int(os.environ.get("MYSQL_DECOY_PORT", "3306"))
-
-
-# ============================================================================
-# JSONL stub sink (for local testing without a backend)
-# ============================================================================
+# ---------------------------------------------------------------------------
+# JSONL stub sink (local testing without a backend)
+# ---------------------------------------------------------------------------
 class JsonlStubSink:
     """Writes events as JSONL to a file. Used for local testing only."""
 
     def __init__(self, path: str = "/tmp/mysql_decoy_events.jsonl"):
         self._path = path
-        # Ensure parent dir exists
-        import os
-        os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+        os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
 
     async def persist(self, objects, broadcast_summary=None):
-        import json
-        from app.decoys.mysql.events import _serialize_for_stub
         with open(self._path, "a", encoding="utf-8") as f:
             for obj in objects:
                 f.write(json.dumps(_serialize_for_stub(obj)) + "\n")
 
 
-# ============================================================================
-# Connection state
-# ============================================================================
+# ---------------------------------------------------------------------------
+# Connection context
+# ---------------------------------------------------------------------------
 class ConnectionContext:
-    """Per-connection state."""
+    """Mutable per-connection state."""
 
-    def __init__(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
-        self.reader = reader
-        self.writer = writer
-        self.peer_ip = writer.get_extra_info("peername")[0] if writer.get_extra_info("peername") else "0.0.0.0"
-        self.peer_port = writer.get_extra_info("peername")[1] if writer.get_extra_info("peername") else 0
-        self.salt = secrets.token_bytes(20)
-        self.connection_id = id(self) & 0xFFFFFFFF
-        self.seq_id = 0
-        self.start_time = time.time()
-        self.bytes_in = 0
-        self.bytes_out = 0
-        self.commands = 0
-        self.username = None
-        self.database = None
-        self.authenticated = False
+    __slots__ = (
+        "peer_ip", "peer_port", "salt", "connection_id",
+        "start_time", "bytes_in", "bytes_out", "commands",
+        "username", "database", "authenticated",
+        "has_login_attempt", "correlation_id",
+        "login_event_id", "conn_event_id",
+    )
+
+    def __init__(self, writer: asyncio.StreamWriter):
+        peername = writer.get_extra_info("peername")
+        self.peer_ip: str = peername[0] if peername else "0.0.0.0"
+        self.peer_port: Optional[int] = peername[1] if peername else None
+        self.salt: bytes = secrets.token_bytes(20)
+        self.connection_id: int = id(self) & 0xFFFFFFFF
+        self.start_time: float = time.monotonic()
+        self.bytes_in: int = 0
+        self.bytes_out: int = 0
+        self.commands: int = 0
+        self.username: Optional[str] = None
+        self.database: Optional[str] = None
+        self.authenticated: bool = False
+        self.has_login_attempt: bool = False
+        self.correlation_id: str = str(uuid.uuid4())[:8]
+        self.login_event_id: uuid.UUID = uuid.uuid4()
+        self.conn_event_id: uuid.UUID = uuid.uuid4()
 
 
-# ============================================================================
+# ---------------------------------------------------------------------------
 # Connection handler
-# ============================================================================
+# ---------------------------------------------------------------------------
 async def handle_connection(
     reader: asyncio.StreamReader,
     writer: asyncio.StreamWriter,
     sink,
     version_string: str,
-    bait_credentials: list,
-    idle_timeout: float = IDLE_TIMEOUT,
-    conn_lifetime: float = CONN_LIFETIME,
-    max_commands: int = MAX_COMMANDS,
+    bait_credentials: List[Tuple[str, str]],
+    handshake_timeout: float = 10.0,
+    idle_timeout: float = 30.0,
+    conn_lifetime: float = 300.0,
+    max_commands: int = 200,
 ):
-    """Handle a single MySQL connection."""
-    ctx = ConnectionContext(reader, writer)
-    logger.info(f"MySQL decoy connection from {ctx.peer_ip}:{ctx.peer_port}")
+    """Handle one MySQL connection end-to-end."""
+    ctx = ConnectionContext(writer)
+    logger.info(f"MySQL decoy: new connection from {ctx.peer_ip}:{ctx.peer_port}")
 
     try:
-        deadline = time.time() + conn_lifetime
+        deadline = time.monotonic() + conn_lifetime
 
-        # 1. Send initial handshake
-        handshake_payload = build_handshake_v10(
-            ctx.connection_id, ctx.salt, version_string
-        )
-        packet = build_packet(handshake_payload, seq_id=0)
-        writer.write(packet)
+        # ── 1. Send Initial Handshake v10 ───────────────────────────────────
+        hs_payload = build_handshake_v10(ctx.connection_id, ctx.salt, version_string)
+        pkt = build_packet(hs_payload, seq_id=0)
+        writer.write(pkt)
         await writer.drain()
-        ctx.bytes_out += len(packet)
+        ctx.bytes_out += len(pkt)
 
-        # 2. Read client response (with timeout)
+        # ── 2. Read client login packet (HANDSHAKE_TIMEOUT) ─────────────────
         try:
             payload, seq_id = await asyncio.wait_for(
-                read_packet(reader, MAX_PACKET),
-                timeout=idle_timeout,
+                read_packet(reader, MAX_PACKET_BYTES),
+                timeout=handshake_timeout,
             )
-        except (asyncio.TimeoutError, asyncio.IncompleteReadError, ValueError) as e:
-            logger.warning(f"Handshake read failed from {ctx.peer_ip}: {e}")
+        except asyncio.TimeoutError:
+            logger.info(f"MySQL decoy: handshake timeout from {ctx.peer_ip}")
+            return
+        except (asyncio.IncompleteReadError, ValueError) as e:
+            logger.info(f"MySQL decoy: handshake read error from {ctx.peer_ip}: {e}")
             return
 
-        ctx.bytes_in += len(payload) + 4  # payload + header
+        ctx.bytes_in += len(payload) + 4
 
-        # 3. Parse handshake response
+        # ── 3. Parse handshake response ──────────────────────────────────────
         try:
             resp = parse_handshake_response_41(payload)
         except ValueError as e:
             if "ssl_request" in str(e):
-                logger.info(f"SSL request from {ctx.peer_ip}, closing (we don't support SSL)")
+                logger.info(f"MySQL decoy: SSL request from {ctx.peer_ip}, closing")
             else:
-                logger.warning(f"Malformed handshake from {ctx.peer_ip}: {e}")
+                logger.warning(f"MySQL decoy: malformed handshake from {ctx.peer_ip}: {e}")
             return
 
         ctx.username = resp["username"]
         ctx.database = resp["database"]
         auth_response = resp["auth_response"]
+        ctx.has_login_attempt = True
 
-        # 4. Check bait credentials
-        authenticated = False
-        for cred_username, cred_password in bait_credentials:
-            if cred_username == ctx.username:
-                if verify_native_password(auth_response, ctx.salt, cred_password.encode("utf-8")):
-                    authenticated = True
+        # ── 4. Verify bait credentials ───────────────────────────────────────
+        for cred_user, cred_pass in bait_credentials:
+            if cred_user == ctx.username:
+                if verify_native_password(
+                    auth_response, ctx.salt, cred_pass.encode("utf-8")
+                ):
+                    ctx.authenticated = True
                     break
 
-        # 5. Send OK or ERR
-        ctx.seq_id = 2
-        if authenticated:
-            ctx.authenticated = True
-            ok_payload = build_ok_packet()
-            packet = build_packet(ok_payload, seq_id=ctx.seq_id)
-            writer.write(packet)
-            await writer.drain()
-            ctx.bytes_out += len(packet)
-            logger.info(f"MySQL login accepted: user='{ctx.username}' from {ctx.peer_ip}")
-        else:
-            err_msg = f"Access denied for user '{ctx.username}'@'{ctx.peer_ip}' (using password: {'YES' if auth_response else 'NO'})"
-            err_payload = build_err_packet(1045, err_msg, sql_state="28000")
-            packet = build_packet(err_payload, seq_id=ctx.seq_id)
-            writer.write(packet)
-            await writer.drain()
-            ctx.bytes_out += len(packet)
-            logger.info(f"MySQL login denied: user='{ctx.username}' from {ctx.peer_ip}")
+        # ── 5. Emit db_login_attempt event BEFORE sending OK/ERR ────────────
+        try:
+            login_ev, login_attempt = build_login_attempt_event(
+                event_id=ctx.login_event_id,
+                source_ip=ctx.peer_ip,
+                source_port=ctx.peer_port,
+                username=ctx.username,
+                auth_response=auth_response,
+                authenticated=ctx.authenticated,
+                correlation_id=ctx.correlation_id,
+            )
+            await sink.persist([login_ev, login_attempt])
+        except Exception as e:
+            logger.error(f"MySQL decoy: failed to persist login event: {e}")
 
-        # 6. Command phase (only if authenticated)
+        # ── 6. Send OK or ERR 1045 ───────────────────────────────────────────
+        ctx.bytes_out += await _send_auth_response(
+            ctx, writer, auth_response
+        )
+
+        # ── 7. Command phase (only if authenticated) ─────────────────────────
         if ctx.authenticated:
-            while time.time() < deadline and ctx.commands < max_commands:
-                try:
-                    cmd_payload, cmd_seq = await asyncio.wait_for(
-                        read_packet(reader, MAX_PACKET),
-                        timeout=idle_timeout,
-                    )
-                except (asyncio.TimeoutError, asyncio.IncompleteReadError, ValueError) as e:
-                    logger.info(f"Connection from {ctx.peer_ip} closed: {e}")
-                    break
-
-                ctx.bytes_in += len(cmd_payload) + 4
-                ctx.commands += 1
-                ctx.seq_id = cmd_seq + 1
-
-                if not cmd_payload:
-                    break
-
-                cmd_byte = cmd_payload[0]
-                # COM_QUIT = 0x01
-                if cmd_byte == 0x01:
-                    break
-                # COM_PING = 0x0e
-                elif cmd_byte == 0x0e:
-                    ok = build_ok_packet()
-                    writer.write(build_packet(ok, seq_id=ctx.seq_id))
-                    await writer.drain()
-                    ctx.bytes_out += len(ok) + 4
-                # COM_INIT_DB = 0x02
-                elif cmd_byte == 0x02:
-                    ctx.database = cmd_payload[1:].decode("utf-8", errors="replace")
-                    ok = build_ok_packet()
-                    writer.write(build_packet(ok, seq_id=ctx.seq_id))
-                    await writer.drain()
-                    ctx.bytes_out += len(ok) + 4
-                # COM_QUERY = 0x03 (Milestone B — for now, send ERR 1064)
-                elif cmd_byte == 0x03:
-                    err = build_err_packet(1064, "You have an error in your SQL syntax", sql_state="42000")
-                    writer.write(build_packet(err, seq_id=ctx.seq_id))
-                    await writer.drain()
-                    ctx.bytes_out += len(err) + 4
-                else:
-                    err = build_err_packet(1047, "Unknown command", sql_state="HY000")
-                    writer.write(build_packet(err, seq_id=ctx.seq_id))
-                    await writer.drain()
-                    ctx.bytes_out += len(err) + 4
+            await _command_phase(
+                ctx, reader, writer, deadline, idle_timeout, max_commands
+            )
 
     except Exception as e:
-        logger.error(f"MySQL decoy error from {ctx.peer_ip}: {e}")
+        logger.error(f"MySQL decoy: unhandled error from {ctx.peer_ip}: {e}")
     finally:
-        # Log connection event
-        try:
-            duration = time.time() - ctx.start_time
-            await _log_connection_event(sink, ctx, duration)
-        except Exception:
-            pass
-
+        await _persist_connection_event(ctx, sink)
         try:
             writer.close()
-            await writer.wait_closed()
+            await asyncio.wait_for(writer.wait_closed(), timeout=2.0)
         except Exception:
             pass
 
 
-async def _log_connection_event(sink, ctx: ConnectionContext, duration: float):
-    """Build and persist a db_connection event."""
-    import uuid
-    from app.models.security_event import SecurityEvent
-
-    event = SecurityEvent(
-        id=uuid.uuid4(),
-        timestamp=datetime.now(timezone.utc),
-        source_ip=ctx.peer_ip,
-        source_port=ctx.peer_port,
-        http_method="SQL",
-        request_path="/mysql/connect",
-        query_params={},
-        headers_sanitized={},
-        user_agent="",
-        event_type="db_connection",
-        severity="low",
-        is_test_event=False,
-        correlation_id=str(uuid.uuid4())[:8],
-        metadata_payload={
-            "duration_seconds": round(duration, 2),
-            "bytes_in": ctx.bytes_in,
-            "bytes_out": ctx.bytes_out,
-            "authenticated": ctx.authenticated,
-            "username": ctx.username,
-        },
-    )
-    await sink.persist([event])
+async def _send_auth_response(
+    ctx: ConnectionContext,
+    writer: asyncio.StreamWriter,
+    auth_response: bytes,
+) -> int:
+    """Send OK or ERR 1045. Returns bytes written."""
+    seq = 2
+    if ctx.authenticated:
+        pkt = build_packet(build_ok_packet(), seq_id=seq)
+        logger.info(
+            f"MySQL decoy: login accepted user='{ctx.username}' from {ctx.peer_ip}"
+        )
+    else:
+        msg = (
+            f"Access denied for user '{ctx.username or ''}'@'{ctx.peer_ip}' "
+            f"(using password: {'YES' if auth_response else 'NO'})"
+        )
+        pkt = build_packet(build_err_packet(1045, msg, sql_state="28000"), seq_id=seq)
+        logger.info(
+            f"MySQL decoy: login denied user='{ctx.username}' from {ctx.peer_ip}"
+        )
+    writer.write(pkt)
+    await writer.drain()
+    return len(pkt)
 
 
-# ============================================================================
-# Server main
-# ============================================================================
+async def _command_phase(
+    ctx: ConnectionContext,
+    reader: asyncio.StreamReader,
+    writer: asyncio.StreamWriter,
+    deadline: float,
+    idle_timeout: float,
+    max_commands: int,
+):
+    """Handle COM_* commands after a successful login."""
+    while time.monotonic() < deadline and ctx.commands < max_commands:
+        try:
+            cmd_payload, cmd_seq = await asyncio.wait_for(
+                read_packet(reader, MAX_PACKET_BYTES),
+                timeout=idle_timeout,
+            )
+        except (asyncio.TimeoutError, asyncio.IncompleteReadError, ValueError):
+            break
+
+        ctx.bytes_in += len(cmd_payload) + 4
+        ctx.commands += 1
+        seq = cmd_seq + 1
+
+        if not cmd_payload:
+            break
+
+        cmd = cmd_payload[0]
+        if cmd == 0x01:  # COM_QUIT
+            break
+        elif cmd == 0x0E:  # COM_PING
+            pkt = build_packet(build_ok_packet(), seq_id=seq)
+            writer.write(pkt)
+            await writer.drain()
+            ctx.bytes_out += len(pkt)
+        elif cmd == 0x02:  # COM_INIT_DB
+            ctx.database = cmd_payload[1:].decode("utf-8", errors="replace")[:64]
+            pkt = build_packet(build_ok_packet(), seq_id=seq)
+            writer.write(pkt)
+            await writer.drain()
+            ctx.bytes_out += len(pkt)
+        elif cmd == 0x03:  # COM_QUERY — Milestone B placeholder
+            pkt = build_packet(
+                build_err_packet(1064, "You have an error in your SQL syntax", "42000"),
+                seq_id=seq,
+            )
+            writer.write(pkt)
+            await writer.drain()
+            ctx.bytes_out += len(pkt)
+        else:
+            pkt = build_packet(
+                build_err_packet(1047, "Unknown command", "HY000"), seq_id=seq
+            )
+            writer.write(pkt)
+            await writer.drain()
+            ctx.bytes_out += len(pkt)
+
+
+async def _persist_connection_event(ctx: ConnectionContext, sink):
+    """Build and persist the db_connection event at connection close."""
+    try:
+        duration = time.monotonic() - ctx.start_time
+        conn_ev = build_connection_event(
+            event_id=ctx.conn_event_id,
+            source_ip=ctx.peer_ip,
+            source_port=ctx.peer_port,
+            username=ctx.username,
+            authenticated=ctx.authenticated,
+            has_login_attempt=ctx.has_login_attempt,
+            duration_seconds=duration,
+            bytes_in=ctx.bytes_in,
+            bytes_out=ctx.bytes_out,
+            correlation_id=ctx.correlation_id,
+        )
+        await sink.persist([conn_ev])
+    except Exception as e:
+        logger.error(f"MySQL decoy: failed to persist connection event: {e}")
+
+
+# ---------------------------------------------------------------------------
+# Server entry point
+# ---------------------------------------------------------------------------
 async def main():
     """Start the MySQL decoy server."""
-    port = _get_port()
-    version_string = _get_version_string()
+    port = _cfg("MYSQL_DECOY_PORT", 3306)
+    version_string = _cfg("MYSQL_DECOY_VERSION_STRING", "8.0.36-0ubuntu0.22.04.1")
     bait_credentials = _get_bait_credentials()
+    handshake_timeout = _cfg("MYSQL_DECOY_HANDSHAKE_TIMEOUT", 10.0)
+    idle_timeout = _cfg("MYSQL_DECOY_IDLE_TIMEOUT", 30.0)
+    max_conns = _cfg("MYSQL_DECOY_MAX_CONNECTIONS", 100)
 
-    # Choose sink: ForwardingEventSink if BACKEND_INGEST_URL is set,
-    # JSONL stub sink otherwise
-    if os.environ.get("BACKEND_INGEST_URL"):
+    if os.environ.get("BACKEND_INGEST_URL") or _cfg("BACKEND_INGEST_URL", ""):
         from app.core.event_sink import ForwardingEventSink, set_event_sink
         sink = ForwardingEventSink()
+        spool_dir = _cfg("MYSQL_DECOY_SPOOL_DIR", "/tmp/argus_mysql_decoy_spool")
+        sink._spool_dir = __import__("pathlib").Path(spool_dir)
+        sink._spool_file = sink._spool_dir / "events.jsonl"
+        sink._spool_dir.mkdir(parents=True, exist_ok=True)
         sink.replay_spool_on_start()
         sink.start_worker()
         set_event_sink(sink)
@@ -312,17 +352,34 @@ async def main():
         sink = JsonlStubSink()
         logger.info("MySQL decoy: using JSONL stub sink")
 
-    sem = asyncio.Semaphore(MAX_CONNECTIONS)
+    # Active-connection counter (not a semaphore — 201st is closed, not queued)
+    _active = [0]
 
-    async def limited_handler(reader, writer):
-        async with sem:
-            await handle_connection(
-                reader, writer, sink, version_string, bait_credentials
+    async def handler(reader, writer):
+        _active[0] += 1
+        if _active[0] > max_conns:
+            _active[0] -= 1
+            logger.warning(
+                f"MySQL decoy: connection cap ({max_conns}) reached, "
+                f"closing {writer.get_extra_info('peername')}"
             )
+            try:
+                writer.close()
+                await asyncio.wait_for(writer.wait_closed(), timeout=1.0)
+            except Exception:
+                pass
+            return
+        try:
+            await handle_connection(
+                reader, writer, sink, version_string, bait_credentials,
+                handshake_timeout=handshake_timeout,
+                idle_timeout=idle_timeout,
+            )
+        finally:
+            _active[0] -= 1
 
-    server = await asyncio.start_server(limited_handler, "0.0.0.0", port)
-    logger.info(f"MySQL decoy listening on port {port} (version: {version_string})")
-
+    server = await asyncio.start_server(handler, "0.0.0.0", port)
+    logger.info(f"MySQL decoy listening on port {port} (max_conns={max_conns})")
     async with server:
         await server.serve_forever()
 
