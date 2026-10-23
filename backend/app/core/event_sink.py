@@ -318,6 +318,9 @@ class ForwardingEventSink(EventSink):
                 if success:
                     batch.clear()
                     backoff = 1.0
+                    # If spool has events, try replaying now that backend is up (R4.1)
+                    if self._spool_file.exists():
+                        await self._replay_spool(httpx)
                 else:
                     # Spool the failed batch
                     self._append_spool(batch)
