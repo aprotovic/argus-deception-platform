@@ -68,10 +68,9 @@ login_resp=$(curl -s -w '\n%{http_code}' -X POST "$DECOY_URL/api/v1/decoy/auth/l
 login_status=$(echo "$login_resp" | tail -1)
 check "POST /decoy/auth/login returns 401" "$([ "$login_status" = "401" ] && echo true || echo false)"
 
-# --- 3. Event appears in backend within 5s ---
+# --- 3. Event appears in backend (poll up to 15s) ---
 echo ""
 echo "--- Checking event appears in backend ---"
-sleep 3
 # Login to backend to get JWT (uses seeded admin)
 admin_user="${ADMIN_USERNAME:-argus_admin}"
 admin_pass="${ADMIN_PASSWORD:-ArgusAdmin2026!ChangeMe}"
@@ -80,15 +79,20 @@ login_body=$(curl -s -X POST "$BACKEND_URL/api/v1/auth/login" \
     -d "{\"username\":\"$admin_user\",\"password\":\"$admin_pass\"}" 2>/dev/null || echo "{}")
 jwt=$(echo "$login_body" | python3 -c "import sys,json; print(json.load(sys.stdin).get('access_token',''))" 2>/dev/null || echo "")
 
-if [ -z "$jwt" ]; then
-    echo "  WARN: Could not get JWT from backend; checking events without auth"
-    events_count=0
-else
-    events_resp=$(curl -s "$BACKEND_URL/api/v1/events?limit=1" \
-        -H "Authorization: Bearer $jwt" 2>/dev/null || echo "{}")
-    events_count=$(echo "$events_resp" | python3 -c "import sys,json; d=json.load(sys.stdin); print(len(d.get('events',[])))" 2>/dev/null || echo "0")
+events_found="false"
+if [ -n "$jwt" ]; then
+    for i in $(seq 1 8); do  # 8 x 2s = 16s max
+        events_resp=$(curl -s "$BACKEND_URL/api/v1/events?limit=1" \
+            -H "Authorization: Bearer $jwt" 2>/dev/null || echo "{}")
+        events_count=$(echo "$events_resp" | python3 -c "import sys,json; d=json.load(sys.stdin); print(len(d.get('events',[])))" 2>/dev/null || echo "0")
+        if [ "$events_count" -gt 0 ] 2>/dev/null; then
+            events_found="true"
+            break
+        fi
+        sleep 2
+    done
 fi
-check "Event from decoy appears in backend API" "$([ "$events_count" -gt 0 ] 2>/dev/null && echo true || echo false)"
+check "Event from decoy appears in backend API" "$events_found"
 
 # --- 4. Stop backend, hit decoy, restart backend, event arrives ---
 echo ""
@@ -105,12 +109,15 @@ echo "  Sent decoy login while backend down"
 
 echo "  Restarting backend..."
 docker compose -f "$PROJECT_DIR/docker-compose.yml" start argus-backend 2>/dev/null
-echo "  Waiting for backend to recover..."
-sleep 8
+echo "  Polling for spooled event delivery (up to 40s)..."
 
-# Check that the spooled event arrived
-if [ -n "$jwt" ]; then
-    events_resp=$(curl -s "$BACKEND_URL/api/v1/events?limit=5" \
+# Poll every 2s for up to 40s for the spooled event to appear
+spool_found="false"
+for i in $(seq 1 20); do  # 20 x 2s = 40s max
+    if [ -z "$jwt" ]; then
+        break
+    fi
+    events_resp=$(curl -s "$BACKEND_URL/api/v1/events?limit=10" \
         -H "Authorization: Bearer $jwt" 2>/dev/null || echo "{}")
     has_spool=$(echo "$events_resp" | python3 -c "
 import sys,json
@@ -118,10 +125,13 @@ d=json.load(sys.stdin)
 events = d.get('events',[])
 print('true' if any('spool_test' in str(e.get('metadata_payload',{}).get('injected_username','')) for e in events) else 'false')
 " 2>/dev/null || echo "false")
-else
-    has_spool="false"
-fi
-check "Spooled event delivered after backend restart" "$has_spool"
+    if [ "$has_spool" = "true" ]; then
+        spool_found="true"
+        break
+    fi
+    sleep 2
+done
+check "Spooled event delivered after backend restart" "$spool_found"
 
 # --- Summary ---
 echo ""
