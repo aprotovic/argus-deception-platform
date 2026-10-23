@@ -106,7 +106,10 @@ async def _ensure_default_decoy(db: AsyncSession) -> uuid.UUID:
             is_active=True,
         )
         db.add(decoy)
-        await db.commit()
+        try:
+            await db.commit()
+        except IntegrityError:
+            await db.rollback()
     return default_id
 
 
