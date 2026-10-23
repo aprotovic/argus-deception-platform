@@ -100,7 +100,8 @@ async def test_decoy_health_live(decoy_client):
     response = await decoy_client.get("/health/live")
     assert response.status_code == 200
     data = response.json()
-    assert data["status"] == "alive"
+    assert data["status"] == "ok"
+    assert "service" not in data
 
 
 @pytest.mark.asyncio
