@@ -41,10 +41,10 @@ class WebSocketManager:
 
     async def broadcast_event(self, event_data: Dict[str, Any]) -> None:
         """Broadcasts a newly ingested security event to all connected dashboards and fires alerts."""
-        # 1. Trigger Telegram alert for critical and high severity events (non-test)
+        # 1. Trigger Telegram alert for critical, high, and medium severity events (non-test)
         severity = str(event_data.get("severity", "low")).lower()
         is_test = bool(event_data.get("is_test_event", False))
-        if severity in ("critical", "high") and not is_test:
+        if severity in ("critical", "high", "medium") and not is_test:
             try:
                 from app.core.alerts import send_telegram_alert
                 event_type = str(event_data.get("event_type", "unknown"))

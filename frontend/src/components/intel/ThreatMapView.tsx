@@ -159,7 +159,7 @@ export const ThreatMapView: React.FC = () => {
   const [sevFilter, setSevFilter] = useState<'all' | 'critical' | 'high'>('all');
   const [vectorFilter, setVectorFilter] = useState<string>('all');
   const [showArcs, setShowArcs] = useState(true);
-  const [showLabels, setShowLabels] = useState(true);
+  const [showLabels, setShowLabels] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -261,25 +261,30 @@ export const ThreatMapView: React.FC = () => {
 
     const targetMarker = L.marker(ENCLAVE_COORDS, { icon: targetIcon, zIndexOffset: 1000 });
     targetMarker.bindTooltip(
-      `<div style="font-weight:700; color:#10b981; font-family:'Chakra Petch',sans-serif;">🛡️ ARGUS DEFENSE ENCLAVE (STATION 01)</div>`,
-      { permanent: true, direction: 'bottom', offset: [0, 16], className: 'argus-enclave-tag' }
+      `<div style="font-weight:700; color:#10b981; font-family:'Chakra Petch',sans-serif; padding:2px 4px;">
+        🛡️ ARGUS DEFENSE ENCLAVE
+        <div style="font-size:0.68rem; color:#6ee7b7; font-weight:normal; font-family:monospace;">STATION 01 • ACTIVE RADAR</div>
+      </div>`,
+      { permanent: false, direction: 'bottom', offset: [0, 16], className: 'argus-enclave-tag' }
     );
     markersLayerRef.current.addLayer(targetMarker);
 
-    // 2. Disperse overlapping local points
+    // 2. Disperse overlapping local/subnet points into an orbital constellation
     const coordCounts: Record<string, number> = {};
     const validGeo = filteredGeo
       .filter((g) => g.lat !== 0 || g.lon !== 0)
       .map((g) => {
-        const key = `${g.lat.toFixed(2)},${g.lon.toFixed(2)}`;
+        // Group points sharing approximate coordinates (~15-20km zone)
+        const key = `${Math.round(g.lat * 4) / 4},${Math.round(g.lon * 4) / 4}`;
         const idx = coordCounts[key] || 0;
         coordCounts[key] = idx + 1;
         if (idx > 0) {
-          const angle = (idx * 2 * Math.PI) / 4;
+          const angle = (idx * 2 * Math.PI) / 5 + (idx * 0.45);
+          const radius = 0.20 + (idx * 0.12);
           return {
             ...g,
-            lat: g.lat + Math.sin(angle) * 0.05,
-            lon: g.lon + Math.cos(angle) * 0.05,
+            lat: g.lat + Math.sin(angle) * radius,
+            lon: g.lon + Math.cos(angle) * radius,
           };
         }
         return g;
@@ -330,24 +335,30 @@ export const ThreatMapView: React.FC = () => {
 
       const marker = L.marker([g.lat, g.lon], { icon: customIcon });
 
-      if (showLabels) {
-        const cityName = g.city || g.country || 'Hostile Zone';
-        marker.bindTooltip(
-          `
-          <div style="display:flex; align-items:center; gap:6px;">
-            <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:${col}; box-shadow:0 0 6px ${col};"></span>
-            <span style="color:#ffffff; font-weight:700;">${cityName}</span>
-            <span style="color:#94a3b8; font-family:monospace; font-size:0.68rem;">(${g.ip})</span>
+      const cityName = g.city || g.country || 'Hostile Zone';
+      const tooltipContent = `
+        <div style="font-family:'Chakra Petch',sans-serif; min-width:145px; padding:2px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; gap:8px;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${col}; box-shadow:0 0 8px ${col};"></span>
+              <span style="color:#ffffff; font-weight:700; font-size:0.8rem;">${cityName}</span>
+            </div>
+            <span style="color:${col}; font-size:0.65rem; font-weight:700; text-transform:uppercase;">${g.max_severity}</span>
           </div>
-          `,
-          {
-            permanent: true,
-            direction: 'top',
-            offset: [0, -r - 4],
-            className: 'argus-permanent-tag',
-          }
-        );
-      }
+          <div style="color:#94a3b8; font-family:monospace; font-size:0.72rem; margin-bottom:4px;">IP: ${g.ip}</div>
+          <div style="font-size:0.68rem; color:#64748b; display:flex; justify-content:space-between; gap:10px;">
+            <span>Hits: <strong style="color:#e2e8f0;">${g.event_count}</strong></span>
+            <span>Vector: <strong style="color:#38bdf8;">${g.top_event_type}</strong></span>
+          </div>
+        </div>
+      `;
+
+      marker.bindTooltip(tooltipContent, {
+        permanent: showLabels,
+        direction: 'top',
+        offset: [0, -r - 4],
+        className: 'argus-radar-tooltip',
+      });
 
       marker.on('click', () => {
         setSelectedIP(g.ip);
@@ -434,6 +445,19 @@ export const ThreatMapView: React.FC = () => {
           background: rgba(13, 18, 30, 0.9) !important;
           color: #10b981 !important;
           border-color: rgba(16, 185, 129, 0.3) !important;
+        }
+        .argus-radar-tooltip {
+          background: rgba(4, 9, 20, 0.94) !important;
+          border: 1px solid rgba(16, 185, 129, 0.45) !important;
+          color: #e2e8f0 !important;
+          font-family: 'Chakra Petch', sans-serif !important;
+          padding: 6px 10px !important;
+          border-radius: 6px !important;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.85) !important;
+          backdrop-filter: blur(8px) !important;
+        }
+        .argus-radar-tooltip::before {
+          border-top-color: rgba(16, 185, 129, 0.45) !important;
         }
         .argus-permanent-tag {
           background: rgba(4, 8, 18, 0.95) !important;
@@ -648,6 +672,7 @@ export const ThreatMapView: React.FC = () => {
             {/* Labels Toggle */}
             <button
               onClick={() => setShowLabels(!showLabels)}
+              title="Toggle between interactive hover HUD and pinned labels"
               style={{
                 background: showLabels ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
                 border: `1px solid ${showLabels ? 'rgba(16, 185, 129, 0.4)' : 'rgba(255,255,255,0.1)'}`,
@@ -656,7 +681,7 @@ export const ThreatMapView: React.FC = () => {
                 cursor: 'pointer', fontFamily: "'Chakra Petch', sans-serif",
               }}
             >
-              🏷️ City Tags: {showLabels ? 'ON' : 'OFF'}
+              🏷️ Labels: {showLabels ? 'PINNED' : 'HOVER HUD'}
             </button>
 
             {/* Reset World View */}
