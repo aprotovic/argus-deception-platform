@@ -1,5 +1,22 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Globe, Shield, AlertTriangle, TrendingUp, RefreshCw, Download, Zap, Radio, AlertCircle, Maximize2 } from 'lucide-react';
+import {
+  Globe,
+  Shield,
+  AlertTriangle,
+  TrendingUp,
+  RefreshCw,
+  Download,
+  Zap,
+  Radio,
+  AlertCircle,
+  Maximize2,
+  Minimize2,
+  Filter,
+  Crosshair,
+  Copy,
+  Check,
+  X,
+} from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { api } from '../../services/api';
@@ -36,6 +53,93 @@ const SEV_COLOR: Record<string, string> = {
   low: '#22c55e',
 };
 
+// Target ARGUS Defense Honeypot Station coordinates (HQ Enclave)
+const ENCLAVE_COORDS: [number, number] = [9.0245, 38.7485];
+
+// MITRE ATT&CK Mapping Encyclopedia for Analysts
+const MITRE_LOOKUP: Record<string, { id: string; name: string; tactic: string; desc: string }> = {
+  sql_injection: {
+    id: 'T1190',
+    name: 'Exploit Public-Facing Application',
+    tactic: 'Initial Access',
+    desc: 'Adversary submitted malicious SQL injection payload to bypass application authentication boundary.',
+  },
+  login_attempt: {
+    id: 'T1110',
+    name: 'Brute Force / Password Spraying',
+    tactic: 'Credential Access',
+    desc: 'Automated adversary botnet cycling credential pairs against simulated contractor authentication portal.',
+  },
+  file_upload: {
+    id: 'T1105',
+    name: 'Ingress Tool Transfer',
+    tactic: 'Command & Control',
+    desc: 'Adversary attempted uploading weaponized web shell or backdoor payload into diagnostic endpoint.',
+  },
+  honeytoken_access: {
+    id: 'T1083',
+    name: 'File and Directory Discovery',
+    tactic: 'Discovery',
+    desc: 'Adversary tripped tripwire honeytoken breadcrumb embedded in leaked source code.',
+  },
+  contractor_credential_use: {
+    id: 'T1078',
+    name: 'Valid Accounts: Local Accounts',
+    tactic: 'Defense Evasion',
+    desc: 'Adversary utilized exposed contractor canary credentials trapped in decoy comments.',
+  },
+  terminal_exec: {
+    id: 'T1059',
+    name: 'Command and Scripting Interpreter',
+    tactic: 'Execution',
+    desc: 'Simulated tactical shell command execution captured in decoy sandbox environment.',
+  },
+  recon_probe: {
+    id: 'T1595',
+    name: 'Active Scanning: Vulnerability Scanning',
+    tactic: 'Reconnaissance',
+    desc: 'Automated reconnaissance crawler probing for sensitive paths (.env, wp-login, config dumps).',
+  },
+  db_query: {
+    id: 'T1213',
+    name: 'Data from Information Repositories',
+    tactic: 'Collection',
+    desc: 'Adversary issued raw SQL commands against simulated MySQL protocol decoy instance on port 3306.',
+  },
+};
+
+// Interpolate curved Bezier trajectory arc between two geographic coordinates
+function getArcPoints(start: [number, number], end: [number, number], numPoints = 28): [number, number][] {
+  const [lat1, lon1] = start;
+  const [lat2, lon2] = end;
+
+  const dLat = lat2 - lat1;
+  const dLon = lon2 - lon1;
+  const dist = Math.sqrt(dLat * dLat + dLon * dLon);
+
+  if (dist < 0.2) return [];
+
+  const midLat = (lat1 + lat2) / 2;
+  const midLon = (lon1 + lon2) / 2;
+
+  // Arc bend height perpendicular to trajectory
+  const bend = Math.min(dist * 0.22, 24);
+  const normalLat = -dLon / dist;
+  const normalLon = dLat / dist;
+
+  const ctrlLat = midLat + normalLat * bend;
+  const ctrlLon = midLon + normalLon * bend;
+
+  const points: [number, number][] = [];
+  for (let i = 0; i <= numPoints; i++) {
+    const t = i / numPoints;
+    const lat = (1 - t) * (1 - t) * lat1 + 2 * (1 - t) * t * ctrlLat + t * t * lat2;
+    const lon = (1 - t) * (1 - t) * lon1 + 2 * (1 - t) * t * ctrlLon + t * t * lon2;
+    points.push([lat, lon]);
+  }
+  return points;
+}
+
 function fmtDt(dt: string) {
   try { return new Date(dt).toLocaleString(); } catch { return dt; }
 }
@@ -49,10 +153,19 @@ export const ThreatMapView: React.FC = () => {
   const [section, setSection] = useState<'map' | 'scores'>('map');
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [copiedIOC, setCopiedIOC] = useState(false);
+
+  // SOC Analyst Controls & Filters
+  const [sevFilter, setSevFilter] = useState<'all' | 'critical' | 'high'>('all');
+  const [vectorFilter, setVectorFilter] = useState<string>('all');
+  const [showArcs, setShowArcs] = useState(true);
+  const [showLabels, setShowLabels] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
+  const arcsLayerRef = useRef<L.LayerGroup | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -76,13 +189,13 @@ export const ThreatMapView: React.FC = () => {
     fetchData();
   }, [fetchData]);
 
-  // Initialize Real Leaflet Map with CartoDB Dark Matter tiles
+  // Initialize Real Leaflet Map with Esri World Dark Gray Canvas
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
     if (!mapInstanceRef.current) {
       const map = L.map(mapContainerRef.current, {
-        center: [20, 10],
+        center: [22, 18],
         zoom: 2.2,
         minZoom: 2,
         maxZoom: 10,
@@ -90,20 +203,22 @@ export const ThreatMapView: React.FC = () => {
         attributionControl: false,
       });
 
-      // Esri World Dark Gray Canvas — Geopolitical SOC Base Map
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-        minZoom: 2,
-        maxZoom: 10,
-        attribution: 'Esri, DeLorme, NAVTEQ',
-      }).addTo(map);
+      // Esri World Dark Gray Canvas Base
+      L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+        { minZoom: 2, maxZoom: 10, attribution: 'Esri, DeLorme, NAVTEQ' }
+      ).addTo(map);
 
-      // Borders and country labels overlay
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
-        minZoom: 2,
-        maxZoom: 10,
-      }).addTo(map);
+      // Borders and geopolitical reference labels overlay
+      L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
+        { minZoom: 2, maxZoom: 10 }
+      ).addTo(map);
 
+      // Dedicated layers for attack trajectory arcs and markers
+      arcsLayerRef.current = L.layerGroup().addTo(map);
       markersLayerRef.current = L.layerGroup().addTo(map);
+
       mapInstanceRef.current = map;
     }
 
@@ -115,16 +230,47 @@ export const ThreatMapView: React.FC = () => {
     };
   }, []);
 
-  // Sync threat markers whenever geoData changes
-  useEffect(() => {
-    if (!mapInstanceRef.current || !markersLayerRef.current) return;
-    markersLayerRef.current.clearLayers();
+  // Filtered dataset based on analyst controls
+  const filteredGeo = geoData.filter((g) => {
+    if (sevFilter === 'critical' && g.max_severity !== 'critical') return false;
+    if (sevFilter === 'high' && g.max_severity !== 'critical' && g.max_severity !== 'high') return false;
+    if (vectorFilter !== 'all' && g.top_event_type !== vectorFilter) return false;
+    return true;
+  });
 
-    // Disperse overlapping points (e.g. laptop & phone on same local network) so each has its own distinct dot & tag
+  // Render Markers, Trajectory Arcs, and Target Enclave Node
+  useEffect(() => {
+    if (!mapInstanceRef.current || !markersLayerRef.current || !arcsLayerRef.current) return;
+    markersLayerRef.current.clearLayers();
+    arcsLayerRef.current.clearLayers();
+
+    // 1. Draw Target ARGUS Defense Sensor Station
+    const targetIcon = L.divIcon({
+      className: 'argus-target-node',
+      html: `
+        <div style="position:relative; width:34px; height:34px; cursor:pointer;">
+          <div style="position:absolute; inset:-8px; border-radius:50%; border:1.5px solid #10b981; animation:enclave-ping 2.5s infinite; opacity:0.6;"></div>
+          <div style="position:absolute; inset:0; border-radius:50%; background:rgba(16,185,129,0.25); border:2px solid #10b981; box-shadow:0 0 20px #10b981; display:flex; align-items:center; justify-content:center;">
+            <span style="font-size:14px;">🛡️</span>
+          </div>
+        </div>
+      `,
+      iconSize: [34, 34],
+      iconAnchor: [17, 17],
+    });
+
+    const targetMarker = L.marker(ENCLAVE_COORDS, { icon: targetIcon, zIndexOffset: 1000 });
+    targetMarker.bindTooltip(
+      `<div style="font-weight:700; color:#10b981; font-family:'Chakra Petch',sans-serif;">🛡️ ARGUS DEFENSE ENCLAVE (STATION 01)</div>`,
+      { permanent: true, direction: 'bottom', offset: [0, 16], className: 'argus-enclave-tag' }
+    );
+    markersLayerRef.current.addLayer(targetMarker);
+
+    // 2. Disperse overlapping local points
     const coordCounts: Record<string, number> = {};
-    const validGeo = (geoData || [])
-      .filter(g => g.lat !== 0 || g.lon !== 0)
-      .map(g => {
+    const validGeo = filteredGeo
+      .filter((g) => g.lat !== 0 || g.lon !== 0)
+      .map((g) => {
         const key = `${g.lat.toFixed(2)},${g.lon.toFixed(2)}`;
         const idx = coordCounts[key] || 0;
         coordCounts[key] = idx + 1;
@@ -132,22 +278,47 @@ export const ThreatMapView: React.FC = () => {
           const angle = (idx * 2 * Math.PI) / 4;
           return {
             ...g,
-            lat: g.lat + Math.sin(angle) * 0.04,
-            lon: g.lon + Math.cos(angle) * 0.04,
+            lat: g.lat + Math.sin(angle) * 0.05,
+            lon: g.lon + Math.cos(angle) * 0.05,
           };
         }
         return g;
       });
 
+    // 3. Render Hostile Markers & Attack Beams
     validGeo.forEach((g) => {
       const col = SEV_COLOR[g.max_severity] || '#22c55e';
       const r = Math.min(8 + Math.log2(g.event_count + 1) * 3, 24);
 
-      // Custom pulsing HTML radar marker
+      // Curved Trajectory Arc from Attacker Origin -> ARGUS Enclave
+      if (showArcs) {
+        const arcPoints = getArcPoints([g.lat, g.lon], ENCLAVE_COORDS);
+        if (arcPoints.length > 0) {
+          // Glow background arc
+          const glowArc = L.polyline(arcPoints, {
+            color: col,
+            weight: 3.5,
+            opacity: 0.18,
+          });
+          arcsLayerRef.current?.addLayer(glowArc);
+
+          // Flowing particle beam line
+          const beamArc = L.polyline(arcPoints, {
+            color: col,
+            weight: 1.8,
+            opacity: 0.85,
+            dashArray: '8, 14',
+            className: 'argus-attack-beam',
+          });
+          arcsLayerRef.current?.addLayer(beamArc);
+        }
+      }
+
+      // Tactical Hostile Marker
       const customIcon = L.divIcon({
         className: 'argus-radar-marker',
         html: `
-          <div style="position:relative; width:${r*2}px; height:${r*2}px; cursor:pointer;">
+          <div style="position:relative; width:${r * 2}px; height:${r * 2}px; cursor:pointer;">
             <div style="position:absolute; inset:-8px; border-radius:50%; border:1px solid ${col}; opacity:0.4; animation:argus-ping 2s infinite ease-out;"></div>
             <div style="position:absolute; inset:0; border-radius:50%; background:${col}; opacity:0.85; box-shadow:0 0 14px ${col}; border:1.5px solid #ffffff;"></div>
             <div style="position:absolute; inset:35%; border-radius:50%; background:#ffffff;"></div>
@@ -159,43 +330,24 @@ export const ThreatMapView: React.FC = () => {
 
       const marker = L.marker([g.lat, g.lon], { icon: customIcon });
 
-      // Permanent City & IP callout tag visible at all zoom levels
-      const cityName = g.city || g.country || 'Target Area';
-      marker.bindTooltip(
-        `
-        <div style="display:flex; align-items:center; gap:6px;">
-          <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:${col}; box-shadow:0 0 6px ${col};"></span>
-          <span style="color:#ffffff; font-weight:700;">${cityName}</span>
-          <span style="color:#94a3b8; font-family:monospace; font-size:0.68rem;">(${g.ip})</span>
-        </div>
-        `,
-        {
-          permanent: true,
-          direction: 'top',
-          offset: [0, -r - 4],
-          className: 'argus-permanent-tag',
-        }
-      );
-
-      const popupHtml = `
-        <div style="font-family:'Chakra Petch',sans-serif; background:#070d19; color:#e2e8f0; padding:12px 14px; border-radius:8px; border:1px solid ${col}; min-width:220px; box-shadow:0 0 16px rgba(0,0,0,0.8);">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <span style="font-size:0.95rem; font-family:monospace; color:#ffffff; font-weight:700;">${g.ip}</span>
-            <span style="font-size:0.65rem; background:${col}25; color:${col}; padding:2px 6px; border-radius:4px; font-weight:700;">${g.max_severity.toUpperCase()}</span>
+      if (showLabels) {
+        const cityName = g.city || g.country || 'Hostile Zone';
+        marker.bindTooltip(
+          `
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:${col}; box-shadow:0 0 6px ${col};"></span>
+            <span style="color:#ffffff; font-weight:700;">${cityName}</span>
+            <span style="color:#94a3b8; font-family:monospace; font-size:0.68rem;">(${g.ip})</span>
           </div>
-          <div style="font-size:0.75rem; color:#94a3b8; margin:3px 0;">📍 ${g.city ? g.city + ', ' : ''}${g.country} (${g.country_code})</div>
-          <div style="font-size:0.7rem; color:#64748b;">🏢 ${g.isp || 'Host'}</div>
-          <div style="margin-top:10px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.1); font-size:0.72rem; display:flex; justify-content:space-between;">
-            <span>Volume: <b style="color:#fff;">${g.event_count} events</b></span>
-            <span>Vector: <b style="color:#fff;">${g.top_event_type.replace(/_/g,' ')}</b></span>
-          </div>
-        </div>
-      `;
-
-      marker.bindPopup(popupHtml, {
-        className: 'argus-dark-popup',
-        closeButton: false,
-      });
+          `,
+          {
+            permanent: true,
+            direction: 'top',
+            offset: [0, -r - 4],
+            className: 'argus-permanent-tag',
+          }
+        );
+      }
 
       marker.on('click', () => {
         setSelectedIP(g.ip);
@@ -204,11 +356,10 @@ export const ThreatMapView: React.FC = () => {
       markersLayerRef.current?.addLayer(marker);
     });
 
-    // Invalidate size in case tab just became visible
     setTimeout(() => {
       mapInstanceRef.current?.invalidateSize();
     }, 150);
-  }, [geoData]);
+  }, [filteredGeo, showArcs, showLabels]);
 
   const handleSimulateGlobal = async () => {
     setSimulating(true);
@@ -235,8 +386,14 @@ export const ThreatMapView: React.FC = () => {
     }
   };
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedIOC(true);
+    setTimeout(() => setCopiedIOC(false), 2000);
+  };
+
   const focusThreatOnMap = (t: ThreatScore) => {
-    const geo = geoData.find(g => g.ip === t.ip);
+    const geo = geoData.find((g) => g.ip === t.ip);
     if (geo && geo.lat !== 0 && geo.lon !== 0 && mapInstanceRef.current) {
       setSection('map');
       setSelectedIP(t.ip);
@@ -244,40 +401,34 @@ export const ThreatMapView: React.FC = () => {
     }
   };
 
-  const card = (label: string, value: number | string, color: string, icon: React.ReactNode) => (
-    <div style={{
-      background: 'rgba(13,18,30,0.85)',
-      border: `1px solid ${color}44`,
-      borderRadius: '8px', padding: '16px',
-      display: 'flex', alignItems: 'center', gap: '12px',
-    }}>
-      <span style={{ color }}>{icon}</span>
-      <div>
-        <div style={{ fontSize: '1.6rem', fontWeight: 700, color, fontFamily: "'Chakra Petch',sans-serif" }}>{value}</div>
-        <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', letterSpacing: '0.06em', marginTop: '2px' }}>{label}</div>
-      </div>
-    </div>
-  );
+  // Currently inspected threat details for the Analyst Dossier side-panel
+  const inspectedGeo = geoData.find((g) => g.ip === selectedIP);
+  const inspectedThreat = threats.find((t) => t.ip === selectedIP);
+  const inspectedMitre = inspectedGeo ? MITRE_LOOKUP[inspectedGeo.top_event_type] || MITRE_LOOKUP['recon_probe'] : null;
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
+    <div style={{ padding: '24px', maxWidth: '1440px', margin: '0 auto' }}>
       <style>{`
         @keyframes argus-ping {
           0% { transform: scale(0.9); opacity: 0.8; }
           70% { transform: scale(2.2); opacity: 0; }
           100% { transform: scale(2.2); opacity: 0; }
         }
+        @keyframes enclave-ping {
+          0% { transform: scale(0.85); opacity: 0.9; }
+          50% { transform: scale(1.6); opacity: 0.2; }
+          100% { transform: scale(0.85); opacity: 0.9; }
+        }
+        @keyframes arc-flow {
+          0% { stroke-dashoffset: 44; }
+          100% { stroke-dashoffset: 0; }
+        }
+        .argus-attack-beam {
+          animation: arc-flow 1.4s linear infinite;
+        }
         .leaflet-container {
           background: #020712 !important;
           font-family: 'Chakra Petch', sans-serif !important;
-        }
-        .leaflet-popup-content-wrapper {
-          background: transparent !important;
-          box-shadow: none !important;
-          padding: 0 !important;
-        }
-        .leaflet-popup-tip {
-          background: #070d19 !important;
         }
         .leaflet-control-zoom a {
           background: rgba(13, 18, 30, 0.9) !important;
@@ -298,18 +449,33 @@ export const ThreatMapView: React.FC = () => {
         .argus-permanent-tag::before {
           border-top-color: rgba(16, 185, 129, 0.45) !important;
         }
+        .argus-enclave-tag {
+          background: rgba(6, 18, 12, 0.95) !important;
+          border: 1px solid #10b981 !important;
+          padding: 4px 10px !important;
+          border-radius: 4px !important;
+          box-shadow: 0 0 16px rgba(16,185,129,0.3) !important;
+        }
       `}</style>
 
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+      {/* ── Top Analyst Console Bar ── */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '14px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <Globe size={28} color="#10b981" />
+          <div style={{
+            width: 44, height: 44, borderRadius: '8px',
+            background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.35)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Crosshair size={24} color="#10b981" />
+          </div>
           <div>
-            <div style={{ fontSize: '1.35rem', fontFamily: "'Chakra Petch',sans-serif", fontWeight: 700, color: '#e2e8f0', letterSpacing: '0.04em' }}>
-              REAL-TIME GEOGRAPHIC THREAT INTELLIGENCE
+            <div style={{ fontSize: '1.4rem', fontFamily: "'Chakra Petch',sans-serif", fontWeight: 700, color: '#f1f5f9', letterSpacing: '0.04em' }}>
+              GLOBAL THREAT INTELLIGENCE &bull; RADAR CONSOLE
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '2px' }}>
-              CartoDB Satellite Dark Mesh &bull; Attacker Profiling &bull; MITRE ATT&amp;CK Framework &bull; Telegram Alerts
+            <div style={{ fontSize: '0.74rem', color: 'var(--text-dim)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>CTI Telemetry Stream</span> &bull;
+              <span>MITRE ATT&amp;CK Mapping</span> &bull;
+              <span>Automated Decoy Splunk/Telegram Ingress</span>
             </div>
           </div>
         </div>
@@ -319,8 +485,8 @@ export const ThreatMapView: React.FC = () => {
             onClick={handleSimulateGlobal}
             disabled={simulating}
             style={{
-              display: 'flex', alignItems: 'center', gap: '8px',
-              background: 'linear-gradient(135deg, rgba(239,68,68,0.2) 0%, rgba(239,68,68,0.08) 100%)',
+              display: 'flex', alignItems: 'center', gap: '7px',
+              background: 'linear-gradient(135deg, rgba(239,68,68,0.2) 0%, rgba(239,68,68,0.06) 100%)',
               border: '1px solid rgba(239,68,68,0.4)',
               borderRadius: '6px', color: '#f87171', padding: '8px 16px',
               cursor: simulating ? 'not-allowed' : 'pointer', fontSize: '0.8rem',
@@ -331,15 +497,19 @@ export const ThreatMapView: React.FC = () => {
             {simulating ? 'INJECTING THREATS...' : 'INJECT DEMO THREATS'}
           </button>
 
-          <button onClick={fetchData} disabled={loading} style={{
-            display: 'flex', alignItems: 'center', gap: '8px',
-            background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)',
-            borderRadius: '6px', color: '#10b981', padding: '8px 16px',
-            cursor: loading ? 'not-allowed' : 'pointer', fontSize: '0.8rem',
-            fontFamily: "'Chakra Petch',sans-serif", letterSpacing: '0.04em',
-          }}>
+          <button
+            onClick={fetchData}
+            disabled={loading}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '7px',
+              background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)',
+              borderRadius: '6px', color: '#10b981', padding: '8px 16px',
+              cursor: loading ? 'not-allowed' : 'pointer', fontSize: '0.8rem',
+              fontFamily: "'Chakra Petch',sans-serif", letterSpacing: '0.04em',
+            }}
+          >
             <RefreshCw size={14} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
-            {loading ? 'REFRESHING...' : 'REFRESH'}
+            {loading ? 'SYNCING...' : 'SYNC RADAR'}
           </button>
         </div>
       </div>
@@ -348,7 +518,7 @@ export const ThreatMapView: React.FC = () => {
         <div style={{
           background: 'rgba(239,68,68,0.15)', border: '1px solid #ef4444',
           borderRadius: '8px', padding: '12px 18px', color: '#f87171',
-          marginBottom: '20px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '10px'
+          marginBottom: '18px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '10px'
         }}>
           <AlertCircle size={16} />
           <span>{errorMsg}</span>
@@ -359,141 +529,387 @@ export const ThreatMapView: React.FC = () => {
         <div style={{
           background: 'rgba(16,185,129,0.15)', border: '1px solid #10b981',
           borderRadius: '8px', padding: '12px 18px', color: '#10b981',
-          marginBottom: '20px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '10px'
+          marginBottom: '18px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '10px'
         }}>
           <Radio size={16} />
           <span>{toastMsg}</span>
         </div>
       )}
 
-      {/* Stats row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '16px', marginBottom: '24px' }}>
-        {card('TOTAL TRACKED IPS', geoData.length, '#10b981', <Globe size={18}/>)}
-        {card('CRITICAL THREATS', threats.filter(t => t.level === 'critical').length, '#ef4444', <AlertTriangle size={18}/>)}
-        {card('HIGH THREATS', threats.filter(t => t.level === 'high').length, '#f97316', <Shield size={18}/>)}
-        {card('ACTIVE COUNTRIES', new Set(geoData.map(g => g.country_code).filter(c => c && c !== 'XX')).size, '#3b82f6', <TrendingUp size={18}/>)}
-      </div>
-
-      {/* Tab toggle */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-        {(['map','scores'] as const).map(s => (
-          <button key={s} onClick={() => setSection(s)} style={{
-            padding: '8px 20px', borderRadius: '6px', cursor: 'pointer',
-            fontFamily: "'Chakra Petch',sans-serif", fontSize: '0.8rem', fontWeight: 600,
-            border: section === s ? '1px solid rgba(16,185,129,0.5)' : '1px solid var(--border-subtle)',
-            background: section === s ? 'rgba(16,185,129,0.12)' : 'transparent',
-            color: section === s ? '#10b981' : 'var(--text-muted)',
-            transition: 'all 0.15s',
+      {/* ── CTI Metrics Ribbon ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '14px', marginBottom: '20px' }}>
+        {[
+          { label: 'TRACKED HOSTILE IPS', val: geoData.length, color: '#10b981', icon: <Globe size={18} /> },
+          { label: 'CRITICAL INTRUSIONS', val: threats.filter(t => t.level === 'critical').length, color: '#ef4444', icon: <AlertTriangle size={18} /> },
+          { label: 'HIGH RISK ADVERSARIES', val: threats.filter(t => t.level === 'high').length, color: '#f97316', icon: <Shield size={18} /> },
+          { label: 'ACTIVE GEOLOCATIONS', val: new Set(geoData.map(g => g.country_code).filter(c => c && c !== 'XX')).size, color: '#38bdf8', icon: <TrendingUp size={18} /> },
+        ].map((stat) => (
+          <div key={stat.label} style={{
+            background: 'rgba(13,18,30,0.85)',
+            border: `1px solid ${stat.color}35`,
+            borderRadius: '8px', padding: '14px 18px',
+            display: 'flex', alignItems: 'center', gap: '12px',
           }}>
-            {s === 'map' ? '🌍  INTERACTIVE GLOBAL MAP' : '📊  THREAT SCORING MATRIX'}
-          </button>
+            <span style={{ color: stat.color }}>{stat.icon}</span>
+            <div>
+              <div style={{ fontSize: '1.6rem', fontWeight: 700, color: stat.color, fontFamily: "'Chakra Petch',sans-serif" }}>{stat.val}</div>
+              <div style={{ fontSize: '0.66rem', color: 'var(--text-dim)', letterSpacing: '0.06em' }}>{stat.label}</div>
+            </div>
+          </div>
         ))}
       </div>
 
-      {/* ── Real Interactive Leaflet Attack Map ── */}
-      <div style={{ display: section === 'map' ? 'block' : 'none' }}>
-        <div style={{ background: 'rgba(4,6,15,0.95)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '20px', marginBottom: '24px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
-            <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', fontFamily: "'Chakra Petch',sans-serif", letterSpacing: '0.05em' }}>
-              GLOBAL THREAT ORIGIN RADAR &bull; {geoData.length} ACTIVE THREAT ORIGIN{geoData.length !== 1 ? 'S' : ''} MAPPED
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedIP(null);
-                  mapInstanceRef.current?.flyTo([20, 10], 2.2, { duration: 1.2 });
-                }}
+      {/* ── Navigation & Operational HUD Toolbar ── */}
+      <div style={{
+        background: 'rgba(9, 14, 24, 0.9)',
+        border: '1px solid var(--border-subtle)',
+        borderRadius: '8px',
+        padding: '10px 16px',
+        marginBottom: '18px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '12px',
+      }}>
+        {/* View switcher */}
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {(['map', 'scores'] as const).map((s) => (
+            <button
+              key={s}
+              onClick={() => setSection(s)}
+              style={{
+                padding: '7px 18px', borderRadius: '5px', cursor: 'pointer',
+                fontFamily: "'Chakra Petch',sans-serif", fontSize: '0.8rem', fontWeight: 600,
+                border: section === s ? '1px solid #10b981' : '1px solid var(--border-subtle)',
+                background: section === s ? 'rgba(16,185,129,0.15)' : 'transparent',
+                color: section === s ? '#10b981' : 'var(--text-muted)',
+                transition: 'all 0.15s',
+              }}
+            >
+              {s === 'map' ? '🌍  DEFENSE RADAR MAP' : '📊  THREAT SCORING MATRIX'}
+            </button>
+          ))}
+        </div>
+
+        {/* Analyst Filters & Layer Toggles (Visible in Map Mode) */}
+        {section === 'map' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            {/* Severity Filter */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.74rem', color: 'var(--text-dim)' }}>
+              <Filter size={13} />
+              <select
+                value={sevFilter}
+                onChange={(e) => setSevFilter(e.target.value as any)}
                 style={{
-                  background: 'rgba(16, 185, 129, 0.12)',
-                  border: '1px solid rgba(16, 185, 129, 0.35)',
-                  borderRadius: '4px',
-                  color: '#10b981',
-                  padding: '4px 10px',
-                  fontSize: '0.72rem',
-                  fontFamily: "'Chakra Petch', sans-serif",
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  letterSpacing: '0.04em',
+                  background: '#070d19', border: '1px solid rgba(255,255,255,0.12)',
+                  color: '#e2e8f0', borderRadius: '4px', padding: '4px 8px',
+                  fontFamily: "'Chakra Petch', sans-serif", fontSize: '0.74rem',
                 }}
               >
-                🌐 RESET WORLD VIEW
-              </button>
-              <div style={{ fontSize: '0.72rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <option value="all">Severity: All</option>
+                <option value="high">High + Critical</option>
+                <option value="critical">Critical Only</option>
+              </select>
+            </div>
+
+            {/* Attack Vector Filter */}
+            <select
+              value={vectorFilter}
+              onChange={(e) => setVectorFilter(e.target.value)}
+              style={{
+                background: '#070d19', border: '1px solid rgba(255,255,255,0.12)',
+                color: '#e2e8f0', borderRadius: '4px', padding: '4px 8px',
+                fontFamily: "'Chakra Petch', sans-serif", fontSize: '0.74rem',
+              }}
+            >
+              <option value="all">Vector: All Vectors</option>
+              <option value="sql_injection">SQL Injection</option>
+              <option value="login_attempt">Credential Attacks</option>
+              <option value="file_upload">File Uploads</option>
+              <option value="honeytoken_access">Honeytokens</option>
+              <option value="recon_probe">Recon Probes</option>
+            </select>
+
+            {/* Arcs Toggle */}
+            <button
+              onClick={() => setShowArcs(!showArcs)}
+              style={{
+                background: showArcs ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+                border: `1px solid ${showArcs ? 'rgba(16, 185, 129, 0.4)' : 'rgba(255,255,255,0.1)'}`,
+                color: showArcs ? '#10b981' : 'var(--text-dim)',
+                padding: '4px 10px', borderRadius: '4px', fontSize: '0.72rem',
+                cursor: 'pointer', fontFamily: "'Chakra Petch', sans-serif",
+              }}
+            >
+              ⚡ Trajectory Arcs: {showArcs ? 'ON' : 'OFF'}
+            </button>
+
+            {/* Labels Toggle */}
+            <button
+              onClick={() => setShowLabels(!showLabels)}
+              style={{
+                background: showLabels ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+                border: `1px solid ${showLabels ? 'rgba(16, 185, 129, 0.4)' : 'rgba(255,255,255,0.1)'}`,
+                color: showLabels ? '#10b981' : 'var(--text-dim)',
+                padding: '4px 10px', borderRadius: '4px', fontSize: '0.72rem',
+                cursor: 'pointer', fontFamily: "'Chakra Petch', sans-serif",
+              }}
+            >
+              🏷️ City Tags: {showLabels ? 'ON' : 'OFF'}
+            </button>
+
+            {/* Reset World View */}
+            <button
+              onClick={() => {
+                setSelectedIP(null);
+                mapInstanceRef.current?.flyTo([22, 18], 2.2, { duration: 1.2 });
+              }}
+              style={{
+                background: 'rgba(56, 189, 248, 0.12)',
+                border: '1px solid rgba(56, 189, 248, 0.35)',
+                color: '#38bdf8',
+                padding: '4px 10px', borderRadius: '4px', fontSize: '0.72rem',
+                cursor: 'pointer', fontFamily: "'Chakra Petch', sans-serif", fontWeight: 600,
+              }}
+            >
+              🌐 Reset World
+            </button>
+
+            {/* Fullscreen Expand */}
+            <button
+              onClick={() => {
+                setIsFullscreen(!isFullscreen);
+                setTimeout(() => mapInstanceRef.current?.invalidateSize(), 200);
+              }}
+              title="Toggle Fullscreen Tactical Mode"
+              style={{
+                background: isFullscreen ? 'rgba(16, 185, 129, 0.2)' : 'transparent',
+                border: '1px solid rgba(255,255,255,0.15)',
+                color: '#e2e8f0', padding: '4px 8px', borderRadius: '4px',
+                cursor: 'pointer', display: 'flex', alignItems: 'center',
+              }}
+            >
+              {isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* ── Main Map Interface & Threat Dossier Split ── */}
+      <div style={{ display: section === 'map' ? 'block' : 'none' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: selectedIP ? '1fr 360px' : '1fr', gap: '18px', transition: 'all 0.3s' }}>
+          
+          {/* Map Container */}
+          <div style={{
+            background: 'rgba(4,6,15,0.96)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: '10px',
+            padding: '16px',
+            position: 'relative',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <div style={{ fontSize: '0.76rem', color: 'var(--text-dim)', fontFamily: "'Chakra Petch',sans-serif", letterSpacing: '0.05em' }}>
+                GLOBAL HONEYPOT CONVERGENCE RADAR &bull; {filteredGeo.length} HOSTILE THREAT VECTORS VISIBLE
+              </div>
+              <div style={{ fontSize: '0.7rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }} />
-                ACTIVE TILES
+                CONVERGENCE TARGET: ARGUS ENCLAVE (ADDIS ABABA)
+              </div>
+            </div>
+
+            <div
+              ref={mapContainerRef}
+              style={{
+                height: isFullscreen ? '740px' : '560px',
+                width: '100%',
+                borderRadius: '8px',
+                border: '1px solid rgba(16,185,129,0.22)',
+                overflow: 'hidden',
+                boxShadow: 'inset 0 0 30px rgba(0,0,0,0.85)',
+                transition: 'height 0.3s ease',
+              }}
+            />
+
+            {/* Quick Hostile Selector Strip */}
+            <div style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={{ fontSize: '0.67rem', color: 'var(--text-dim)', marginBottom: '8px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                Target Acquisition Feeds (Click Hostile to Inspect Forensics):
+              </div>
+              <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px' }}>
+                {filteredGeo.map((g) => {
+                  const col = SEV_COLOR[g.max_severity] || '#22c55e';
+                  const isSelected = selectedIP === g.ip;
+                  return (
+                    <button
+                      key={g.ip}
+                      type="button"
+                      onClick={() => {
+                        setSelectedIP(g.ip);
+                        mapInstanceRef.current?.flyTo([g.lat, g.lon], 5, { duration: 1.2 });
+                      }}
+                      style={{
+                        background: isSelected ? 'rgba(16, 185, 129, 0.2)' : 'rgba(13, 18, 30, 0.85)',
+                        border: `1px solid ${isSelected ? col : 'rgba(255,255,255,0.1)'}`,
+                        borderRadius: '6px', padding: '6px 11px',
+                        display: 'flex', alignItems: 'center', gap: '8px',
+                        cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.15s',
+                      }}
+                    >
+                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: col, boxShadow: `0 0 6px ${col}` }} />
+                      <span style={{ fontSize: '0.74rem', fontFamily: 'monospace', color: '#ffffff', fontWeight: 600 }}>{g.ip}</span>
+                      <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>📍 {g.city || g.country}</span>
+                      <span style={{ fontSize: '0.65rem', background: `${col}22`, color: col, padding: '1px 5px', borderRadius: '3px', fontWeight: 700 }}>
+                        {g.event_count} ev
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
 
-          <div
-            ref={mapContainerRef}
-            style={{
-              height: '540px',
-              width: '100%',
-              borderRadius: '8px',
-              border: '1px solid rgba(16,185,129,0.2)',
-              overflow: 'hidden',
-              boxShadow: 'inset 0 0 30px rgba(0,0,0,0.8)',
-            }}
-          />
-
-          {/* Legend bar */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '14px', flexWrap: 'wrap', gap: '10px' }}>
-            <div style={{ display: 'flex', gap: '18px', alignItems: 'center' }}>
-              {Object.entries(SEV_COLOR).map(([sev, col]) => (
-                <div key={sev} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: col, boxShadow: `0 0 6px ${col}` }}/>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{sev}</span>
+          {/* ── Threat Actor Dossier Side Panel (When a Hostile is Selected) ── */}
+          {selectedIP && inspectedGeo && (
+            <div style={{
+              background: 'rgba(8, 12, 22, 0.98)',
+              border: `1px solid ${SEV_COLOR[inspectedGeo.max_severity]}55`,
+              borderRadius: '10px',
+              padding: '18px',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: `0 0 30px rgba(0,0,0,0.9), 0 0 15px ${SEV_COLOR[inspectedGeo.max_severity]}22`,
+              animation: 'fadeIn 0.2s ease',
+            }}>
+              {/* Dossier Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                <div>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                    ADVERSARY PROFILE DOSSIER
+                  </div>
+                  <div style={{ fontSize: '1.2rem', fontFamily: 'monospace', color: '#ffffff', fontWeight: 700, marginTop: '2px' }}>
+                    {inspectedGeo.ip}
+                  </div>
                 </div>
-              ))}
-            </div>
-            <div style={{ fontSize: '0.72rem', color: selectedIP ? '#10b981' : 'var(--text-dim)', fontStyle: 'italic' }}>
-              {selectedIP ? `Target Inspected: ${selectedIP}` : 'Click any marker to inspect attacker forensics or zoom in'}
-            </div>
-          </div>
+                <button
+                  onClick={() => setSelectedIP(null)}
+                  style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }}
+                >
+                  <X size={16} />
+                </button>
+              </div>
 
-          {/* Quick Hostile Locator Pills */}
-          <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-            <div style={{ fontSize: '0.68rem', color: 'var(--text-dim)', marginBottom: '8px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-              Identified Threat Origin Nodes ({geoData.length}):
-            </div>
-            <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px' }}>
-              {geoData.map((g) => {
-                const col = SEV_COLOR[g.max_severity] || '#22c55e';
-                const isSelected = selectedIP === g.ip;
-                return (
-                  <button
-                    key={g.ip}
-                    type="button"
-                    onClick={() => {
-                      setSelectedIP(g.ip);
-                      mapInstanceRef.current?.flyTo([g.lat, g.lon], 5, { duration: 1.2 });
-                    }}
-                    style={{
-                      background: isSelected ? 'rgba(16, 185, 129, 0.18)' : 'rgba(13, 18, 30, 0.85)',
-                      border: `1px solid ${isSelected ? col : 'rgba(255,255,255,0.1)'}`,
-                      borderRadius: '6px',
-                      padding: '6px 10px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      transition: 'all 0.15s',
-                    }}
-                  >
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: col, boxShadow: `0 0 6px ${col}` }} />
-                    <span style={{ fontSize: '0.74rem', fontFamily: 'monospace', color: '#ffffff', fontWeight: 600 }}>{g.ip}</span>
-                    <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>📍 {g.city || g.country}</span>
-                    <span style={{ fontSize: '0.65rem', background: `${col}22`, color: col, padding: '1px 5px', borderRadius: '3px', fontWeight: 700 }}>
-                      {g.event_count} ev
+              {/* Severity & Threat Score Banner */}
+              <div style={{
+                background: `${SEV_COLOR[inspectedGeo.max_severity]}15`,
+                border: `1px solid ${SEV_COLOR[inspectedGeo.max_severity]}40`,
+                borderRadius: '6px', padding: '10px 14px', marginBottom: '16px',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              }}>
+                <div>
+                  <div style={{ fontSize: '0.64rem', color: 'var(--text-dim)' }}>RISK CLASSIFICATION</div>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 700, color: SEV_COLOR[inspectedGeo.max_severity] }}>
+                    {inspectedGeo.max_severity.toUpperCase()} THREAT
+                  </div>
+                </div>
+                {inspectedThreat && (
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '0.64rem', color: 'var(--text-dim)' }}>THREAT SCORE</div>
+                    <div style={{ fontSize: '1.2rem', fontWeight: 800, color: SEV_COLOR[inspectedGeo.max_severity], fontFamily: "'Chakra Petch',sans-serif" }}>
+                      {inspectedThreat.score}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Geopolitical Intelligence */}
+              <div style={{ marginBottom: '16px', background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ fontSize: '0.68rem', color: '#38bdf8', fontWeight: 600, marginBottom: '8px', letterSpacing: '0.05em' }}>
+                  GEOPOLITICAL INTELLIGENCE
+                </div>
+                <div style={{ fontSize: '0.78rem', color: '#e2e8f0', marginBottom: '4px' }}>
+                  📍 <b>Location:</b> {inspectedGeo.city ? `${inspectedGeo.city}, ` : ''}{inspectedGeo.country} ({inspectedGeo.country_code})
+                </div>
+                <div style={{ fontSize: '0.74rem', color: '#94a3b8', marginBottom: '4px' }}>
+                  🏢 <b>ASN / ISP:</b> {inspectedGeo.isp || 'Host Private Gateway'}
+                </div>
+                <div style={{ fontSize: '0.74rem', color: '#94a3b8' }}>
+                  🌐 <b>Coordinates:</b> {inspectedGeo.lat.toFixed(4)}, {inspectedGeo.lon.toFixed(4)}
+                </div>
+              </div>
+
+              {/* MITRE ATT&CK Classification */}
+              {inspectedMitre && (
+                <div style={{ marginBottom: '16px', background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div style={{ fontSize: '0.68rem', color: '#10b981', fontWeight: 600, marginBottom: '8px', letterSpacing: '0.05em' }}>
+                    MITRE ATT&amp;CK FRAMEWORK ALIGNMENT
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                    <span style={{ background: 'rgba(16, 185, 129, 0.2)', border: '1px solid #10b981', color: '#10b981', padding: '2px 6px', borderRadius: '4px', fontSize: '0.74rem', fontWeight: 700 }}>
+                      {inspectedMitre.id}
                     </span>
-                  </button>
-                );
-              })}
+                    <span style={{ fontSize: '0.8rem', color: '#ffffff', fontWeight: 600 }}>{inspectedMitre.name}</span>
+                  </div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', marginBottom: '6px' }}>
+                    <b>Tactic:</b> {inspectedMitre.tactic}
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: '#94a3b8', lineHeight: 1.4 }}>
+                    {inspectedMitre.desc}
+                  </div>
+                </div>
+              )}
+
+              {/* Forensic Timeline */}
+              <div style={{ marginBottom: '16px', fontSize: '0.74rem', color: '#94a3b8' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                  <span>Observed Interactions:</span>
+                  <b style={{ color: '#ffffff' }}>{inspectedGeo.event_count} incidents</b>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                  <span>Primary Exploit Target:</span>
+                  <b style={{ color: '#ffffff' }}>{inspectedGeo.top_event_type.replace(/_/g, ' ')}</b>
+                </div>
+                {inspectedThreat && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Last Ingress:</span>
+                    <b style={{ color: '#ffffff' }}>{fmtDt(inspectedThreat.last_seen)}</b>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <button
+                  onClick={() => handleDownloadPDF(inspectedGeo.ip)}
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(59,130,246,0.2) 0%, rgba(59,130,246,0.08) 100%)',
+                    border: '1px solid rgba(59,130,246,0.4)',
+                    color: '#60a5fa', borderRadius: '6px', padding: '9px',
+                    fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                    fontFamily: "'Chakra Petch',sans-serif",
+                  }}
+                >
+                  <Download size={14} /> EXPORT INCIDENT REPORT (PDF)
+                </button>
+
+                <button
+                  onClick={() => copyToClipboard(inspectedGeo.ip)}
+                  style={{
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    color: '#e2e8f0', borderRadius: '6px', padding: '8px',
+                    fontSize: '0.74rem', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                    fontFamily: "'Chakra Petch',sans-serif",
+                  }}
+                >
+                  {copiedIOC ? <Check size={14} color="#10b981" /> : <Copy size={14} />}
+                  {copiedIOC ? 'IOC COPIED TO CLIPBOARD' : 'COPY HOSTILE IP (IOC)'}
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -511,7 +927,7 @@ export const ThreatMapView: React.FC = () => {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
               <thead>
                 <tr style={{ background: 'rgba(0,0,0,0.3)' }}>
-                  {['Hostile IP','Origin','Score','Risk Level','Events','Observed Vectors','First Seen','Last Activity','Locate','Forensics PDF'].map(h => (
+                  {['Hostile IP','Origin','Score','Risk Level','Events','Observed Vectors','First Seen','Last Activity','Locate','Forensics PDF'].map((h) => (
                     <th key={h} style={{
                       padding: '12px 16px', textAlign: 'left', fontSize: '0.68rem',
                       color: 'var(--text-dim)', letterSpacing: '0.06em', fontWeight: 600,
@@ -552,8 +968,8 @@ export const ThreatMapView: React.FC = () => {
                       </td>
                       <td style={{ padding: '12px 16px', color: '#e2e8f0', fontWeight: 600 }}>{t.event_count}</td>
                       <td style={{ padding: '12px 16px', color: 'var(--text-dim)', fontSize: '0.74rem', maxWidth: '200px' }}>
-                        {t.event_types.slice(0,3).map(e => e.replace(/_/g,' ')).join(', ')}
-                        {t.event_types.length > 3 ? ` +${t.event_types.length-3}` : ''}
+                        {t.event_types.slice(0, 3).map(e => e.replace(/_/g, ' ')).join(', ')}
+                        {t.event_types.length > 3 ? ` +${t.event_types.length - 3}` : ''}
                       </td>
                       <td style={{ padding: '12px 16px', color: 'var(--text-dim)', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{fmtDt(t.first_seen)}</td>
                       <td style={{ padding: '12px 16px', color: 'var(--text-dim)', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{fmtDt(t.last_seen)}</td>
@@ -564,7 +980,7 @@ export const ThreatMapView: React.FC = () => {
                           borderRadius: '4px', color: '#10b981', padding: '6px 10px',
                           cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600,
                         }}>
-                          <Maximize2 size={12}/> MAP
+                          <Crosshair size={12}/> INSPECT
                         </button>
                       </td>
                       <td style={{ padding: '12px 16px' }}>
