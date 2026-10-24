@@ -84,21 +84,23 @@ export const ThreatMapView: React.FC = () => {
       const map = L.map(mapContainerRef.current, {
         center: [20, 10],
         zoom: 2.2,
-        minZoom: 1.8,
-        maxZoom: 18,
+        minZoom: 2,
+        maxZoom: 10,
         zoomControl: true,
         attributionControl: false,
       });
 
-      // Esri World Dark Gray Canvas — 100% Free, No API key required
+      // Esri World Dark Gray Canvas — Geopolitical SOC Base Map
       L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-        maxZoom: 16,
+        minZoom: 2,
+        maxZoom: 10,
         attribution: 'Esri, DeLorme, NAVTEQ',
       }).addTo(map);
 
       // Borders and country labels overlay
       L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
-        maxZoom: 16,
+        minZoom: 2,
+        maxZoom: 10,
       }).addTo(map);
 
       markersLayerRef.current = L.layerGroup().addTo(map);
@@ -203,7 +205,7 @@ export const ThreatMapView: React.FC = () => {
     if (geo && geo.lat !== 0 && geo.lon !== 0 && mapInstanceRef.current) {
       setSection('map');
       setSelectedIP(t.ip);
-      mapInstanceRef.current.flyTo([geo.lat, geo.lon], 6, { duration: 1.5 });
+      mapInstanceRef.current.flyTo([geo.lat, geo.lon], 5, { duration: 1.2 });
     }
   };
 
@@ -342,13 +344,36 @@ export const ThreatMapView: React.FC = () => {
       {/* ── Real Interactive Leaflet Attack Map ── */}
       <div style={{ display: section === 'map' ? 'block' : 'none' }}>
         <div style={{ background: 'rgba(4,6,15,0.95)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '20px', marginBottom: '24px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
             <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', fontFamily: "'Chakra Petch',sans-serif", letterSpacing: '0.05em' }}>
               GLOBAL THREAT ORIGIN RADAR &bull; {geoData.length} ACTIVE THREAT ORIGIN{geoData.length !== 1 ? 'S' : ''} MAPPED
             </div>
-            <div style={{ fontSize: '0.72rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }} />
-              INTERACTIVE TILES &bull; ZOOM &amp; DRAG ENABLED
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedIP(null);
+                  mapInstanceRef.current?.flyTo([20, 10], 2.2, { duration: 1.2 });
+                }}
+                style={{
+                  background: 'rgba(16, 185, 129, 0.12)',
+                  border: '1px solid rgba(16, 185, 129, 0.35)',
+                  borderRadius: '4px',
+                  color: '#10b981',
+                  padding: '4px 10px',
+                  fontSize: '0.72rem',
+                  fontFamily: "'Chakra Petch', sans-serif",
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                🌐 RESET WORLD VIEW
+              </button>
+              <div style={{ fontSize: '0.72rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }} />
+                ACTIVE TILES
+              </div>
             </div>
           </div>
 
