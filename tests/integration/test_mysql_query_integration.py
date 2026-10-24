@@ -139,6 +139,8 @@ async def test_select_personnel_public_columns_only(query_server):
     r, w = await asyncio.open_connection("127.0.0.1", port)
     salt, seq = await _handshake(r, w)
     ok, seq = await _login(r, w, salt, seq)
+    # Select database first so table queries don't return ERR 1046
+    _, seq = await _query(r, w, seq, "USE nexis_hr")
     payloads, _ = await _query(r, w, seq, "SELECT * FROM personnel")
     all_bytes = b"".join(payloads)
     # badge_id must not appear in column definitions

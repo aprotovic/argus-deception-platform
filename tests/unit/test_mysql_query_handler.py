@@ -205,11 +205,13 @@ def test_show_variables_like():
 def test_show_grants():
     pkts = dispatch_query("SHOW GRANTS", _ctx(username="root"), seq=1, version_string=VERSION)
     _, rows = _parse_result(pkts)
-    assert "nexis_hr" in rows[0][0]
+    assert "GRANT ALL PRIVILEGES ON *.*" in rows[0][0]
+    assert "`root`@`%`" in rows[0][0]
+    assert "WITH GRANT OPTION" in rows[0][0]
 
 
 def test_select_from_personnel():
-    pkts = dispatch_query("SELECT * FROM personnel", _ctx(), seq=1, version_string=VERSION)
+    pkts = dispatch_query("SELECT * FROM personnel", _ctx(database="nexis_hr"), seq=1, version_string=VERSION)
     cols, rows = _parse_result(pkts)
     assert "employee_id" in cols
     assert len(rows) == 8
@@ -218,7 +220,7 @@ def test_select_from_personnel():
 
 
 def test_select_from_personnel_limit():
-    pkts = dispatch_query("SELECT * FROM personnel LIMIT 3", _ctx(), seq=1, version_string=VERSION)
+    pkts = dispatch_query("SELECT * FROM personnel LIMIT 3", _ctx(database="nexis_hr"), seq=1, version_string=VERSION)
     _, rows = _parse_result(pkts)
     assert len(rows) == 3
 
@@ -246,7 +248,7 @@ def test_mysql_user_returns_1142():
 
 
 def test_unknown_table_returns_1146():
-    pkts = dispatch_query("SELECT * FROM secret_table", _ctx(), seq=1, version_string=VERSION)
+    pkts = dispatch_query("SELECT * FROM secret_table", _ctx(database="nexis_hr"), seq=1, version_string=VERSION)
     payload, _ = _unframe(pkts[0])
     assert payload[0] == 0xFF
     code = struct.unpack_from("<H", payload, 1)[0]
