@@ -279,7 +279,7 @@ export const TelemetrySpikeGraph: React.FC<TelemetrySpikeGraphProps> = ({
         <div
           style={{
             background: 'rgba(10, 14, 23, 0.8)',
-            border: '1px solid rgba(255, 20, 117, 0.3)',
+            border: '1px solid rgba(16, 185, 129, 0.2)',
             borderRadius: '4px',
             padding: '3px 8px',
             fontSize: '0.65rem',
@@ -306,15 +306,14 @@ export const TelemetrySpikeGraph: React.FC<TelemetrySpikeGraphProps> = ({
         <defs>
           {/* Subtle green gradient fill beneath peaks */}
           <linearGradient id="neonGreenSpikeGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#10b981" stopOpacity="0.28" />
-            <stop offset="65%" stopColor="#10b981" stopOpacity="0.08" />
+            <stop offset="0%" stopColor="#10b981" stopOpacity="0.14" />
+            <stop offset="65%" stopColor="#10b981" stopOpacity="0.03" />
             <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
           </linearGradient>
 
-          {/* Neon glow filter */}
+          {/* Dimmed glow filter */}
           <filter id="neonSpikeGlow" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="0" stdDeviation="2.5" floodColor="#10b981" floodOpacity="0.85" />
-            <feDropShadow dx="0" dy="0" stdDeviation="6" floodColor="#10b981" floodOpacity="0.45" />
+            <feDropShadow dx="0" dy="0" stdDeviation="1.5" floodColor="#10b981" floodOpacity="0.35" />
           </filter>
         </defs>
 
@@ -328,8 +327,8 @@ export const TelemetrySpikeGraph: React.FC<TelemetrySpikeGraphProps> = ({
           x2={containerWidth}
           y2={baselineY}
           stroke="#10b981"
-          strokeWidth="1.5"
-          strokeOpacity="0.85"
+          strokeWidth="1"
+          strokeOpacity="0.35"
         />
 
         {/* Main continuous neon green telemetry spike waveform */}
@@ -338,7 +337,7 @@ export const TelemetrySpikeGraph: React.FC<TelemetrySpikeGraphProps> = ({
             d={strokePath}
             fill="none"
             stroke="#10b981"
-            strokeWidth="2.2"
+            strokeWidth="1.8"
             strokeLinecap="round"
             strokeLinejoin="round"
             filter="url(#neonSpikeGlow)"
@@ -365,8 +364,7 @@ export const TelemetrySpikeGraph: React.FC<TelemetrySpikeGraphProps> = ({
               r="4.5"
               fill="#10b981"
               stroke="#ffffff"
-              strokeWidth="2"
-              filter="url(#neonSpikeGlow)"
+              strokeWidth="1.5"
             />
           </g>
         )}
@@ -381,8 +379,8 @@ export const TelemetrySpikeGraph: React.FC<TelemetrySpikeGraphProps> = ({
             top: `${Math.max(hoverData.y - 68, 12)}px`,
             transform: 'translateX(-50%)',
             background: 'rgba(8, 12, 10, 0.95)',
-            border: '1px solid #10b981',
-            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.8), 0 0 12px rgba(16, 185, 129, 0.3)',
+            border: '1px solid rgba(16, 185, 129, 0.3)',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.8)',
             borderRadius: '6px',
             padding: '6px 10px',
             pointerEvents: 'none',
@@ -410,7 +408,7 @@ export const TelemetrySpikeGraph: React.FC<TelemetrySpikeGraphProps> = ({
                 color: hoverData.count > 0 ? '#10b981' : 'var(--text-muted)',
               }}
             >
-              {hoverData.count > 0 ? `${hoverData.count} TELEMETRY BURST` : 'BASELINE (0 EVENTS)'}
+              {hoverData.count} EVENTS
             </span>
           </div>
           {Object.keys(hoverData.severities).length > 0 && (

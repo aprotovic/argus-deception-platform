@@ -111,8 +111,7 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
     {
       id: 'VEC-01',
       type: 'login_attempt',
-      label: 'Decoy Authentication Portals',
-      sub: 'Synthetic SSH / Admin login forms trapping credential sprays',
+      label: 'Auth Portals',
       count: (metrics?.events_by_type as any)?.login_attempt ?? 0,
       color: '#f59e0b',
       icon: <KeyRound size={16} color="#f59e0b" />,
@@ -120,8 +119,7 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
     {
       id: 'VEC-02',
       type: 'recon_probe',
-      label: 'Reconnaissance Scanners',
-      sub: 'Exposed fictitious .env, wp-login, swagger & git endpoints',
+      label: 'Recon Probes',
       count: (metrics?.events_by_type as any)?.recon_probe ?? 0,
       color: '#10b981',
       icon: <Radar size={16} color="#10b981" />,
@@ -129,8 +127,7 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
     {
       id: 'VEC-03',
       type: 'file_upload',
-      label: 'Quarantined File Uploads',
-      sub: 'In-memory sandbox trapping web-shells & executable binaries',
+      label: 'File Uploads',
       count: (metrics?.events_by_type as any)?.file_upload ?? 0,
       color: '#ef4444',
       icon: <FileCode size={16} color="#ef4444" />,
@@ -138,8 +135,7 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
     {
       id: 'VEC-04',
       type: 'command_injection',
-      label: 'Command Injection Traps',
-      sub: 'Emulated virtual shell intercepting system command payloads',
+      label: 'Command Traps',
       count: (metrics?.events_by_type as any)?.command_injection ?? 0,
       color: '#f43f5e',
       icon: <Terminal size={16} color="#f43f5e" />,
@@ -147,8 +143,7 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
     {
       id: 'VEC-05',
       type: 'honeytoken_accessed',
-      label: 'Honeytoken Canary Traps',
-      sub: 'Synthetic high-privilege AWS keys, tokens & connection strings',
+      label: 'Honeytokens',
       count: (metrics?.events_by_type as any)?.honeytoken_accessed ?? 0,
       color: '#c084fc',
       icon: <Binary size={16} color="#c084fc" />,
@@ -156,8 +151,7 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
     {
       id: 'VEC-06',
       type: 'unauthorized_access',
-      label: 'Unauthorized Enclave Probes',
-      sub: 'Zero-trust perimeter violations & forbidden route attempts',
+      label: 'Unauthorized Probes',
       count: (metrics?.events_by_type as any)?.unauthorized_access ?? 0,
       color: '#8b5cf6',
       icon: <Lock size={16} color="#8b5cf6" />,
@@ -181,12 +175,11 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
             width: '40px',
             height: '40px',
             borderRadius: '8px',
-            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(5, 150, 105, 0.05) 100%)',
-            border: '1px solid rgba(16, 185, 129, 0.45)',
+            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.02) 100%)',
+            border: '1px solid rgba(16, 185, 129, 0.25)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 0 16px rgba(16, 185, 129, 0.25)',
           }}>
             <Shield size={20} color="#10b981" />
           </div>
@@ -197,12 +190,11 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
                 fontSize: '1.65rem',
                 fontWeight: 700,
                 letterSpacing: '0.04em',
-                color: '#ffffff',
+                color: '#e2e8f0',
                 textTransform: 'uppercase',
                 margin: 0,
-                textShadow: '0 0 20px rgba(16, 185, 129, 0.25)',
               }}>
-                SECURITY OPERATIONS OVERVIEW
+                SECURITY OVERVIEW
               </h1>
               <span style={{
                 fontSize: '0.68rem',
@@ -210,23 +202,19 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
                 fontWeight: 600,
                 padding: '2px 8px',
                 borderRadius: '4px',
-                background: 'rgba(16, 185, 129, 0.12)',
-                border: '1px solid rgba(16, 185, 129, 0.35)',
+                background: 'rgba(16, 185, 129, 0.08)',
+                border: '1px solid rgba(16, 185, 129, 0.25)',
                 color: '#10b981',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
               }}>
                 <span className="radar-dot" style={{ width: '6px', height: '6px' }} />
-                DEFENSE MATRIX ACTIVE
+                ACTIVE
               </span>
             </div>
-            <p style={{ fontSize: '0.82rem', color: '#94a3b8', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-              <span>Live attack telemetry & honeypot interaction metrics captured by ARGUS.</span>
-              <span style={{ color: '#334155' }}>•</span>
-              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '0.74rem', color: '#64748b' }}>
-                NODE: <span style={{ color: '#10b981' }}>ARGUS-EAST-01</span>
-              </span>
+            <p style={{ fontSize: '0.82rem', color: '#94a3b8', marginTop: '4px', margin: 0 }}>
+              Live telemetry and honeypot metrics.
             </p>
           </div>
         </div>
@@ -238,24 +226,21 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
             className="btn-secondary"
             title="Inject controlled test traffic marked with is_test_event=True"
             style={{
-              borderColor: 'rgba(16, 185, 129, 0.3)',
-              background: 'rgba(16, 185, 129, 0.05)',
+              borderColor: 'rgba(16, 185, 129, 0.2)',
+              background: 'rgba(16, 185, 129, 0.04)',
             }}
           >
             <Play size={14} color="#10b981" />
-            <span>{simulating ? 'GENERATING TEST TRAFFIC...' : 'RUN CONTROLLED TEST'}</span>
+            <span>{simulating ? 'SIMULATING...' : 'RUN TEST'}</span>
           </button>
 
           <a
             href={api.getExportUrl('json')}
             download="argus_forensic_export.json"
             className="btn-primary"
-            style={{
-              boxShadow: '0 0 16px rgba(16, 185, 129, 0.3)',
-            }}
           >
             <Download size={14} />
-            <span>EXPORT REPORT (JSON)</span>
+            <span>EXPORT JSON</span>
           </a>
         </div>
       </div>
@@ -283,11 +268,11 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
       {/* ========================================================= */}
       <div style={{
         background: 'linear-gradient(180deg, rgba(8, 14, 10, 0.95) 0%, rgba(3, 6, 4, 0.98) 100%)',
-        border: '1px solid rgba(16, 185, 129, 0.22)',
+        border: '1px solid rgba(16, 185, 129, 0.14)',
         borderRadius: '10px',
         position: 'relative',
         overflow: 'hidden',
-        boxShadow: '0 12px 36px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(16, 185, 129, 0.25)',
+        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.6)',
       }}>
         {/* Top Diagnostic Stream Ticker */}
         <div style={{
@@ -296,28 +281,28 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
           justifyContent: 'space-between',
           padding: '8px 18px',
           background: 'rgba(0, 0, 0, 0.65)',
-          borderBottom: '1px solid rgba(16, 185, 129, 0.15)',
+          borderBottom: '1px solid rgba(16, 185, 129, 0.12)',
           fontSize: '0.72rem',
           fontFamily: "'JetBrains Mono', monospace",
           color: '#64748b',
           flexWrap: 'wrap',
           gap: '8px',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#10b981', fontWeight: 600 }}>
               <span className="radar-dot" style={{ width: '6px', height: '6px' }} />
-              TELEMETRY STREAM // LIVE
+              STREAM: LIVE
             </span>
             <span style={{ color: '#1e293b' }}>|</span>
-            <span>INGESTION: <strong style={{ color: '#f1f5f9' }}>ONLINE</strong></span>
+            <span>INGESTION: <strong style={{ color: '#cbd5e1' }}>ACTIVE</strong></span>
             <span style={{ color: '#1e293b' }}>|</span>
             <span>CONTAINMENT: <strong style={{ color: '#10b981' }}>ENFORCED</strong></span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span>DECOYS: <strong style={{ color: '#10b981' }}>6 ARMED</strong></span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span><strong style={{ color: '#10b981' }}>6 DECOYS</strong></span>
             <span style={{ color: '#1e293b' }}>|</span>
             <span>STATUS: <strong style={{ color: threatIndex > 60 ? '#f43f5e' : '#10b981' }}>
-              {threatIndex > 60 ? 'ELEVATED RISK' : 'SECURE'}
+              {threatIndex > 60 ? 'ELEVATED' : 'SECURE'}
             </strong></span>
           </div>
         </div>
@@ -331,14 +316,14 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
           <div style={{
             padding: '22px 20px',
             position: 'relative',
-            borderRight: '1px solid rgba(16, 185, 129, 0.12)',
+            borderRight: '1px solid rgba(16, 185, 129, 0.08)',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            background: 'radial-gradient(circle at 10% 10%, rgba(16, 185, 129, 0.08) 0%, transparent 60%)',
+            background: 'radial-gradient(circle at 10% 10%, rgba(16, 185, 129, 0.04) 0%, transparent 60%)',
           }}>
             {/* Corner Bracket */}
-            <span style={{ position: 'absolute', top: '6px', left: '8px', fontSize: '10px', color: 'rgba(16, 185, 129, 0.4)', fontFamily: 'monospace' }}>┌</span>
+            <span style={{ position: 'absolute', top: '6px', left: '8px', fontSize: '10px', color: 'rgba(16, 185, 129, 0.25)', fontFamily: 'monospace' }}>┌</span>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
               <span style={{
                 fontFamily: "'Chakra Petch', sans-serif",
@@ -347,11 +332,11 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
                 color: '#94a3b8',
                 letterSpacing: '0.08em',
               }}>
-                TOTAL OBSERVED EVENTS
+                TOTAL EVENTS
               </span>
               <div style={{
-                background: 'rgba(16, 185, 129, 0.12)',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
+                background: 'rgba(16, 185, 129, 0.08)',
+                border: '1px solid rgba(16, 185, 129, 0.2)',
                 borderRadius: '6px',
                 padding: '6px',
                 display: 'flex',
@@ -367,9 +352,8 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
                 fontSize: '2.5rem',
                 fontWeight: 700,
                 fontFamily: "'JetBrains Mono', monospace",
-                color: '#ffffff',
+                color: '#e2e8f0',
                 lineHeight: 1,
-                textShadow: '0 0 20px rgba(16, 185, 129, 0.45)',
               }}>
                 {metrics?.total_events ?? 0}
               </span>
@@ -378,9 +362,9 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
                 fontFamily: "'JetBrains Mono', monospace",
                 padding: '2px 6px',
                 borderRadius: '4px',
-                background: 'rgba(16, 185, 129, 0.15)',
-                color: '#34d399',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
+                background: 'rgba(16, 185, 129, 0.1)',
+                color: '#10b981',
+                border: '1px solid rgba(16, 185, 129, 0.2)',
                 fontWeight: 600,
               }}>
                 +{metrics?.events_last_24h ?? 0} 24h
@@ -392,17 +376,17 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
               <svg viewBox="0 0 120 28" style={{ width: '100%', height: '28px', overflow: 'visible' }}>
                 <defs>
                   <linearGradient id="metricGrad1" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#10b981" stopOpacity="0.4" />
+                    <stop offset="0%" stopColor="#10b981" stopOpacity="0.18" />
                     <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
                   </linearGradient>
                 </defs>
                 <path d="M 0,22 L 15,18 L 30,22 L 45,14 L 60,18 L 75,9 L 90,14 L 105,6 L 120,3 L 120,28 L 0,28 Z" fill="url(#metricGrad1)" />
-                <path d="M 0,22 L 15,18 L 30,22 L 45,14 L 60,18 L 75,9 L 90,14 L 105,6 L 120,3" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" />
-                <circle cx="120" cy="3" r="3" fill="#10b981" />
+                <path d="M 0,22 L 15,18 L 30,22 L 45,14 L 60,18 L 75,9 L 90,14 L 105,6 L 120,3" fill="none" stroke="#10b981" strokeWidth="1.8" strokeLinecap="round" />
+                <circle cx="120" cy="3" r="2.5" fill="#10b981" />
               </svg>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#64748b', marginTop: '4px', fontFamily: "'JetBrains Mono', monospace" }}>
-                <span>TELEMETRY INGESTION</span>
-                <span style={{ color: '#10b981' }}>100% CAPTURED</span>
+                <span>INGESTION</span>
+                <span style={{ color: '#10b981' }}>100%</span>
               </div>
             </div>
           </div>
@@ -411,13 +395,13 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
           <div style={{
             padding: '22px 20px',
             position: 'relative',
-            borderRight: '1px solid rgba(16, 185, 129, 0.12)',
+            borderRight: '1px solid rgba(16, 185, 129, 0.08)',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            background: 'radial-gradient(circle at 10% 10%, rgba(52, 211, 153, 0.08) 0%, transparent 60%)',
+            background: 'radial-gradient(circle at 10% 10%, rgba(16, 185, 129, 0.04) 0%, transparent 60%)',
           }}>
-            <span style={{ position: 'absolute', top: '6px', left: '8px', fontSize: '10px', color: 'rgba(52, 211, 153, 0.4)', fontFamily: 'monospace' }}>┌</span>
+            <span style={{ position: 'absolute', top: '6px', left: '8px', fontSize: '10px', color: 'rgba(16, 185, 129, 0.25)', fontFamily: 'monospace' }}>┌</span>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
               <span style={{
                 fontFamily: "'Chakra Petch', sans-serif",
@@ -426,18 +410,18 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
                 color: '#94a3b8',
                 letterSpacing: '0.08em',
               }}>
-                UNIQUE ATTACKER IPS
+                ATTACKER IPS
               </span>
               <div style={{
-                background: 'rgba(52, 211, 153, 0.12)',
-                border: '1px solid rgba(52, 211, 153, 0.3)',
+                background: 'rgba(16, 185, 129, 0.08)',
+                border: '1px solid rgba(16, 185, 129, 0.2)',
                 borderRadius: '6px',
                 padding: '6px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}>
-                <Users size={18} color="#34d399" />
+                <Users size={18} color="#10b981" />
               </div>
             </div>
 
@@ -446,9 +430,8 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
                 fontSize: '2.5rem',
                 fontWeight: 700,
                 fontFamily: "'JetBrains Mono', monospace",
-                color: '#ffffff',
+                color: '#e2e8f0',
                 lineHeight: 1,
-                textShadow: '0 0 20px rgba(52, 211, 153, 0.45)',
               }}>
                 {metrics?.unique_ips ?? 0}
               </span>
@@ -457,9 +440,9 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
                 fontFamily: "'JetBrains Mono', monospace",
                 padding: '2px 6px',
                 borderRadius: '4px',
-                background: 'rgba(52, 211, 153, 0.15)',
-                color: '#34d399',
-                border: '1px solid rgba(52, 211, 153, 0.3)',
+                background: 'rgba(16, 185, 129, 0.1)',
+                color: '#10b981',
+                border: '1px solid rgba(16, 185, 129, 0.2)',
                 fontWeight: 600,
               }}>
                 ISOLATED
@@ -470,17 +453,17 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
               <svg viewBox="0 0 120 28" style={{ width: '100%', height: '28px', overflow: 'visible' }}>
                 <defs>
                   <linearGradient id="metricGrad2" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#34d399" stopOpacity="0.4" />
-                    <stop offset="100%" stopColor="#34d399" stopOpacity="0" />
+                    <stop offset="0%" stopColor="#10b981" stopOpacity="0.18" />
+                    <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
                   </linearGradient>
                 </defs>
                 <path d="M 0,24 L 20,24 L 35,14 L 55,24 L 75,24 L 90,8 L 105,24 L 120,24 L 120,28 L 0,28 Z" fill="url(#metricGrad2)" />
-                <path d="M 0,24 L 20,24 L 35,14 L 55,24 L 75,24 L 90,8 L 105,24 L 120,24" fill="none" stroke="#34d399" strokeWidth="2" strokeLinecap="round" />
-                <circle cx="90" cy="8" r="3" fill="#34d399" />
+                <path d="M 0,24 L 20,24 L 35,14 L 55,24 L 75,24 L 90,8 L 105,24 L 120,24" fill="none" stroke="#10b981" strokeWidth="1.8" strokeLinecap="round" />
+                <circle cx="90" cy="8" r="2.5" fill="#10b981" />
               </svg>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#64748b', marginTop: '4px', fontFamily: "'JetBrains Mono', monospace" }}>
-                <span>SOURCES PROFILED</span>
-                <span style={{ color: '#34d399' }}>GEO ENRICHED</span>
+                <span>PROFILED</span>
+                <span style={{ color: '#10b981' }}>ENRICHED</span>
               </div>
             </div>
           </div>
@@ -489,13 +472,13 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
           <div style={{
             padding: '22px 20px',
             position: 'relative',
-            borderRight: '1px solid rgba(16, 185, 129, 0.12)',
+            borderRight: '1px solid rgba(16, 185, 129, 0.08)',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            background: 'radial-gradient(circle at 10% 10%, rgba(245, 158, 11, 0.08) 0%, transparent 60%)',
+            background: 'radial-gradient(circle at 10% 10%, rgba(245, 158, 11, 0.04) 0%, transparent 60%)',
           }}>
-            <span style={{ position: 'absolute', top: '6px', left: '8px', fontSize: '10px', color: 'rgba(245, 158, 11, 0.4)', fontFamily: 'monospace' }}>┌</span>
+            <span style={{ position: 'absolute', top: '6px', left: '8px', fontSize: '10px', color: 'rgba(245, 158, 11, 0.25)', fontFamily: 'monospace' }}>┌</span>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
               <span style={{
                 fontFamily: "'Chakra Petch', sans-serif",
@@ -504,11 +487,11 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
                 color: '#94a3b8',
                 letterSpacing: '0.08em',
               }}>
-                TRAPPED LOGIN ATTEMPTS
+                LOGIN ATTEMPTS
               </span>
               <div style={{
-                background: 'rgba(245, 158, 11, 0.12)',
-                border: '1px solid rgba(245, 158, 11, 0.3)',
+                background: 'rgba(245, 158, 11, 0.08)',
+                border: '1px solid rgba(245, 158, 11, 0.2)',
                 borderRadius: '6px',
                 padding: '6px',
                 display: 'flex',
@@ -524,9 +507,8 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
                 fontSize: '2.5rem',
                 fontWeight: 700,
                 fontFamily: "'JetBrains Mono', monospace",
-                color: '#ffffff',
+                color: '#e2e8f0',
                 lineHeight: 1,
-                textShadow: '0 0 20px rgba(245, 158, 11, 0.45)',
               }}>
                 {metrics?.failed_logins ?? 0}
               </span>
@@ -535,9 +517,9 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
                 fontFamily: "'JetBrains Mono', monospace",
                 padding: '2px 6px',
                 borderRadius: '4px',
-                background: 'rgba(245, 158, 11, 0.15)',
-                color: '#fbbf24',
-                border: '1px solid rgba(245, 158, 11, 0.3)',
+                background: 'rgba(245, 158, 11, 0.1)',
+                color: '#f59e0b',
+                border: '1px solid rgba(245, 158, 11, 0.2)',
                 fontWeight: 600,
               }}>
                 DECOY AUTH
@@ -548,17 +530,17 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
               <svg viewBox="0 0 120 28" style={{ width: '100%', height: '28px', overflow: 'visible' }}>
                 <defs>
                   <linearGradient id="metricGrad3" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.4" />
+                    <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.18" />
                     <stop offset="100%" stopColor="#f59e0b" stopOpacity="0" />
                   </linearGradient>
                 </defs>
                 <path d="M 0,24 L 20,24 L 35,16 L 50,16 L 65,20 L 80,12 L 95,12 L 110,6 L 120,6 L 120,28 L 0,28 Z" fill="url(#metricGrad3)" />
-                <path d="M 0,24 L 20,24 L 35,16 L 50,16 L 65,20 L 80,12 L 95,12 L 110,6 L 120,6" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" />
-                <circle cx="120" cy="6" r="3" fill="#f59e0b" />
+                <path d="M 0,24 L 20,24 L 35,16 L 50,16 L 65,20 L 80,12 L 95,12 L 110,6 L 120,6" fill="none" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" />
+                <circle cx="120" cy="6" r="2.5" fill="#f59e0b" />
               </svg>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#64748b', marginTop: '4px', fontFamily: "'JetBrains Mono', monospace" }}>
-                <span>CANARY PASSWORDS</span>
-                <span style={{ color: '#f59e0b' }}>HMAC HASHED</span>
+                <span>PASSWORDS</span>
+                <span style={{ color: '#f59e0b' }}>HASHED</span>
               </div>
             </div>
           </div>
@@ -570,9 +552,9 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            background: 'radial-gradient(circle at 10% 10%, rgba(244, 63, 94, 0.08) 0%, transparent 60%)',
+            background: 'radial-gradient(circle at 10% 10%, rgba(244, 63, 94, 0.04) 0%, transparent 60%)',
           }}>
-            <span style={{ position: 'absolute', top: '6px', left: '8px', fontSize: '10px', color: 'rgba(244, 63, 94, 0.4)', fontFamily: 'monospace' }}>┌</span>
+            <span style={{ position: 'absolute', top: '6px', left: '8px', fontSize: '10px', color: 'rgba(244, 63, 94, 0.25)', fontFamily: 'monospace' }}>┌</span>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
               <span style={{
                 fontFamily: "'Chakra Petch', sans-serif",
@@ -581,11 +563,11 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
                 color: '#94a3b8',
                 letterSpacing: '0.08em',
               }}>
-                QUARANTINED PAYLOADS
+                QUARANTINED FILES
               </span>
               <div style={{
-                background: 'rgba(244, 63, 94, 0.12)',
-                border: '1px solid rgba(244, 63, 94, 0.3)',
+                background: 'rgba(244, 63, 94, 0.08)',
+                border: '1px solid rgba(244, 63, 94, 0.2)',
                 borderRadius: '6px',
                 padding: '6px',
                 display: 'flex',
@@ -601,9 +583,8 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
                 fontSize: '2.5rem',
                 fontWeight: 700,
                 fontFamily: "'JetBrains Mono', monospace",
-                color: '#ffffff',
+                color: '#e2e8f0',
                 lineHeight: 1,
-                textShadow: '0 0 20px rgba(244, 63, 94, 0.45)',
               }}>
                 {metrics?.quarantined_files ?? 0}
               </span>
@@ -612,9 +593,9 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
                 fontFamily: "'JetBrains Mono', monospace",
                 padding: '2px 6px',
                 borderRadius: '4px',
-                background: 'rgba(244, 63, 94, 0.15)',
-                color: '#f87171',
-                border: '1px solid rgba(244, 63, 94, 0.3)',
+                background: 'rgba(244, 63, 94, 0.1)',
+                color: '#ef4444',
+                border: '1px solid rgba(244, 63, 94, 0.2)',
                 fontWeight: 600,
               }}>
                 {metrics?.rejected_uploads ?? 0} REJECTED
@@ -625,16 +606,16 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
               <svg viewBox="0 0 120 28" style={{ width: '100%', height: '28px', overflow: 'visible' }}>
                 <defs>
                   <linearGradient id="metricGrad4" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.4" />
+                    <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.18" />
                     <stop offset="100%" stopColor="#f43f5e" stopOpacity="0" />
                   </linearGradient>
                 </defs>
                 <path d="M 0,24 L 25,24 L 40,10 L 55,24 L 75,24 L 90,6 L 105,24 L 120,24 L 120,28 L 0,28 Z" fill="url(#metricGrad4)" />
-                <path d="M 0,24 L 25,24 L 40,10 L 55,24 L 75,24 L 90,6 L 105,24 L 120,24" fill="none" stroke="#f43f5e" strokeWidth="2" strokeLinecap="round" />
-                <circle cx="90" cy="6" r="3" fill="#f43f5e" />
+                <path d="M 0,24 L 25,24 L 40,10 L 55,24 L 75,24 L 90,6 L 105,24 L 120,24" fill="none" stroke="#f43f5e" strokeWidth="1.8" strokeLinecap="round" />
+                <circle cx="90" cy="6" r="2.5" fill="#f43f5e" />
               </svg>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#64748b', marginTop: '4px', fontFamily: "'JetBrains Mono', monospace" }}>
-                <span>SANDBOX CONTAINMENT</span>
+                <span>CONTAINMENT</span>
                 <span style={{ color: '#f43f5e' }}>0 ESCAPES</span>
               </div>
             </div>
@@ -646,7 +627,7 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
       {/* 2. MASTER THREAT & DECEPTION MATRIX (Polar Radar + Honeytrap Grid) */}
       {/* ========================================================= */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(440px, 1fr))', gap: '22px' }}>
-        
+
         {/* LEFT: ADVANCED CYBER THREAT SEVERITY SPECTRUM */}
         <ThreatSeveritySpectrum metrics={metrics} />
 
@@ -659,14 +640,14 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
           display: 'flex',
           flexDirection: 'column',
           position: 'relative',
-          boxShadow: '0 12px 32px rgba(0, 0, 0, 0.75)',
+          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.6)',
         }}>
           {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div style={{
-                background: 'rgba(16, 185, 129, 0.12)',
-                border: '1px solid rgba(16, 185, 129, 0.35)',
+                background: 'rgba(16, 185, 129, 0.08)',
+                border: '1px solid rgba(16, 185, 129, 0.2)',
                 borderRadius: '6px',
                 padding: '6px',
                 display: 'flex',
@@ -680,16 +661,13 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
                   fontFamily: "'Chakra Petch', sans-serif",
                   fontSize: '1rem',
                   fontWeight: 700,
-                  color: '#ffffff',
+                  color: '#e2e8f0',
                   letterSpacing: '0.04em',
                   textTransform: 'uppercase',
                   margin: 0,
                 }}>
-                  INTERACTION CLASSIFICATION & VECTORS
+                  INTERACTION VECTORS
                 </h2>
-                <span style={{ fontSize: '0.72rem', color: '#64748b', fontFamily: "'JetBrains Mono', monospace" }}>
-                  DECEPTION LAYER // ACTIVE HONEY-GRID
-                </span>
               </div>
             </div>
 
@@ -699,16 +677,16 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
               color: '#10b981',
               padding: '2px 8px',
               borderRadius: '4px',
-              background: 'rgba(16, 185, 129, 0.1)',
-              border: '1px solid rgba(16, 185, 129, 0.25)',
+              background: 'rgba(16, 185, 129, 0.08)',
+              border: '1px solid rgba(16, 185, 129, 0.2)',
               fontWeight: 600,
             }}>
-              6 VECTORS ARMED
+              6 VECTORS
             </span>
           </div>
 
           {/* Vector Cards List */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {deceptionVectors.map((item) => {
               const vectorPct = Math.round((item.count / safeTotal) * 100);
               const isActive = item.count > 0;
@@ -717,23 +695,23 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
                 <div
                   key={item.id}
                   style={{
-                    padding: '10px 14px',
+                    padding: '9px 12px',
                     borderRadius: '6px',
                     background: 'rgba(255, 255, 255, 0.02)',
-                    border: '1px solid rgba(16, 185, 129, 0.12)',
+                    border: '1px solid rgba(16, 185, 129, 0.1)',
                     position: 'relative',
                     overflow: 'hidden',
                     display: 'flex',
-                    flexDirection: 'column',
-                    gap: '6px',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
                     transition: 'all 0.2s ease',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.45)';
-                    e.currentTarget.style.background = 'rgba(16, 185, 129, 0.04)';
+                    e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                    e.currentTarget.style.background = 'rgba(16, 185, 129, 0.03)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.12)';
+                    e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.1)';
                     e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
                   }}
                 >
@@ -749,60 +727,52 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
                     transition: 'width 0.4s ease',
                   }} />
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{
-                        fontSize: '0.65rem',
-                        fontFamily: "'JetBrains Mono', monospace",
-                        fontWeight: 600,
-                        color: item.color,
-                        background: `${item.color}18`,
-                        border: `1px solid ${item.color}40`,
-                        borderRadius: '3px',
-                        padding: '1px 5px',
-                      }}>
-                        {item.id}
-                      </span>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        {item.icon}
-                        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#f1f5f9' }}>
-                          {item.label}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{
-                        fontSize: '0.65rem',
-                        fontFamily: "'JetBrains Mono', monospace",
-                        padding: '1px 6px',
-                        borderRadius: '3px',
-                        background: isActive ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255, 255, 255, 0.04)',
-                        border: `1px solid ${isActive ? 'rgba(16, 185, 129, 0.3)' : 'rgba(255, 255, 255, 0.08)'}`,
-                        color: isActive ? '#34d399' : '#64748b',
-                        fontWeight: 600,
-                      }}>
-                        {isActive ? `TRAPPED (${item.count})` : 'ARMED'}
-                      </span>
-                      <span style={{
-                        fontFamily: "'JetBrains Mono', monospace",
-                        fontWeight: 700,
-                        fontSize: '0.95rem',
-                        color: '#ffffff',
-                        minWidth: '24px',
-                        textAlign: 'right',
-                      }}>
-                        {item.count}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative', zIndex: 1 }}>
+                    <span style={{
+                      fontSize: '0.65rem',
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontWeight: 600,
+                      color: item.color,
+                      background: `${item.color}18`,
+                      border: `1px solid ${item.color}40`,
+                      borderRadius: '3px',
+                      padding: '1px 5px',
+                    }}>
+                      {item.id}
+                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      {item.icon}
+                      <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#f1f5f9' }}>
+                        {item.label}
                       </span>
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 1 }}>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                      {item.sub}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative', zIndex: 1 }}>
+                    <span style={{ fontSize: '0.68rem', fontFamily: "'JetBrains Mono', monospace", color: '#64748b' }}>
+                      {vectorPct}%
                     </span>
-                    <span style={{ fontSize: '0.68rem', fontFamily: "'JetBrains Mono', monospace", color: '#475569' }}>
-                      {vectorPct}% of total
+                    <span style={{
+                      fontSize: '0.65rem',
+                      fontFamily: "'JetBrains Mono', monospace",
+                      padding: '1px 6px',
+                      borderRadius: '3px',
+                      background: isActive ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255, 255, 255, 0.03)',
+                      border: `1px solid ${isActive ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.06)'}`,
+                      color: isActive ? '#10b981' : '#64748b',
+                      fontWeight: 600,
+                    }}>
+                      {isActive ? 'TRAPPED' : 'ARMED'}
+                    </span>
+                    <span style={{
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontWeight: 700,
+                      fontSize: '0.92rem',
+                      color: '#ffffff',
+                      minWidth: '20px',
+                      textAlign: 'right',
+                    }}>
+                      {item.count}
                     </span>
                   </div>
                 </div>
@@ -829,22 +799,22 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{
-              background: 'rgba(255, 20, 117, 0.12)',
-              border: '1px solid rgba(255, 20, 117, 0.35)',
+              background: 'rgba(16, 185, 129, 0.08)',
+              border: '1px solid rgba(16, 185, 129, 0.2)',
               borderRadius: '6px',
               padding: '6px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}>
-              <Activity size={18} color="#ff1475" />
+              <Activity size={18} color="#10b981" />
             </div>
             <div>
               <div style={{
                 fontFamily: "'Chakra Petch', sans-serif",
                 fontSize: '1rem',
                 fontWeight: 700,
-                color: '#ffffff',
+                color: '#e2e8f0',
                 letterSpacing: '0.04em',
                 textTransform: 'uppercase',
                 display: 'flex',
@@ -852,22 +822,10 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
                 gap: '8px',
                 flexWrap: 'wrap',
               }}>
-                RECENT OBSERVATIONAL ACTIVITY
-                <span style={{
-                  fontSize: '0.65rem',
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontWeight: 600,
-                  padding: '2px 8px',
-                  borderRadius: '9999px',
-                  background: 'rgba(16, 185, 129, 0.15)',
-                  border: '1px solid rgba(16, 185, 129, 0.35)',
-                  color: '#10b981',
-                }}>
-                  TELEMETRY IMPULSE STREAM
-                </span>
+                RECENT ACTIVITY
               </div>
               <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: '2px' }}>
-                Real-time attack telemetry and honeypot interaction spikes over temporal window
+                Telemetry spikes over 36 hours
               </div>
             </div>
           </div>
@@ -887,7 +845,7 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
                 gap: '4px',
               }}
             >
-              VIEW LIVE TELEMETRY STREAM &rarr;
+              LIVE STREAM &rarr;
             </button>
           </div>
         </div>
