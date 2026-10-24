@@ -47,7 +47,7 @@ async def init_default_data() -> None:
             # 3. Default Decoy Service Profile
             stmt = select(DecoyService).where(DecoyService.name == "Nexis Defense Core Portal")
             res = await session.execute(stmt)
-            decoy = res.scalar_one_or_none()
+            decoy = res.scalars().first()
             if not decoy:
                 decoy = DecoyService(
                     name="Nexis Defense Core Portal",
