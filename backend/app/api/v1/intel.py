@@ -216,3 +216,96 @@ async def get_threat_scores(
 
     output.sort(key=lambda x: x["score"], reverse=True)
     return output
+
+
+@router.post("/simulate-sample")
+async def simulate_sample_threats(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Injects realistic global threat actors into telemetry for graduation presentation demonstration.
+    Creates attacks originating from diverse international networks (US, DE, NL, SG, BR).
+    """
+    import uuid
+    from app.core.websocket_manager import ws_manager
+
+    now = datetime.now(timezone.utc)
+    samples = [
+        {
+            "ip": "185.220.101.5",  # Germany
+            "event_type": "sql_injection",
+            "severity": "critical",
+            "path": "/api/v1/decoy/auth/login",
+            "summary": "CRITICAL: SQLi authentication bypass attempt from Tor exit node (185.220.101.5)",
+        },
+        {
+            "ip": "198.51.100.42",  # US
+            "event_type": "recon_probe",
+            "severity": "medium",
+            "path": "/.env",
+            "summary": "Automated reconnaissance scanner targeting environment secrets",
+        },
+        {
+            "ip": "45.154.255.8",   # Netherlands
+            "event_type": "file_upload",
+            "severity": "high",
+            "path": "/api/v1/decoy/upload/diagnostics",
+            "summary": "Suspicious reverse shell script quarantined (payload: 'c99shell.php')",
+        },
+        {
+            "ip": "103.208.220.10", # Singapore
+            "event_type": "honeytoken_access",
+            "severity": "critical",
+            "path": "/api/v1/decoy/honeytoken/download",
+            "summary": "CRITICAL: Attacker tripped Canary Honeytoken 'PROJECT_ARGUS_TOP_SECRET.cfg'",
+        },
+        {
+            "ip": "177.54.144.18",  # Brazil
+            "event_type": "login_attempt",
+            "severity": "high",
+            "path": "/api/v1/decoy/auth/login",
+            "summary": "Credential stuffing barrage: 40 attempts against administrator account",
+        },
+    ]
+
+    added_events = []
+    for s in samples:
+        ev_id = uuid.uuid4()
+        ev = SecurityEvent(
+            id=ev_id,
+            timestamp=now,
+            source_ip=s["ip"],
+            source_port=54321,
+            http_method="POST" if "login" in s["path"] or "upload" in s["path"] else "GET",
+            request_path=s["path"],
+            query_params={},
+            headers_sanitized={"user-agent": "Mozilla/5.0 (Automated Recon Probe)"},
+            user_agent="Mozilla/5.0 (Automated Recon Probe)",
+            event_type=s["event_type"],
+            severity=s["severity"],
+            is_test_event=False,
+            correlation_id=f"demo-{ev_id.hex[:8]}",
+            metadata_payload={"summary": s["summary"]},
+        )
+        db.add(ev)
+        added_events.append(ev)
+
+    await db.commit()
+
+    # Broadcast to live websocket & telegram
+    for ev in added_events:
+        await ws_manager.broadcast_event({
+            "id": str(ev.id),
+            "timestamp": ev.timestamp.isoformat(),
+            "source_ip": ev.source_ip,
+            "event_type": ev.event_type,
+            "severity": ev.severity,
+            "request_path": ev.request_path,
+            "http_method": ev.http_method,
+            "user_agent": ev.user_agent,
+            "is_test_event": False,
+            "summary": ev.metadata_payload.get("summary", ""),
+        })
+
+    return {"status": "success", "injected_actors": len(samples)}

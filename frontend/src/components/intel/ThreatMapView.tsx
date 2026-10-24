@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Globe, Shield, AlertTriangle, TrendingUp, RefreshCw, Download } from 'lucide-react';
+import { Globe, Shield, AlertTriangle, TrendingUp, RefreshCw, Download, Zap, Radio } from 'lucide-react';
 
 interface GeoEntry {
   ip: string;
@@ -33,36 +33,26 @@ const SEV_COLOR: Record<string, string> = {
   low: '#22c55e',
 };
 
-// Equirectangular projection — SVG viewBox 0 0 1000 500
+// Equirectangular projection mapping to SVG viewBox 0 0 1000 500
 function ll2xy(lat: number, lon: number): [number, number] {
-  return [((lon + 180) / 360) * 1000, ((90 - lat) / 180) * 500];
+  const x = ((lon + 180) / 360) * 1000;
+  const y = ((90 - lat) / 180) * 500;
+  return [Math.max(10, Math.min(990, x)), Math.max(10, Math.min(490, y))];
 }
 
 function fmtDt(dt: string) {
   try { return new Date(dt).toLocaleString(); } catch { return dt; }
 }
 
-const CONTINENTS = [
-  // North America
-  'M130,80 L220,75 L240,90 L230,110 L210,135 L200,162 L185,182 L168,202 L152,212 L138,242 L128,262 L118,242 L108,212 L98,192 L93,162 L98,132 L108,102 Z',
-  // South America
-  'M178,272 L208,262 L223,282 L228,312 L223,342 L213,372 L198,397 L183,412 L168,397 L158,372 L153,342 L156,312 L163,287 Z',
-  // Europe
-  'M438,68 L488,63 L508,73 L518,83 L508,98 L493,108 L473,113 L458,118 L443,113 L433,98 L430,83 Z',
-  // Africa
-  'M448,138 L488,133 L508,143 L523,163 L528,198 L523,238 L513,268 L498,293 L478,308 L458,303 L443,283 L433,258 L428,228 L430,198 L436,168 L440,148 Z',
-  // Asia (simplified)
-  'M508,58 L618,48 L698,53 L758,63 L798,73 L818,88 L808,108 L788,123 L758,133 L718,138 L678,143 L638,148 L598,143 L568,133 L543,118 L523,103 L510,88 Z',
-  // Australia
-  'M718,288 L778,278 L818,288 L838,308 L833,333 L813,348 L783,353 L753,343 L728,323 L713,303 Z',
-];
-
 export const ThreatMapView: React.FC = () => {
   const [geoData, setGeoData] = useState<GeoEntry[]>([]);
   const [threats, setThreats] = useState<ThreatScore[]>([]);
   const [loading, setLoading] = useState(true);
+  const [simulating, setSimulating] = useState(false);
   const [hoveredIP, setHoveredIP] = useState<string | null>(null);
+  const [selectedIP, setSelectedIP] = useState<string | null>(null);
   const [section, setSection] = useState<'map' | 'scores'>('map');
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -82,6 +72,25 @@ export const ThreatMapView: React.FC = () => {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  const handleSimulateGlobal = async () => {
+    setSimulating(true);
+    try {
+      const res = await fetch('/api/v1/intel/simulate-sample', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (res.ok) {
+        setToastMsg('Simulated 5 international threat actors across US, Europe, Asia & Africa');
+        await fetchData();
+        setTimeout(() => setToastMsg(null), 4000);
+      }
+    } catch (e) {
+      console.error('Simulation error:', e);
+    } finally {
+      setSimulating(false);
+    }
+  };
+
   const downloadPDF = async (ip: string) => {
     try {
       const res = await fetch(`/api/v1/export/incident-report/${encodeURIComponent(ip)}`, { credentials: 'include' });
@@ -97,7 +106,7 @@ export const ThreatMapView: React.FC = () => {
   };
 
   const validGeo = geoData.filter(g => g.lat !== 0 || g.lon !== 0);
-  const hoveredEntry = geoData.find(g => g.ip === hoveredIP);
+  const hoveredEntry = geoData.find(g => g.ip === hoveredIP) || geoData.find(g => g.ip === selectedIP);
 
   const card = (label: string, value: number | string, color: string, icon: React.ReactNode) => (
     <div style={{
@@ -118,36 +127,66 @@ export const ThreatMapView: React.FC = () => {
     <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
           <Globe size={28} color="#10b981" />
           <div>
             <div style={{ fontSize: '1.35rem', fontFamily: "'Chakra Petch',sans-serif", fontWeight: 700, color: '#e2e8f0', letterSpacing: '0.04em' }}>
-              THREAT INTELLIGENCE
+              THREAT INTELLIGENCE &amp; ATTACK ORIGIN MAP
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '2px' }}>
-              GeoIP Attack Map · Attacker Threat Scoring · MITRE ATT&CK · PDF Reports
+              Real-time Geolocation · Threat Scoring · MITRE ATT&amp;CK · Telegram Alert Sync
             </div>
           </div>
         </div>
-        <button onClick={fetchData} disabled={loading} style={{
-          display: 'flex', alignItems: 'center', gap: '8px',
-          background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)',
-          borderRadius: '6px', color: '#10b981', padding: '8px 16px',
-          cursor: loading ? 'not-allowed' : 'pointer', fontSize: '0.8rem',
-          fontFamily: "'Chakra Petch',sans-serif", letterSpacing: '0.04em',
-        }}>
-          <RefreshCw size={14} />
-          {loading ? 'LOADING...' : 'REFRESH'}
-        </button>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button
+            onClick={handleSimulateGlobal}
+            disabled={simulating}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              background: 'linear-gradient(135deg, rgba(239,68,68,0.2) 0%, rgba(239,68,68,0.08) 100%)',
+              border: '1px solid rgba(239,68,68,0.4)',
+              borderRadius: '6px', color: '#f87171', padding: '8px 16px',
+              cursor: simulating ? 'not-allowed' : 'pointer', fontSize: '0.8rem',
+              fontFamily: "'Chakra Petch',sans-serif", fontWeight: 600, letterSpacing: '0.04em',
+            }}
+          >
+            <Zap size={14} />
+            {simulating ? 'INJECTING THREATS...' : 'INJECT DEMO THREATS'}
+          </button>
+
+          <button onClick={fetchData} disabled={loading} style={{
+            display: 'flex', alignItems: 'center', gap: '8px',
+            background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)',
+            borderRadius: '6px', color: '#10b981', padding: '8px 16px',
+            cursor: loading ? 'not-allowed' : 'pointer', fontSize: '0.8rem',
+            fontFamily: "'Chakra Petch',sans-serif", letterSpacing: '0.04em',
+          }}>
+            <RefreshCw size={14} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
+            {loading ? 'REFRESHING...' : 'REFRESH'}
+          </button>
+        </div>
       </div>
 
-      {/* Stats */}
+      {toastMsg && (
+        <div style={{
+          background: 'rgba(16,185,129,0.15)', border: '1px solid #10b981',
+          borderRadius: '8px', padding: '12px 18px', color: '#10b981',
+          marginBottom: '20px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '10px'
+        }}>
+          <Radio size={16} />
+          <span>{toastMsg}</span>
+        </div>
+      )}
+
+      {/* Stats row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '16px', marginBottom: '24px' }}>
-        {card('TRACKED IPs', geoData.length, '#10b981', <Globe size={18}/>)}
+        {card('TOTAL TRACKED IPS', geoData.length, '#10b981', <Globe size={18}/>)}
         {card('CRITICAL THREATS', threats.filter(t => t.level === 'critical').length, '#ef4444', <AlertTriangle size={18}/>)}
         {card('HIGH THREATS', threats.filter(t => t.level === 'high').length, '#f97316', <Shield size={18}/>)}
-        {card('COUNTRIES', new Set(geoData.map(g => g.country_code).filter(c => c && c !== 'XX')).size, '#3b82f6', <TrendingUp size={18}/>)}
+        {card('ACTIVE COUNTRIES', new Set(geoData.map(g => g.country_code).filter(c => c && c !== 'XX')).size, '#3b82f6', <TrendingUp size={18}/>)}
       </div>
 
       {/* Tab toggle */}
@@ -161,7 +200,7 @@ export const ThreatMapView: React.FC = () => {
             color: section === s ? '#10b981' : 'var(--text-muted)',
             transition: 'all 0.15s',
           }}>
-            {s === 'map' ? '🌍  ATTACK MAP' : '📊  THREAT SCORES'}
+            {s === 'map' ? '🌍  GEOGRAPHIC ATTACK MAP' : '📊  THREAT SCORING MATRIX'}
           </button>
         ))}
       </div>
@@ -169,100 +208,216 @@ export const ThreatMapView: React.FC = () => {
       {/* ── Attack Map ── */}
       {section === 'map' && (
         <div style={{ background: 'rgba(4,6,15,0.95)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '20px', marginBottom: '24px' }}>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: '12px', fontFamily: "'Chakra Petch',sans-serif", letterSpacing: '0.05em' }}>
-            GLOBAL THREAT ORIGIN MAP — {validGeo.length} active source{validGeo.length !== 1 ? 's' : ''} · hover dots for details
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', fontFamily: "'Chakra Petch',sans-serif", letterSpacing: '0.05em' }}>
+              GLOBAL THREAT ORIGIN RADAR &bull; {validGeo.length} ACTIVE THREAT SOURCE{validGeo.length !== 1 ? 'S' : ''} DETECTED
+            </div>
+            <div style={{ fontSize: '0.72rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }} />
+              LIVE TELEMETRY ACTIVE
+            </div>
           </div>
 
-          <div style={{ position: 'relative', background: '#020814', borderRadius: '8px', overflow: 'hidden' }}>
+          <div style={{ position: 'relative', background: '#020712', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(16,185,129,0.15)' }}>
             <svg viewBox="0 0 1000 500" style={{ width: '100%', height: 'auto', display: 'block' }}>
-              <rect width="1000" height="500" fill="#020814" />
-              {/* Grid */}
+              {/* Deep ocean background */}
+              <rect width="1000" height="500" fill="#030914" />
+
+              {/* Coordinate Grid lines */}
               {[-60,-30,0,30,60].map(lat => {
                 const y = ((90-lat)/180)*500;
-                return <line key={`lat${lat}`} x1="0" y1={y} x2="1000" y2={y} stroke="rgba(16,185,129,0.05)" strokeWidth="0.5"/>;
+                return (
+                  <g key={`lat${lat}`}>
+                    <line x1="0" y1={y} x2="1000" y2={y} stroke="rgba(16,185,129,0.08)" strokeDasharray="3 3" strokeWidth="0.6"/>
+                    <text x="8" y={y - 3} fill="rgba(16,185,129,0.3)" fontSize="8" fontFamily="monospace">{lat}&deg;</text>
+                  </g>
+                );
               })}
               {[-120,-60,0,60,120].map(lon => {
                 const x = ((lon+180)/360)*1000;
-                return <line key={`lon${lon}`} x1={x} y1="0" x2={x} y2="500" stroke="rgba(16,185,129,0.05)" strokeWidth="0.5"/>;
+                return (
+                  <g key={`lon${lon}`}>
+                    <line x1={x} y1="0" x2={x} y2="500" stroke="rgba(16,185,129,0.08)" strokeDasharray="3 3" strokeWidth="0.6"/>
+                    <text x={x + 3} y="495" fill="rgba(16,185,129,0.3)" fontSize="8" fontFamily="monospace">{lon}&deg;</text>
+                  </g>
+                );
               })}
-              {/* Continents */}
-              {CONTINENTS.map((d, i) => (
-                <path key={i} d={d} fill="#0d2137" stroke="rgba(16,185,129,0.15)" strokeWidth="0.5"/>
-              ))}
-              {/* Attack dots */}
+
+              {/* Equator & Prime Meridian highlight */}
+              <line x1="0" y1="250" x2="1000" y2="250" stroke="rgba(16,185,129,0.18)" strokeWidth="0.8"/>
+              <line x1="500" y1="0" x2="500" y2="500" stroke="rgba(16,185,129,0.18)" strokeWidth="0.8"/>
+
+              {/* Refined World Continents (Equirectangular) */}
+              <g fill="#0b1b2d" stroke="rgba(16,185,129,0.22)" strokeWidth="0.8">
+                {/* North America */}
+                <path d="M 120,40 L 210,35 L 260,65 L 290,110 L 270,140 L 250,145 L 240,175 L 210,185 L 195,210 L 165,225 L 150,250 L 140,265 L 125,245 L 115,220 L 105,190 L 95,160 L 85,125 L 90,90 L 105,60 Z" />
+                {/* Central America & Caribbean */}
+                <path d="M 150,250 L 175,260 L 190,280 L 180,295 L 165,285 L 140,265 Z" />
+                {/* South America */}
+                <path d="M 190,285 L 225,275 L 255,295 L 265,330 L 255,365 L 240,405 L 220,440 L 205,455 L 195,435 L 180,395 L 170,360 L 165,325 L 175,295 Z" />
+                {/* Greenland */}
+                <path d="M 295,30 L 350,25 L 365,55 L 330,80 L 300,75 Z" />
+                {/* Europe */}
+                <path d="M 435,70 L 480,60 L 515,68 L 525,95 L 510,120 L 485,130 L 460,135 L 440,125 L 430,105 L 425,85 Z" />
+                {/* British Isles */}
+                <path d="M 415,75 L 430,70 L 435,90 L 420,95 Z" />
+                {/* Africa */}
+                <path d="M 435,145 L 480,140 L 520,155 L 550,180 L 560,225 L 545,285 L 525,335 L 500,375 L 475,370 L 445,335 L 430,290 L 415,240 L 418,190 L 425,165 Z" />
+                {/* Madagascar */}
+                <path d="M 565,315 L 575,310 L 580,345 L 570,355 Z" />
+                {/* Asia / Eurasia */}
+                <path d="M 525,60 L 610,50 L 700,55 L 780,65 L 850,75 L 890,100 L 860,130 L 830,145 L 800,160 L 760,165 L 725,185 L 690,210 L 650,230 L 620,220 L 590,195 L 565,165 L 540,135 L 525,95 Z" />
+                {/* India */}
+                <path d="M 645,190 L 675,195 L 685,235 L 665,270 L 650,245 Z" />
+                {/* Japan */}
+                <path d="M 865,120 L 880,115 L 885,145 L 870,160 Z" />
+                {/* Southeast Asia / Indonesia */}
+                <path d="M 720,235 L 755,230 L 780,260 L 760,285 L 725,270 Z" />
+                <path d="M 770,290 L 820,285 L 835,305 L 790,310 Z" />
+                {/* Australia */}
+                <path d="M 740,310 L 810,300 L 850,315 L 865,345 L 855,385 L 830,410 L 790,415 L 760,395 L 740,360 L 730,330 Z" />
+                {/* New Zealand */}
+                <path d="M 890,395 L 905,390 L 910,425 L 895,430 Z" />
+              </g>
+
+              {/* Attack Origin Markers */}
               {validGeo.map(g => {
                 const [x, y] = ll2xy(g.lat, g.lon);
                 const col = SEV_COLOR[g.max_severity] || '#22c55e';
-                const r = Math.min(3 + Math.log2(g.event_count + 1) * 2, 14);
-                const hov = hoveredIP === g.ip;
+                const baseR = Math.min(4 + Math.log2(g.event_count + 1) * 2.5, 16);
+                const isHov = hoveredIP === g.ip || selectedIP === g.ip;
+                const r = isHov ? baseR + 3 : baseR;
+
                 return (
-                  <g key={g.ip}>
-                    <circle cx={x} cy={y} r={r+8} fill="none" stroke={col} strokeWidth="0.5" opacity={hov ? 0.5 : 0.15}/>
-                    <circle cx={x} cy={y} r={r+4} fill="none" stroke={col} strokeWidth="0.5" opacity={hov ? 0.3 : 0.08}/>
+                  <g key={g.ip} style={{ cursor: 'pointer' }}
+                     onClick={() => setSelectedIP(selectedIP === g.ip ? null : g.ip)}
+                     onMouseEnter={() => setHoveredIP(g.ip)}
+                     onMouseLeave={() => setHoveredIP(null)}>
+                    {/* Concentric radar wave rings */}
+                    <circle cx={x} cy={y} r={r + 14} fill="none" stroke={col} strokeWidth="0.5" opacity={isHov ? 0.6 : 0.15}>
+                      <animate attributeName="r" values={`${r+4};${r+18};${r+4}`} dur="2.4s" repeatCount="indefinite" />
+                      <animate attributeName="opacity" values="0.4;0.05;0.4" dur="2.4s" repeatCount="indefinite" />
+                    </circle>
+                    <circle cx={x} cy={y} r={r + 6} fill="none" stroke={col} strokeWidth="0.8" opacity={isHov ? 0.7 : 0.25} />
+
+                    {/* Target crosshair for hovered/selected dot */}
+                    {isHov && (
+                      <g stroke={col} strokeWidth="0.7" opacity="0.8">
+                        <line x1={x - r - 8} y1={y} x2={x - r - 2} y2={y} />
+                        <line x1={x + r + 2} y1={y} x2={x + r + 8} y2={y} />
+                        <line x1={x} y1={y - r - 8} x2={x} y2={y - r - 2} />
+                        <line x1={x} y1={y + r + 2} x2={x} y2={y + r + 8} />
+                      </g>
+                    )}
+
+                    {/* Main pulsing attack core */}
                     <circle
-                      cx={x} cy={y} r={hov ? r+2 : r}
-                      fill={col} opacity={0.85}
-                      style={{ cursor: 'pointer', filter: hov ? `drop-shadow(0 0 6px ${col})` : 'none', transition: 'all 0.15s' }}
-                      onMouseEnter={() => setHoveredIP(g.ip)}
-                      onMouseLeave={() => setHoveredIP(null)}
+                      cx={x} cy={y} r={r}
+                      fill={col}
+                      opacity={0.9}
+                      style={{ filter: `drop-shadow(0 0 ${isHov ? 10 : 5}px ${col})`, transition: 'all 0.2s' }}
                     />
+
+                    {/* Inner high-energy white centroid */}
+                    <circle cx={x} cy={y} r={Math.max(2, r * 0.35)} fill="#ffffff" opacity="0.95" />
+
+                    {/* Country callout pill */}
+                    <text
+                      x={x} y={y - r - 6}
+                      fill="#e2e8f0"
+                      fontSize="9"
+                      fontFamily="'Chakra Petch',sans-serif"
+                      fontWeight="600"
+                      textAnchor="middle"
+                      style={{ textShadow: '0 1px 4px #000', pointerEvents: 'none' }}
+                    >
+                      {g.country_code ? `${g.country_code} • ${g.event_count}` : g.ip}
+                    </text>
                   </g>
                 );
               })}
             </svg>
 
-            {/* Tooltip */}
+            {/* Tactical Inspector HUD Tooltip */}
             {hoveredEntry && (
               <div style={{
-                position: 'absolute', top: 12, right: 12, pointerEvents: 'none',
-                background: 'rgba(4,6,15,0.97)', border: `1px solid ${SEV_COLOR[hoveredEntry.max_severity]}`,
-                borderRadius: '8px', padding: '12px 16px', minWidth: '210px',
+                position: 'absolute', top: 16, right: 16,
+                background: 'rgba(6,10,22,0.96)',
+                border: `1px solid ${SEV_COLOR[hoveredEntry.max_severity]}`,
+                boxShadow: `0 0 20px rgba(0,0,0,0.8), 0 0 10px ${SEV_COLOR[hoveredEntry.max_severity]}33`,
+                borderRadius: '8px', padding: '14px 18px', minWidth: '240px', pointerEvents: 'none',
               }}>
-                <div style={{ fontFamily: "'Chakra Petch',sans-serif", fontSize: '0.9rem', color: '#e2e8f0', fontWeight: 700 }}>{hoveredEntry.ip}</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '4px' }}>
-                  📍 {hoveredEntry.city ? `${hoveredEntry.city}, ` : ''}{hoveredEntry.country || 'Unknown'}
-                </div>
-                {hoveredEntry.isp && <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: '2px' }}>🏢 {hoveredEntry.isp}</div>}
-                <div style={{ display: 'flex', gap: '12px', marginTop: '8px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '0.72rem', color: SEV_COLOR[hoveredEntry.max_severity], fontWeight: 700 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <span style={{ fontFamily: 'monospace', fontSize: '0.95rem', color: '#ffffff', fontWeight: 700 }}>
+                    {hoveredEntry.ip}
+                  </span>
+                  <span style={{
+                    fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.06em',
+                    color: SEV_COLOR[hoveredEntry.max_severity],
+                    background: `${SEV_COLOR[hoveredEntry.max_severity]}22`,
+                    padding: '2px 6px', borderRadius: '4px',
+                  }}>
                     {hoveredEntry.max_severity.toUpperCase()}
                   </span>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>{hoveredEntry.event_count} events</span>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>{hoveredEntry.top_event_type.replace(/_/g,' ')}</span>
+                </div>
+
+                <div style={{ fontSize: '0.76rem', color: '#94a3b8', margin: '4px 0' }}>
+                  📍 {hoveredEntry.city ? `${hoveredEntry.city}, ` : ''}{hoveredEntry.country} ({hoveredEntry.country_code})
+                </div>
+                {hoveredEntry.isp && (
+                  <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                    🏢 {hoveredEntry.isp}
+                  </div>
+                )}
+
+                <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <div>
+                    <div style={{ fontSize: '0.62rem', color: 'var(--text-dim)', letterSpacing: '0.05em' }}>VOLUME</div>
+                    <div style={{ fontSize: '0.85rem', color: '#e2e8f0', fontWeight: 600 }}>{hoveredEntry.event_count} events</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.62rem', color: 'var(--text-dim)', letterSpacing: '0.05em' }}>PRIMARY VECTOR</div>
+                    <div style={{ fontSize: '0.85rem', color: '#e2e8f0', fontWeight: 600 }}>{hoveredEntry.top_event_type.replace(/_/g,' ')}</div>
+                  </div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Legend */}
-          <div style={{ display: 'flex', gap: '20px', marginTop: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
-            {Object.entries(SEV_COLOR).map(([sev, col]) => (
-              <div key={sev} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <div style={{ width: 10, height: 10, borderRadius: '50%', background: col }}/>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'capitalize' }}>{sev}</span>
-              </div>
-            ))}
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)', marginLeft: 'auto' }}>• Dot size ∝ event count</span>
+          {/* Legend bar */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '14px', flexWrap: 'wrap', gap: '10px' }}>
+            <div style={{ display: 'flex', gap: '18px', alignItems: 'center' }}>
+              {Object.entries(SEV_COLOR).map(([sev, col]) => (
+                <div key={sev} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: col, boxShadow: `0 0 6px ${col}` }}/>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{sev}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', fontStyle: 'italic' }}>
+              Dot radius scales dynamically with attack intensity
+            </div>
           </div>
         </div>
       )}
 
-      {/* ── Threat Scores Table ── */}
+      {/* ── Threat Scores Matrix Table ── */}
       {section === 'scores' && (
         <div style={{ background: 'rgba(13,18,30,0.85)', border: '1px solid var(--border-subtle)', borderRadius: '12px', overflow: 'hidden' }}>
-          <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontFamily: "'Chakra Petch',sans-serif", fontSize: '0.78rem', color: 'var(--text-muted)', letterSpacing: '0.05em' }}>
-              ATTACKER THREAT SCORES — Last 7 Days
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontFamily: "'Chakra Petch',sans-serif", fontSize: '0.8rem', color: 'var(--text-muted)', letterSpacing: '0.05em' }}>
+              ATTACKER RISK SCORING MATRIX &bull; LAST 7 DAYS
             </span>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>{threats.length} tracked actor{threats.length !== 1 ? 's' : ''}</span>
+            <span style={{ fontSize: '0.74rem', color: 'var(--text-dim)' }}>{threats.length} Tracked Hostiles</span>
           </div>
+
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
               <thead>
                 <tr style={{ background: 'rgba(0,0,0,0.3)' }}>
-                  {['IP Address','Country','Score','Level','Events','Event Types','First Seen','Last Seen','PDF'].map(h => (
+                  {['Hostile IP','Origin','Score','Risk Level','Events','Observed Vectors','First Seen','Last Activity','Forensics PDF'].map(h => (
                     <th key={h} style={{
-                      padding: '10px 14px', textAlign: 'left', fontSize: '0.67rem',
+                      padding: '12px 16px', textAlign: 'left', fontSize: '0.68rem',
                       color: 'var(--text-dim)', letterSpacing: '0.06em', fontWeight: 600,
                       whiteSpace: 'nowrap', borderBottom: '1px solid var(--border-subtle)',
                     }}>{h}</th>
@@ -271,39 +426,49 @@ export const ThreatMapView: React.FC = () => {
               </thead>
               <tbody>
                 {threats.length === 0 ? (
-                  <tr><td colSpan={9} style={{ padding: '40px', textAlign: 'center', color: 'var(--text-dim)', fontSize: '0.85rem' }}>
-                    No threat data yet — trigger some decoy interactions to populate this table
+                  <tr><td colSpan={9} style={{ padding: '48px', textAlign: 'center', color: 'var(--text-dim)' }}>
+                    No hostile telemetry detected yet. Click "INJECT DEMO THREATS" above or interact with the decoy.
                   </td></tr>
                 ) : threats.map((t, i) => {
                   const col = SEV_COLOR[t.level] || '#22c55e';
                   return (
-                    <tr key={t.ip} style={{ borderBottom: '1px solid var(--border-subtle)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
-                      <td style={{ padding: '10px 14px', fontFamily: 'monospace', color: '#e2e8f0', fontWeight: 600, whiteSpace: 'nowrap' }}>{t.ip}</td>
-                      <td style={{ padding: '10px 14px', color: 'var(--text-muted)', fontSize: '0.78rem' }}>{t.country || '—'}</td>
-                      <td style={{ padding: '10px 14px' }}>
+                    <tr key={t.ip} style={{ borderBottom: '1px solid var(--border-subtle)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)' }}>
+                      <td style={{ padding: '12px 16px', fontFamily: 'monospace', color: '#e2e8f0', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                        {t.ip}
+                      </td>
+                      <td style={{ padding: '12px 16px', color: 'var(--text-muted)', fontSize: '0.78rem' }}>
+                        {t.country || 'Host Local'} {t.country_code ? `(${t.country_code})` : ''}
+                      </td>
+                      <td style={{ padding: '12px 16px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <div style={{ width: `${Math.min(t.score * 2, 80)}px`, height: '5px', borderRadius: '3px', background: col }}/>
+                          <div style={{ width: `${Math.min(t.score * 1.5, 90)}px`, height: '6px', borderRadius: '3px', background: col, boxShadow: `0 0 6px ${col}66` }}/>
                           <span style={{ color: col, fontWeight: 700 }}>{t.score}</span>
                         </div>
                       </td>
-                      <td style={{ padding: '10px 14px' }}>
-                        <span style={{ color: col, fontWeight: 700, fontSize: '0.72rem', letterSpacing: '0.05em' }}>{t.level.toUpperCase()}</span>
+                      <td style={{ padding: '12px 16px' }}>
+                        <span style={{
+                          color: col, fontWeight: 700, fontSize: '0.7rem',
+                          background: `${col}18`, border: `1px solid ${col}44`,
+                          padding: '3px 8px', borderRadius: '4px', letterSpacing: '0.05em'
+                        }}>
+                          {t.level.toUpperCase()}
+                        </span>
                       </td>
-                      <td style={{ padding: '10px 14px', color: 'var(--text-muted)' }}>{t.event_count}</td>
-                      <td style={{ padding: '10px 14px', color: 'var(--text-dim)', fontSize: '0.74rem', maxWidth: '180px' }}>
+                      <td style={{ padding: '12px 16px', color: '#e2e8f0', fontWeight: 600 }}>{t.event_count}</td>
+                      <td style={{ padding: '12px 16px', color: 'var(--text-dim)', fontSize: '0.74rem', maxWidth: '200px' }}>
                         {t.event_types.slice(0,3).map(e => e.replace(/_/g,' ')).join(', ')}
                         {t.event_types.length > 3 ? ` +${t.event_types.length-3}` : ''}
                       </td>
-                      <td style={{ padding: '10px 14px', color: 'var(--text-dim)', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{fmtDt(t.first_seen)}</td>
-                      <td style={{ padding: '10px 14px', color: 'var(--text-dim)', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{fmtDt(t.last_seen)}</td>
-                      <td style={{ padding: '10px 14px' }}>
-                        <button onClick={() => downloadPDF(t.ip)} title={`Download PDF report for ${t.ip}`} style={{
-                          display: 'flex', alignItems: 'center', gap: '5px',
-                          background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.3)',
-                          borderRadius: '4px', color: '#60a5fa', padding: '5px 9px',
-                          cursor: 'pointer', fontSize: '0.72rem', whiteSpace: 'nowrap',
+                      <td style={{ padding: '12px 16px', color: 'var(--text-dim)', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{fmtDt(t.first_seen)}</td>
+                      <td style={{ padding: '12px 16px', color: 'var(--text-dim)', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{fmtDt(t.last_seen)}</td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <button onClick={() => downloadPDF(t.ip)} title={`Download forensic report for ${t.ip}`} style={{
+                          display: 'flex', alignItems: 'center', gap: '6px',
+                          background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.35)',
+                          borderRadius: '4px', color: '#60a5fa', padding: '6px 10px',
+                          cursor: 'pointer', fontSize: '0.74rem', fontWeight: 600, whiteSpace: 'nowrap',
                         }}>
-                          <Download size={11}/> PDF
+                          <Download size={12}/> REPORT
                         </button>
                       </td>
                     </tr>

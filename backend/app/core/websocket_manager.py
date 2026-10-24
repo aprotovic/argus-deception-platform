@@ -1,5 +1,6 @@
-"""WebSocket Connection Manager for live SOC operations streaming."""
+"""WebSocket Connection Manager for live SOC operations streaming with Telegram alert integration."""
 
+import asyncio
 import json
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Set
@@ -39,7 +40,30 @@ class WebSocketManager:
         )
 
     async def broadcast_event(self, event_data: Dict[str, Any]) -> None:
-        """Broadcasts a newly ingested security event to all connected dashboards."""
+        """Broadcasts a newly ingested security event to all connected dashboards and fires alerts."""
+        # 1. Trigger Telegram alert for critical and high severity events (non-test)
+        severity = str(event_data.get("severity", "low")).lower()
+        is_test = bool(event_data.get("is_test_event", False))
+        if severity in ("critical", "high") and not is_test:
+            try:
+                from app.core.alerts import send_telegram_alert
+                event_type = str(event_data.get("event_type", "unknown"))
+                source_ip = str(event_data.get("source_ip", "unknown"))
+                summary = str(event_data.get("summary", event_data.get("request_path", "Security event detected")))
+                event_id = str(event_data.get("id", "alert"))
+                asyncio.create_task(
+                    send_telegram_alert(
+                        event_type=event_type,
+                        severity=severity,
+                        source_ip=source_ip,
+                        summary=summary,
+                        event_id=event_id,
+                    )
+                )
+            except Exception as e:
+                logger.warning(f"Failed to dispatch Telegram alert from WebSocketManager: {e}")
+
+        # 2. Forward to connected dashboard WebSocket clients
         if not self.active_connections:
             return
 
