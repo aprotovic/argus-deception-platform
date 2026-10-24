@@ -467,3 +467,133 @@ async def test_button_driven_navigation_and_callbacks(db_session, monkeypatch):
     }
     await process_update(mock_client, cb_unauth)
     assert any("Unauthorized" in str(c) for c in mock_client.post.call_args_list)
+
+
+@pytest.mark.asyncio
+async def test_super_admin_and_secondary_admin_hierarchy(db_session, monkeypatch):
+    """Verify Super Admin can promote/demote secondary Admins, and secondary Admins are properly restricted."""
+    super_admin_id = "6288136999"
+    secondary_admin_id = "3331112222"
+    analyst_id = "4445556666"
+
+    monkeypatch.setattr(settings, "TELEGRAM_ADMIN_ID", super_admin_id)
+
+    mock_client = AsyncMock()
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_client.post.return_value = mock_resp
+
+    # 1. Register candidate user
+    update_start = {
+        "update_id": 701,
+        "message": {
+            "chat": {"id": secondary_admin_id},
+            "from": {"id": int(secondary_admin_id), "username": "candidate"},
+            "text": "/start",
+        },
+    }
+    await process_update(mock_client, update_start)
+
+    # 2. Super Admin promotes candidate to Admin
+    mock_client.reset_mock()
+    update_promote = {
+        "update_id": 702,
+        "message": {
+            "chat": {"id": super_admin_id},
+            "from": {"id": int(super_admin_id)},
+            "text": f"/promote {secondary_admin_id}",
+        },
+    }
+    await process_update(mock_client, update_promote)
+    assert any("PROMOTED TO ADMINISTRATOR" in str(c) for c in mock_client.post.call_args_list)
+
+    # Verify DB state: role is admin, promoted_by is super admin
+    stmt = select(TelegramUser).where(TelegramUser.telegram_id == secondary_admin_id)
+    sec_user = (await db_session.execute(stmt)).scalar_one_or_none()
+    assert sec_user is not None
+    assert sec_user.role == "admin"
+    assert sec_user.status == "approved"
+    assert sec_user.promoted_by == super_admin_id
+
+    # 3. Secondary Admin CAN access /users
+    mock_client.reset_mock()
+    update_sec_users = {
+        "update_id": 703,
+        "message": {
+            "chat": {"id": secondary_admin_id},
+            "from": {"id": int(secondary_admin_id)},
+            "text": "/users",
+        },
+    }
+    await process_update(mock_client, update_sec_users)
+    assert any("Total Registered" in str(c) for c in mock_client.post.call_args_list)
+
+    # 4. Secondary Admin CANNOT promote another user to admin
+    mock_client.reset_mock()
+    update_sec_promote = {
+        "update_id": 704,
+        "message": {
+            "chat": {"id": secondary_admin_id},
+            "from": {"id": int(secondary_admin_id)},
+            "text": f"/promote {analyst_id}",
+        },
+    }
+    await process_update(mock_client, update_sec_promote)
+    assert any("Only the Super Administrator can promote" in str(c) for c in mock_client.post.call_args_list)
+
+    # 5. Secondary Admin CANNOT delete users
+    mock_client.reset_mock()
+    update_sec_delete = {
+        "update_id": 705,
+        "message": {
+            "chat": {"id": secondary_admin_id},
+            "from": {"id": int(secondary_admin_id)},
+            "text": f"/delete {analyst_id}",
+        },
+    }
+    await process_update(mock_client, update_sec_delete)
+    assert any("Only the Super Administrator can permanently delete" in str(c) for c in mock_client.post.call_args_list)
+
+    # 6. Secondary Admin CANNOT revoke Super Admin
+    mock_client.reset_mock()
+    update_sec_revoke_super = {
+        "update_id": 706,
+        "message": {
+            "chat": {"id": secondary_admin_id},
+            "from": {"id": int(secondary_admin_id)},
+            "text": f"/revoke {super_admin_id}",
+        },
+    }
+    await process_update(mock_client, update_sec_revoke_super)
+    assert any("Cannot revoke the Super Administrator" in str(c) for c in mock_client.post.call_args_list)
+
+    # 7. Secondary Admin CANNOT execute lockdown
+    mock_client.reset_mock()
+    update_sec_lockdown = {
+        "update_id": 707,
+        "message": {
+            "chat": {"id": secondary_admin_id},
+            "from": {"id": int(secondary_admin_id)},
+            "text": "/lockdown",
+        },
+    }
+    await process_update(mock_client, update_sec_lockdown)
+    assert any("Only the Super Administrator can execute platform lockdown" in str(c) for c in mock_client.post.call_args_list)
+
+    # 8. Super Admin demotes secondary Admin back to analyst
+    mock_client.reset_mock()
+    update_demote = {
+        "update_id": 708,
+        "message": {
+            "chat": {"id": super_admin_id},
+            "from": {"id": int(super_admin_id)},
+            "text": f"/demote {secondary_admin_id}",
+        },
+    }
+    await process_update(mock_client, update_demote)
+    assert any("DEMOTED TO ANALYST" in str(c) for c in mock_client.post.call_args_list)
+
+    # Verify DB: role is now user
+    await db_session.refresh(sec_user)
+    assert sec_user.role == "user"
+    assert sec_user.promoted_by is None

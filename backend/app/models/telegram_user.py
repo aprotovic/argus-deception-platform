@@ -42,6 +42,8 @@ class TelegramUser(Base):
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     revoked_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    promoted_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    promoted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Activity tracking
     last_command: Mapped[str | None] = mapped_column(String(128), nullable=True)

@@ -1,21 +1,15 @@
 """ARGUS Telegram Incident Command Bot Service.
 
-Enforces server-side administrator lockdown with full button-driven controls:
-- Only the verified numeric administrator Telegram ID may execute administrative actions.
+Enforces hierarchical server-side administrator lockdown with full button-driven controls:
+- 👑 SUPER ADMINISTRATOR: The verified numeric administrator Telegram ID from configuration.
+  Full root authority: can promote/demote administrators, audit all users, execute lockdown,
+  and revoke or delete accounts. Cannot be modified or demoted by anyone.
+- ⭐ ADMINISTRATORS: Secondary admins promoted by the Super Administrator.
+  Can review telemetry, audit users, and approve/reject/revoke standard analysts.
+  Cannot modify fellow administrators or the Super Administrator, and cannot promote/demote.
+- 🛡️ ANALYSTS: Standard approved users with telemetry monitoring and incident alert delivery.
 - Interactive persistent reply keyboard and inline keyboards for all operations:
   no manual command typing required.
-- New users receive 'pending' status on /start and have zero access to telemetry or alerts.
-- Revoked users cannot execute commands or receive alerts.
-- All actions are audited in audit_logs.
-
-Available via one-tap buttons or slash commands:
-  • Status               — ARGUS platform and sensor status
-  • Stats                — Threat telemetry overview
-  • Events               — Recent trapped security events
-  • Toggle Alerts        — One-tap toggle for live intrusion alert delivery
-  • Manage Users         — List users with Info / Approve / Revoke / Delete buttons
-  • User Info            — Full profile + live command history for any user
-  • Emergency Lockdown   — One-tap emergency lockdown with confirmation dialog
 """
 
 import asyncio
@@ -47,13 +41,26 @@ _HISTORY_LIMIT = 10
 # Keyboards & Navigation Layouts
 # ---------------------------------------------------------------------------
 
-def _admin_reply_keyboard() -> Dict[str, Any]:
-    """Persistent bottom keyboard for the administrator."""
+def _super_admin_reply_keyboard() -> Dict[str, Any]:
+    """Persistent bottom keyboard for the Super Administrator."""
     return {
         "keyboard": [
             [{"text": "🛡️ Status"}, {"text": "📊 Stats"}, {"text": "🚨 Events"}],
             [{"text": "🔔 Toggle Alerts"}, {"text": "👥 Manage Users"}],
             [{"text": "🚨 Emergency Lockdown"}, {"text": "🏠 Main Menu"}],
+        ],
+        "resize_keyboard": True,
+        "is_persistent": True,
+    }
+
+
+def _secondary_admin_reply_keyboard() -> Dict[str, Any]:
+    """Persistent bottom keyboard for secondary Administrators."""
+    return {
+        "keyboard": [
+            [{"text": "🛡️ Status"}, {"text": "📊 Stats"}, {"text": "🚨 Events"}],
+            [{"text": "🔔 Toggle Alerts"}, {"text": "👥 Manage Users"}],
+            [{"text": "🏠 Main Menu"}],
         ],
         "resize_keyboard": True,
         "is_persistent": True,
@@ -73,8 +80,8 @@ def _analyst_reply_keyboard() -> Dict[str, Any]:
     }
 
 
-def _admin_dashboard_inline() -> Dict[str, Any]:
-    """Interactive command dashboard inline buttons for administrator."""
+def _super_admin_dashboard_inline() -> Dict[str, Any]:
+    """Interactive command dashboard inline buttons for Super Administrator."""
     return {
         "inline_keyboard": [
             [
@@ -86,10 +93,30 @@ def _admin_dashboard_inline() -> Dict[str, Any]:
                 {"text": "🔔 Toggle Alerts", "callback_data": "cmd:alerts_toggle"},
             ],
             [
-                {"text": "👥 Manage Users", "callback_data": "cmd:users"},
+                {"text": "👥 Manage Users & Admins", "callback_data": "cmd:users"},
                 {"text": "🚨 Emergency Lockdown", "callback_data": "cmd:lockdown_prompt"},
             ],
             [
+                {"text": "🔄 Refresh Console", "callback_data": "cmd:refresh_menu"},
+            ],
+        ]
+    }
+
+
+def _secondary_admin_dashboard_inline() -> Dict[str, Any]:
+    """Interactive command dashboard inline buttons for secondary Administrators."""
+    return {
+        "inline_keyboard": [
+            [
+                {"text": "🛡️ Platform Status", "callback_data": "cmd:status"},
+                {"text": "📊 Threat Stats", "callback_data": "cmd:stats"},
+            ],
+            [
+                {"text": "🚨 Trapped Events", "callback_data": "cmd:events"},
+                {"text": "🔔 Toggle Alerts", "callback_data": "cmd:alerts_toggle"},
+            ],
+            [
+                {"text": "👥 Manage Analysts", "callback_data": "cmd:users"},
                 {"text": "🔄 Refresh Console", "callback_data": "cmd:refresh_menu"},
             ],
         ]
@@ -115,7 +142,7 @@ def _analyst_dashboard_inline() -> Dict[str, Any]:
     }
 
 
-def _quick_nav_inline(is_admin: bool = True) -> Dict[str, Any]:
+def _quick_nav_inline(is_admin: bool = False) -> Dict[str, Any]:
     """Quick-action toolbar attached to command outputs for rapid navigation."""
     row1 = [
         {"text": "🛡️ Status", "callback_data": "cmd:status"},
@@ -237,6 +264,14 @@ def _display_name(user: TelegramUser) -> str:
     return full if full else f"ID {user.telegram_id}"
 
 
+def _role_badge(role: str, is_super: bool = False) -> str:
+    if is_super or role == "super_admin":
+        return "👑 SUPER ADMINISTRATOR"
+    elif role == "admin":
+        return "⭐ ADMINISTRATOR"
+    return "🛡️ ANALYST"
+
+
 def _status_emoji(status: str) -> str:
     return {"approved": "✅", "pending": "⏳", "revoked": "🔒", "rejected": "❌"}.get(status, "❓")
 
@@ -253,7 +288,7 @@ async def handle_start(
     admin_id: str,
 ) -> None:
     """Handle /start — role-based welcome with interactive button keyboards."""
-    is_admin = user_id == admin_id
+    is_super = user_id == admin_id
     username = from_user.get("username")
     first_name = from_user.get("first_name", "")
     last_name = from_user.get("last_name", "")
@@ -264,7 +299,8 @@ async def handle_start(
         user_record = res.scalar_one_or_none()
         now = datetime.now(timezone.utc)
 
-        if is_admin:
+        # 1. Super Administrator Flow
+        if is_super:
             if not user_record:
                 user_record = TelegramUser(
                     id=uuid.uuid4(),
@@ -272,7 +308,7 @@ async def handle_start(
                     username=username,
                     first_name=first_name,
                     last_name=last_name,
-                    role="admin",
+                    role="super_admin",
                     status="approved",
                     is_subscribed=True,
                     registered_at=now,
@@ -285,7 +321,7 @@ async def handle_start(
                 )
                 session.add(user_record)
             else:
-                user_record.role = "admin"
+                user_record.role = "super_admin"
                 user_record.status = "approved"
                 user_record.is_subscribed = True
                 user_record.approved_by = admin_id
@@ -308,37 +344,66 @@ async def handle_start(
             await session.commit()
 
             admin_welcome = (
-                "🛡️ <b>ARGUS INCIDENT COMMAND — ACCESS GRANTED</b>\n\n"
-                f"<b>Role:</b> <code>ADMINISTRATOR</code>\n"
-                f"<b>Status:</b> <code>VERIFIED ACTIVE</code>\n"
+                "🛡️ <b>ARGUS INCIDENT COMMAND — ROOT CONTROL</b>\n\n"
+                "<b>Role:</b> <code>👑 SUPER ADMINISTRATOR</code>\n"
+                "<b>Status:</b> <code>ROOT VERIFIED ACTIVE</code>\n"
                 f"<b>Admin ID:</b> <code>{user_id}</code>\n\n"
-                "<b>Quick Command Console:</b>\n"
-                "Tap any button below or in the persistent keyboard menu to inspect status, "
-                "manage analyst accounts, or initiate emergency lockdown without typing commands.\n\n"
-                "• <b>Status</b> — ARGUS platform and sensor status\n"
-                "• <b>Stats</b> — Threat telemetry overview\n"
-                "• <b>Events</b> — Recent trapped security events\n"
-                "• <b>Toggle Alerts</b> — Toggle live intrusion alert delivery\n"
-                "• <b>Manage Users</b> — Audit, approve, revoke, or delete users\n"
-                "• <b>Emergency Lockdown</b> — Revoke all non-administrator accounts"
+                "<b>Super Admin Command Console:</b>\n"
+                "You hold full root authority to monitor telemetry, appoint or demote "
+                "Administrators, manage analyst access, or execute emergency platform lockdown.\n\n"
+                "• <b>Status / Stats / Events</b> — Live sensor health and threat metrics\n"
+                "• <b>Toggle Alerts</b> — One-tap alert notifications switch\n"
+                "• <b>Manage Users & Admins</b> — Promote/demote admins, approve, revoke, or delete\n"
+                "• <b>Emergency Lockdown</b> — Immediately revoke all non-admin analyst accounts"
             )
 
-            # Send rich interactive dashboard buttons
-            await _send_msg(client, chat_id, admin_welcome, reply_markup=_admin_dashboard_inline())
-            # Ensure persistent bottom keyboard is active
+            await _send_msg(client, chat_id, admin_welcome, reply_markup=_super_admin_dashboard_inline())
             await _send_msg(
                 client, chat_id,
-                "⌨️ <i>Command keyboard active below. Tap any button to proceed:</i>",
-                reply_markup=_admin_reply_keyboard(),
+                "⌨️ <i>Super Administrator console active below. Tap any button to proceed:</i>",
+                reply_markup=_super_admin_reply_keyboard(),
             )
             return
 
-        # Non-admin user handling
+        # 2. Secondary Administrator Flow
+        if user_record and user_record.status == "approved" and user_record.role == "admin":
+            user_record.last_command = "/start"
+            user_record.last_seen = now
+            user_record.command_count = (user_record.command_count or 0) + 1
+            if username:
+                user_record.username = username
+            if first_name:
+                user_record.first_name = first_name
+            if last_name:
+                user_record.last_name = last_name
+            await session.commit()
+
+            sec_welcome = (
+                "🛡️ <b>ARGUS INCIDENT COMMAND — ADMINISTRATOR</b>\n\n"
+                "<b>Role:</b> <code>⭐ ADMINISTRATOR</code>\n"
+                "<b>Status:</b> <code>VERIFIED ACTIVE</code>\n"
+                f"<b>Admin ID:</b> <code>{user_id}</code>\n"
+                f"<b>Appointed by Super Admin:</b> <code>{user_record.promoted_by or admin_id}</code>\n\n"
+                "<b>Administrator Controls:</b>\n"
+                "You can inspect security telemetry, audit registered users, and approve or revoke analyst accounts.\n\n"
+                "• <b>Status / Stats / Events</b> — Live platform metrics\n"
+                "• <b>Toggle Alerts</b> — Live incident delivery toggle\n"
+                "• <b>Manage Analysts</b> — Audit, approve, or revoke analyst users"
+            )
+            await _send_msg(client, chat_id, sec_welcome, reply_markup=_secondary_admin_dashboard_inline())
+            await _send_msg(
+                client, chat_id,
+                "⌨️ <i>Administrator keyboard active below:</i>",
+                reply_markup=_secondary_admin_reply_keyboard(),
+            )
+            return
+
+        # 3. Non-admin handling (revoked / rejected / approved analyst)
         if user_record and user_record.status == "revoked":
             await _send_msg(
                 client, chat_id,
                 "⛔ <b>ACCESS DENIED — AUTHORIZATION REVOKED</b>\n\n"
-                "Your ARGUS Telegram bot access has been revoked by the Administrator.\n"
+                "Your ARGUS Telegram bot access has been revoked by an Administrator.\n"
                 "You cannot view telemetry or receive incident alerts.",
             )
             return
@@ -347,7 +412,7 @@ async def handle_start(
             await _send_msg(
                 client, chat_id,
                 "⛔ <b>ACCESS REJECTED</b>\n\n"
-                "Your registration request was rejected by the Administrator.",
+                "Your registration request was rejected by an Administrator.",
             )
             return
 
@@ -367,7 +432,7 @@ async def handle_start(
             )
             return
 
-        # New user: register as pending, update profile if existing
+        # 4. New user: register as pending
         if user_record:
             if username:
                 user_record.username = username
@@ -378,12 +443,6 @@ async def handle_start(
             user_record.last_command = "/start"
             user_record.last_seen = now
             user_record.command_count = (user_record.command_count or 0) + 1
-            try:
-                hist = json.loads(user_record.command_history or "[]")
-            except Exception:
-                hist = []
-            hist.insert(0, {"cmd": "/start", "ts": now.strftime("%Y-%m-%d %H:%M:%S UTC")})
-            user_record.command_history = json.dumps(hist[:_HISTORY_LIMIT])
         else:
             user_record = TelegramUser(
                 id=uuid.uuid4(),
@@ -409,7 +468,7 @@ async def handle_start(
             f"<b>Your User ID:</b> <code>{user_id}</code>\n"
             "<b>Status:</b> <code>PENDING ADMINISTRATOR REVIEW</code>\n\n"
             "Your account has been registered. You do not have access to ARGUS "
-            "security telemetry or alerts until explicitly approved by the system administrator.",
+            "security telemetry or alerts until explicitly approved by an administrator.",
         )
 
         user_display = f"@{username}" if username else f"{first_name} {last_name}".strip()
@@ -436,19 +495,20 @@ async def handle_status(
     client: httpx.AsyncClient, chat_id: str, user_id: str, admin_id: str
 ) -> None:
     """Protected: Platform operational health."""
-    is_admin = user_id == admin_id
+    is_super = user_id == admin_id
     async with AsyncSessionLocal() as session:
         res = await session.execute(select(TelegramUser).where(TelegramUser.telegram_id == user_id))
         user = res.scalar_one_or_none()
-    if not is_admin and (not user or user.status != "approved"):
-        await _send_msg(client, chat_id, "⛔ Access Denied. Approved analyst authorization required.")
+    is_admin = is_super or (user is not None and user.role == "admin" and user.status == "approved")
+    if not is_super and (not user or user.status != "approved"):
+        await _send_msg(client, chat_id, "⛔ Access Denied. Approved authorization required.")
         return
     msg = (
         "🛡️ <b>ARGUS PLATFORM OPERATIONAL STATUS</b>\n\n"
         "• <b>Core API:</b> <code>ONLINE (Port 8000)</code>\n"
         "• <b>Web Decoy Portal:</b> <code>ONLINE (Port 8081)</code>\n"
         "• <b>MySQL Protocol Decoy:</b> <code>ONLINE (Port 3306)</code>\n"
-        "• <b>Lockdown Policy:</b> <code>ADMINISTRATOR-ENFORCED</code>\n"
+        "• <b>Lockdown Policy:</b> <code>SUPER-ADMIN-ENFORCED</code>\n"
         "• <b>Quarantine Storage:</b> <code>SECURED</code>\n"
         f"• <b>System Time:</b> <code>{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}</code>"
     )
@@ -459,12 +519,13 @@ async def handle_stats(
     client: httpx.AsyncClient, chat_id: str, user_id: str, admin_id: str
 ) -> None:
     """Protected: Telemetry statistics."""
-    is_admin = user_id == admin_id
+    is_super = user_id == admin_id
     async with AsyncSessionLocal() as session:
         res = await session.execute(select(TelegramUser).where(TelegramUser.telegram_id == user_id))
         user = res.scalar_one_or_none()
-        if not is_admin and (not user or user.status != "approved"):
-            await _send_msg(client, chat_id, "⛔ Access Denied. Approved analyst authorization required.")
+        is_admin = is_super or (user is not None and user.role == "admin" and user.status == "approved")
+        if not is_super and (not user or user.status != "approved"):
+            await _send_msg(client, chat_id, "⛔ Access Denied. Approved authorization required.")
             return
         total_events   = await session.scalar(select(func.count(SecurityEvent.id)))
         crit_events    = await session.scalar(select(func.count(SecurityEvent.id)).where(SecurityEvent.severity == "critical"))
@@ -486,12 +547,13 @@ async def handle_events(
     client: httpx.AsyncClient, chat_id: str, user_id: str, admin_id: str
 ) -> None:
     """Protected: Recent security events."""
-    is_admin = user_id == admin_id
+    is_super = user_id == admin_id
     async with AsyncSessionLocal() as session:
         res = await session.execute(select(TelegramUser).where(TelegramUser.telegram_id == user_id))
         user = res.scalar_one_or_none()
-        if not is_admin and (not user or user.status != "approved"):
-            await _send_msg(client, chat_id, "⛔ Access Denied. Approved analyst authorization required.")
+        is_admin = is_super or (user is not None and user.role == "admin" and user.status == "approved")
+        if not is_super and (not user or user.status != "approved"):
+            await _send_msg(client, chat_id, "⛔ Access Denied. Approved authorization required.")
             return
         events_res = await session.execute(
             select(SecurityEvent).order_by(desc(SecurityEvent.timestamp)).limit(5)
@@ -517,17 +579,17 @@ async def handle_alerts_toggle(
     client: httpx.AsyncClient, chat_id: str, user_id: str, admin_id: str, arg: str = ""
 ) -> None:
     """Protected: Toggle user's alert delivery with one-tap inline buttons."""
-    is_admin = user_id == admin_id
+    is_super = user_id == admin_id
     async with AsyncSessionLocal() as session:
         res = await session.execute(select(TelegramUser).where(TelegramUser.telegram_id == user_id))
         user = res.scalar_one_or_none()
-        if not is_admin and (not user or user.status != "approved"):
+        if not is_super and (not user or user.status != "approved"):
             await _send_msg(client, chat_id, "⛔ Access Denied. Approved authorization required.")
             return
-        if not user and is_admin:
+        if not user and is_super:
             user = TelegramUser(
                 id=uuid.uuid4(), telegram_id=user_id,
-                role="admin", status="approved", is_subscribed=True,
+                role="super_admin", status="approved", is_subscribed=True,
             )
             session.add(user)
 
@@ -537,7 +599,6 @@ async def handle_alerts_toggle(
         elif arg == "off":
             user.is_subscribed = False
         else:
-            # One-tap button toggle when called without specific on/off
             user.is_subscribed = not user.is_subscribed
 
         await session.commit()
@@ -563,23 +624,154 @@ async def handle_alerts_toggle(
 
 
 # ---------------------------------------------------------------------------
-# Administrator-Only Commands
+# Super Administrator & Administrator Management Commands
 # ---------------------------------------------------------------------------
+
+async def handle_promote(
+    client: httpx.AsyncClient, chat_id: str, user_id: str, admin_id: str, target_id: str
+) -> None:
+    """Super Admin only: Promote an approved user to Administrator."""
+    if user_id != admin_id:
+        await _send_msg(client, chat_id, "⛔ Unauthorized: Only the Super Administrator can promote users to Administrator.")
+        await _log_audit_event("UNAUTHORIZED_SUPER_ADMIN_COMMAND", target_id, user_id, {"command": "/promote"})
+        return
+
+    target_id = target_id.strip()
+    if not target_id or not target_id.isdigit():
+        await _send_msg(client, chat_id, "⚠️ Usage: <code>/promote &lt;numeric_user_id&gt;</code>")
+        return
+
+    if target_id == admin_id:
+        await _send_msg(client, chat_id, "ℹ️ You are already the Super Administrator.")
+        return
+
+    now = datetime.now(timezone.utc)
+    async with AsyncSessionLocal() as session:
+        res = await session.execute(select(TelegramUser).where(TelegramUser.telegram_id == target_id))
+        user = res.scalar_one_or_none()
+        if not user:
+            await _send_msg(client, chat_id, f"❓ No user found with ID <code>{target_id}</code>. User must register first.")
+            return
+
+        if user.role == "admin" and user.status == "approved":
+            await _send_msg(client, chat_id, f"ℹ️ User <code>{target_id}</code> is already an Administrator.")
+            return
+
+        user.role = "admin"
+        user.status = "approved"
+        user.is_subscribed = True
+        user.promoted_by = admin_id
+        user.promoted_at = now
+        await session.commit()
+        target_name = _display_name(user)
+
+    await _log_audit_event("TELEGRAM_USER_PROMOTED_ADMIN", target_id, admin_id, {"promoted_by": admin_id})
+
+    nav = {
+        "inline_keyboard": [
+            [
+                {"text": "🔍 View Profile", "callback_data": f"info:{target_id}"},
+                {"text": "🔻 Demote to Analyst", "callback_data": f"demote:{target_id}"},
+            ],
+            [
+                {"text": "👥 All Users", "callback_data": "cmd:users"},
+                {"text": "🏠 Main Menu", "callback_data": "cmd:menu"},
+            ],
+        ]
+    }
+    await _send_msg(
+        client, chat_id,
+        f"⭐ User <code>{target_id}</code> (<b>{html.escape(target_name)}</b>) has been <b>PROMOTED TO ADMINISTRATOR</b>.\n"
+        "They now have access to analyst audits and authorizations.",
+        reply_markup=nav,
+    )
+    # Notify the promoted user
+    await _send_msg(
+        client, target_id,
+        "⭐ <b>PROMOTED TO ADMINISTRATOR</b>\n\n"
+        "You have been granted Administrator privileges by the Super Administrator.\n"
+        "You can now manage analyst requests and review platform security telemetry.",
+        reply_markup=_secondary_admin_reply_keyboard(),
+    )
+
+
+async def handle_demote(
+    client: httpx.AsyncClient, chat_id: str, user_id: str, admin_id: str, target_id: str
+) -> None:
+    """Super Admin only: Demote an Administrator back to standard Analyst."""
+    if user_id != admin_id:
+        await _send_msg(client, chat_id, "⛔ Unauthorized: Only the Super Administrator can demote Administrators.")
+        await _log_audit_event("UNAUTHORIZED_SUPER_ADMIN_COMMAND", target_id, user_id, {"command": "/demote"})
+        return
+
+    target_id = target_id.strip()
+    if not target_id or not target_id.isdigit():
+        await _send_msg(client, chat_id, "⚠️ Usage: <code>/demote &lt;numeric_user_id&gt;</code>")
+        return
+
+    if target_id == admin_id:
+        await _send_msg(client, chat_id, "⚠️ Action refused: Cannot demote the Super Administrator.")
+        return
+
+    async with AsyncSessionLocal() as session:
+        res = await session.execute(select(TelegramUser).where(TelegramUser.telegram_id == target_id))
+        user = res.scalar_one_or_none()
+        if not user:
+            await _send_msg(client, chat_id, f"❓ No user found with ID <code>{target_id}</code>.")
+            return
+
+        if user.role != "admin":
+            await _send_msg(client, chat_id, f"ℹ️ User <code>{target_id}</code> is not an Administrator (current role: <code>{user.role}</code>).")
+            return
+
+        user.role = "user"
+        user.promoted_by = None
+        user.promoted_at = None
+        await session.commit()
+        target_name = _display_name(user)
+
+    await _log_audit_event("TELEGRAM_USER_DEMOTED_USER", target_id, admin_id, {"demoted_by": admin_id})
+
+    nav = {
+        "inline_keyboard": [
+            [
+                {"text": "🔍 View Profile", "callback_data": f"info:{target_id}"},
+                {"text": "⭐ Re-Promote", "callback_data": f"promote:{target_id}"},
+            ],
+            [
+                {"text": "👥 All Users", "callback_data": "cmd:users"},
+                {"text": "🏠 Main Menu", "callback_data": "cmd:menu"},
+            ],
+        ]
+    }
+    await _send_msg(
+        client, chat_id,
+        f"🔻 Administrator <code>{target_id}</code> (<b>{html.escape(target_name)}</b>) has been <b>DEMOTED TO ANALYST</b>.",
+        reply_markup=nav,
+    )
+    # Notify demoted user
+    await _send_msg(
+        client, target_id,
+        "ℹ️ <b>ADMINISTRATOR PRIVILEGES REVOKED</b>\n\n"
+        "Your role has been updated to Analyst by the Super Administrator.",
+        reply_markup=_analyst_reply_keyboard(),
+    )
+
 
 async def handle_lockdown_prompt(
     client: httpx.AsyncClient, chat_id: str, user_id: str, admin_id: str
 ) -> None:
-    """Admin: Show emergency lockdown confirmation dialog with buttons."""
+    """Super Admin only: Show emergency lockdown confirmation dialog with buttons."""
     if user_id != admin_id:
-        await _send_msg(client, chat_id, "⛔ Unauthorized: Administrator privilege required.")
+        await _send_msg(client, chat_id, "⛔ Unauthorized: Only the Super Administrator can execute platform lockdown.")
         return
 
     text = (
         "🚨 <b>CONFIRM EMERGENCY LOCKDOWN</b>\n\n"
         "Are you sure you want to execute an emergency platform lockdown?\n\n"
-        "• <b>All non-administrator accounts will be immediately REVOKED.</b>\n"
-        "• <b>Live alert notifications will be restricted to you only.</b>\n"
-        "• <b>Non-admin command and telemetry access will be BLOCKED.</b>\n\n"
+        "• <b>All non-administrator analyst accounts will be immediately REVOKED.</b>\n"
+        "• <b>Live alert notifications will be restricted to Administrators only.</b>\n"
+        "• <b>Non-admin analyst access will be BLOCKED.</b>\n\n"
         "<i>Tap a button below to execute or cancel:</i>"
     )
     markup = {
@@ -596,16 +788,19 @@ async def handle_lockdown_prompt(
 async def handle_lockdown(
     client: httpx.AsyncClient, chat_id: str, user_id: str, admin_id: str
 ) -> None:
-    """Admin: Emergency lockdown — revoke all non-admin accounts."""
+    """Super Admin only: Emergency lockdown — revoke all non-admin analyst accounts."""
     if user_id != admin_id:
-        await _send_msg(client, chat_id, "⛔ Unauthorized: Administrator privilege required.")
-        await _log_audit_event("UNAUTHORIZED_ADMIN_COMMAND", "LOCKDOWN", user_id, {"command": "/lockdown"})
+        await _send_msg(client, chat_id, "⛔ Unauthorized: Only the Super Administrator can execute platform lockdown.")
+        await _log_audit_event("UNAUTHORIZED_SUPER_ADMIN_COMMAND", "LOCKDOWN", user_id, {"command": "/lockdown"})
         return
 
     now = datetime.now(timezone.utc)
     revoked_count = 0
     async with AsyncSessionLocal() as session:
-        res = await session.execute(select(TelegramUser).where(TelegramUser.telegram_id != admin_id))
+        # Revoke non-admin users (preserve secondary admins and super admin)
+        res = await session.execute(
+            select(TelegramUser).where(TelegramUser.telegram_id != admin_id, TelegramUser.role == "user")
+        )
         users = res.scalars().all()
         for u in users:
             if u.status != "revoked":
@@ -633,7 +828,7 @@ async def handle_lockdown(
         chat_id,
         f"🚨 <b>EMERGENCY LOCKDOWN COMPLETE</b>\n\n"
         f"• Revoked non-admin accounts: <code>{revoked_count}</code>\n"
-        f"• Alert delivery: <b>RESTRICTED TO ADMINISTRATOR ONLY</b>\n"
+        f"• Alert delivery: <b>RESTRICTED TO ADMINISTRATORS ONLY</b>\n"
         f"• Non-admin command access: <b>BLOCKED</b>",
         reply_markup=summary_nav,
     )
@@ -642,13 +837,18 @@ async def handle_lockdown(
 async def handle_users(
     client: httpx.AsyncClient, chat_id: str, user_id: str, admin_id: str
 ) -> None:
-    """Admin: List all registered Telegram users with interactive action buttons."""
-    if user_id != admin_id:
-        await _send_msg(client, chat_id, "⛔ Unauthorized: Administrator privilege required.")
-        await _log_audit_event("UNAUTHORIZED_ADMIN_COMMAND", "/users", user_id, {"command": "/users"})
-        return
-
+    """Admin & Super Admin: List all registered Telegram users with interactive action buttons."""
+    is_super = user_id == admin_id
     async with AsyncSessionLocal() as session:
+        caller_res = await session.execute(select(TelegramUser).where(TelegramUser.telegram_id == user_id))
+        caller = caller_res.scalar_one_or_none()
+        is_admin = is_super or (caller is not None and caller.role == "admin" and caller.status == "approved")
+
+        if not is_admin:
+            await _send_msg(client, chat_id, "⛔ Unauthorized: Administrator privilege required.")
+            await _log_audit_event("UNAUTHORIZED_ADMIN_COMMAND", "/users", user_id, {"command": "/users"})
+            return
+
         res = await session.execute(select(TelegramUser).order_by(TelegramUser.registered_at))
         users = res.scalars().all()
 
@@ -657,8 +857,10 @@ async def handle_users(
         return
 
     for u in users:
-        sub    = "🔔 Alerts ON" if u.is_subscribed else "🔕 Alerts OFF"
-        name   = _display_name(u)
+        is_target_super = u.telegram_id == admin_id
+        badge = _role_badge(u.role, is_super=is_target_super)
+        sub   = "🔔 ON" if u.is_subscribed else "🔕 OFF"
+        name  = _display_name(u)
         semoji = _status_emoji(u.status)
         registered = u.registered_at.strftime("%Y-%m-%d") if u.registered_at else "—"
         last_seen  = u.last_seen.strftime("%Y-%m-%d %H:%M UTC") if u.last_seen else "never"
@@ -667,42 +869,57 @@ async def handle_users(
         card = (
             f"{semoji} <b>{html.escape(name)}</b>\n"
             f"<b>ID:</b> <code>{u.telegram_id}</code>\n"
-            f"<b>Role:</b> <code>{u.role.upper()}</code> | <b>Status:</b> <b>{u.status.upper()}</b>\n"
+            f"<b>Role:</b> <code>{badge}</code> | <b>Status:</b> <b>{u.status.upper()}</b>\n"
             f"<b>Alerts:</b> {sub} | <b>Commands:</b> <code>{u.command_count or 0}</code>\n"
             f"<b>Joined:</b> <code>{registered}</code> | <b>Last seen:</b> <code>{last_seen}</code>\n"
             f"<b>Last action:</b> <code>{last_cmd}</code>"
         )
 
-        # Inline action buttons (skip action buttons for admin's own card)
-        if u.telegram_id == admin_id:
+        # Inline action buttons based on hierarchy
+        if is_target_super:
             markup = None
+        elif is_super:
+            # Super Admin sees full control buttons
+            buttons = [{"text": "🔍 Info", "callback_data": f"info:{u.telegram_id}"}]
+            if u.role == "admin":
+                buttons.append({"text": "🔻 Demote", "callback_data": f"demote:{u.telegram_id}"})
+                buttons.append({"text": "🔒 Revoke", "callback_data": f"revoke:{u.telegram_id}"})
+                buttons.append({"text": "🗑 Delete", "callback_data": f"delete:{u.telegram_id}"})
+            elif u.status == "approved":
+                buttons.append({"text": "⭐ Make Admin", "callback_data": f"promote:{u.telegram_id}"})
+                buttons.append({"text": "🔒 Revoke", "callback_data": f"revoke:{u.telegram_id}"})
+                buttons.append({"text": "🗑 Delete", "callback_data": f"delete:{u.telegram_id}"})
+            elif u.status in ("pending", "revoked", "rejected"):
+                buttons.append({"text": "✅ Approve", "callback_data": f"approve:{u.telegram_id}"})
+                buttons.append({"text": "🗑 Delete", "callback_data": f"delete:{u.telegram_id}"})
+            markup = {"inline_keyboard": [buttons]}
         else:
-            action_row = [{"text": "🔍 Profile & History", "callback_data": f"info:{u.telegram_id}"}]
-            if u.status in ("pending", "revoked", "rejected"):
-                action_row.append({"text": "✅ Approve", "callback_data": f"approve:{u.telegram_id}"})
-            if u.status == "approved":
-                action_row.append({"text": "🔒 Revoke", "callback_data": f"revoke:{u.telegram_id}"})
-            action_row.append({"text": "🗑 Delete", "callback_data": f"delete:{u.telegram_id}"})
-            markup = {"inline_keyboard": [action_row]}
+            # Secondary Admin viewing: cannot modify other Admins or Super Admin
+            buttons = [{"text": "🔍 Info", "callback_data": f"info:{u.telegram_id}"}]
+            if u.role == "admin":
+                pass
+            elif u.status == "approved":
+                buttons.append({"text": "🔒 Revoke", "callback_data": f"revoke:{u.telegram_id}"})
+            elif u.status in ("pending", "revoked", "rejected"):
+                buttons.append({"text": "✅ Approve", "callback_data": f"approve:{u.telegram_id}"})
+            markup = {"inline_keyboard": [buttons]}
 
         await _send_msg(client, chat_id, card, reply_markup=markup)
 
     # Footer navigation toolbar
+    footer_row = [{"text": "🔄 Refresh User List", "callback_data": "cmd:users"}]
+    if is_super:
+        footer_row.append({"text": "🚨 Emergency Lockdown", "callback_data": "cmd:lockdown_prompt"})
     footer_markup = {
         "inline_keyboard": [
-            [
-                {"text": "🔄 Refresh User List", "callback_data": "cmd:users"},
-                {"text": "🚨 Emergency Lockdown", "callback_data": "cmd:lockdown_prompt"},
-            ],
-            [
-                {"text": "🏠 Main Menu", "callback_data": "cmd:menu"},
-            ],
+            footer_row,
+            [{"text": "🏠 Main Menu", "callback_data": "cmd:menu"}],
         ]
     }
     await _send_msg(
         client, chat_id,
         f"👥 <b>Total Registered:</b> <code>{len(users)}</code> accounts\n"
-        "<i>Tap buttons above to inspect details, approve, revoke, or delete any account.</i>",
+        "<i>Tap buttons above to inspect details, promote, approve, revoke, or delete accounts.</i>",
         reply_markup=footer_markup,
     )
 
@@ -710,18 +927,23 @@ async def handle_users(
 async def handle_userinfo(
     client: httpx.AsyncClient, chat_id: str, user_id: str, admin_id: str, target_id: str
 ) -> None:
-    """Admin: Show full profile and command history for a specific user with action buttons."""
-    if user_id != admin_id:
-        await _send_msg(client, chat_id, "⛔ Unauthorized: Administrator privilege required.")
-        await _log_audit_event("UNAUTHORIZED_ADMIN_COMMAND", target_id, user_id, {"command": "/userinfo"})
-        return
-
-    target_id = target_id.strip()
-    if not target_id or not target_id.isdigit():
-        await _send_msg(client, chat_id, "⚠️ Usage: <code>/userinfo &lt;numeric_user_id&gt;</code>")
-        return
-
+    """Admin & Super Admin: Show full profile and command history for a specific user."""
+    is_super = user_id == admin_id
     async with AsyncSessionLocal() as session:
+        caller_res = await session.execute(select(TelegramUser).where(TelegramUser.telegram_id == user_id))
+        caller = caller_res.scalar_one_or_none()
+        is_admin = is_super or (caller is not None and caller.role == "admin" and caller.status == "approved")
+
+        if not is_admin:
+            await _send_msg(client, chat_id, "⛔ Unauthorized: Administrator privilege required.")
+            await _log_audit_event("UNAUTHORIZED_ADMIN_COMMAND", target_id, user_id, {"command": "/userinfo"})
+            return
+
+        target_id = target_id.strip()
+        if not target_id or not target_id.isdigit():
+            await _send_msg(client, chat_id, "⚠️ Usage: <code>/userinfo &lt;numeric_user_id&gt;</code>")
+            return
+
         res = await session.execute(select(TelegramUser).where(TelegramUser.telegram_id == target_id))
         u = res.scalar_one_or_none()
 
@@ -729,6 +951,8 @@ async def handle_userinfo(
         await _send_msg(client, chat_id, f"❓ No user found with ID <code>{target_id}</code>.")
         return
 
+    is_target_super = u.telegram_id == admin_id
+    badge  = _role_badge(u.role, is_super=is_target_super)
     semoji = _status_emoji(u.status)
     name   = _display_name(u)
 
@@ -739,6 +963,7 @@ async def handle_userinfo(
     last_seen   = u.last_seen.strftime("%Y-%m-%d %H:%M:%S UTC") if u.last_seen else "never"
     approved_at = u.approved_at.strftime("%Y-%m-%d %H:%M UTC") if u.approved_at else "—"
     revoked_at  = u.revoked_at.strftime("%Y-%m-%d %H:%M UTC") if u.revoked_at else "—"
+    promoted_at = u.promoted_at.strftime("%Y-%m-%d %H:%M UTC") if u.promoted_at else "—"
 
     profile = (
         f"🔍 <b>ARGUS USER PROFILE & TELEMETRY</b>\n\n"
@@ -746,13 +971,20 @@ async def handle_userinfo(
         f"<b>Full Name:</b> {html.escape(full_name)}\n"
         f"<b>Username:</b> {'@' + html.escape(u.username) if u.username else '—'}\n"
         f"<b>Telegram ID:</b> <code>{u.telegram_id}</code>\n\n"
-        f"<b>Role:</b> <code>{u.role.upper()}</code>\n"
+        f"<b>Role:</b> <code>{badge}</code>\n"
         f"<b>Status:</b> <code>{u.status.upper()}</code>\n"
         f"<b>Alerts:</b> {'🔔 ON' if u.is_subscribed else '🔕 OFF'}\n\n"
         f"<b>Registered:</b> <code>{registered}</code>\n"
         f"<b>Approved by:</b> <code>{u.approved_by or '—'}</code> at <code>{approved_at}</code>\n"
-        f"<b>Revoked by:</b> <code>{u.revoked_by or '—'}</code> at <code>{revoked_at}</code>\n\n"
-        f"<b>Commands sent:</b> <code>{u.command_count or 0}</code>\n"
+    )
+
+    if u.promoted_by:
+        profile += f"<b>Promoted to Admin by:</b> <code>{u.promoted_by}</code> at <code>{promoted_at}</code>\n"
+    if u.revoked_by:
+        profile += f"<b>Revoked by:</b> <code>{u.revoked_by}</code> at <code>{revoked_at}</code>\n"
+
+    profile += (
+        f"\n<b>Commands sent:</b> <code>{u.command_count or 0}</code>\n"
         f"<b>Last seen:</b> <code>{last_seen}</code>\n"
         f"<b>Last command:</b> <code>{html.escape(u.last_command or '—')}</code>"
     )
@@ -769,20 +1001,34 @@ async def handle_userinfo(
     else:
         profile += "\n\n<i>No command history recorded yet.</i>"
 
-    # Action buttons for this user
+    # Action buttons
     markup = None
-    if target_id != admin_id:
+    if not is_target_super:
         actions = []
-        if u.status in ("pending", "revoked", "rejected"):
-            actions.append({"text": "✅ Approve", "callback_data": f"approve:{target_id}"})
-        if u.status == "approved":
-            actions.append({"text": "🔒 Revoke", "callback_data": f"revoke:{target_id}"})
-        actions.append({"text": "🗑 Delete", "callback_data": f"delete:{target_id}"})
+        if is_super:
+            if u.role == "admin":
+                actions.append({"text": "🔻 Demote to Analyst", "callback_data": f"demote:{target_id}"})
+            elif u.status == "approved":
+                actions.append({"text": "⭐ Promote to Admin", "callback_data": f"promote:{target_id}"})
+
+            if u.status in ("pending", "revoked", "rejected"):
+                actions.append({"text": "✅ Approve", "callback_data": f"approve:{target_id}"})
+            if u.status == "approved":
+                actions.append({"text": "🔒 Revoke", "callback_data": f"revoke:{target_id}"})
+            actions.append({"text": "🗑 Delete", "callback_data": f"delete:{target_id}"})
+        else:
+            # Secondary admin
+            if u.role != "admin":
+                if u.status in ("pending", "revoked", "rejected"):
+                    actions.append({"text": "✅ Approve", "callback_data": f"approve:{target_id}"})
+                if u.status == "approved":
+                    actions.append({"text": "🔒 Revoke", "callback_data": f"revoke:{target_id}"})
+
         nav_row = [
             {"text": "👥 All Users", "callback_data": "cmd:users"},
             {"text": "🏠 Main Menu", "callback_data": "cmd:menu"},
         ]
-        markup = {"inline_keyboard": [actions, nav_row]}
+        markup = {"inline_keyboard": [actions, nav_row] if actions else [nav_row]}
     else:
         markup = {
             "inline_keyboard": [[
@@ -797,18 +1043,23 @@ async def handle_userinfo(
 async def handle_approve(
     client: httpx.AsyncClient, chat_id: str, user_id: str, admin_id: str, target_id: str
 ) -> None:
-    """Admin: Approve a user."""
-    if user_id != admin_id:
-        await _send_msg(client, chat_id, "⛔ Unauthorized: Administrator privilege required.")
-        await _log_audit_event("UNAUTHORIZED_ADMIN_COMMAND", target_id, user_id, {"command": "/approve"})
-        return
-
-    target_id = target_id.strip()
-    if not target_id or not target_id.isdigit():
-        await _send_msg(client, chat_id, "⚠️ Usage: <code>/approve &lt;numeric_user_id&gt;</code>")
-        return
-
+    """Admin & Super Admin: Approve a user."""
+    is_super = user_id == admin_id
     async with AsyncSessionLocal() as session:
+        caller_res = await session.execute(select(TelegramUser).where(TelegramUser.telegram_id == user_id))
+        caller = caller_res.scalar_one_or_none()
+        is_admin = is_super or (caller is not None and caller.role == "admin" and caller.status == "approved")
+
+        if not is_admin:
+            await _send_msg(client, chat_id, "⛔ Unauthorized: Administrator privilege required.")
+            await _log_audit_event("UNAUTHORIZED_ADMIN_COMMAND", target_id, user_id, {"command": "/approve"})
+            return
+
+        target_id = target_id.strip()
+        if not target_id or not target_id.isdigit():
+            await _send_msg(client, chat_id, "⚠️ Usage: <code>/approve &lt;numeric_user_id&gt;</code>")
+            return
+
         res = await session.execute(select(TelegramUser).where(TelegramUser.telegram_id == target_id))
         user = res.scalar_one_or_none()
         now = datetime.now(timezone.utc)
@@ -816,19 +1067,19 @@ async def handle_approve(
             user = TelegramUser(
                 id=uuid.uuid4(), telegram_id=target_id,
                 role="user", status="approved", is_subscribed=True,
-                registered_at=now, approved_by=admin_id, approved_at=now,
+                registered_at=now, approved_by=user_id, approved_at=now,
             )
             session.add(user)
         else:
             user.status = "approved"
             user.is_subscribed = True
-            user.approved_by = admin_id
+            user.approved_by = user_id
             user.approved_at = now
             user.revoked_at = None
             user.revoked_by = None
         await session.commit()
 
-    await _log_audit_event("TELEGRAM_USER_APPROVED", target_id, admin_id, {"target_id": target_id})
+    await _log_audit_event("TELEGRAM_USER_APPROVED", target_id, user_id, {"target_id": target_id})
     action_nav = {
         "inline_keyboard": [
             [
@@ -849,7 +1100,7 @@ async def handle_approve(
     await _send_msg(
         client, target_id,
         "🛡️ <b>ARGUS AUTHORIZATION APPROVED</b>\n\n"
-        "Your access request has been approved by the Administrator.\n"
+        "Your access request has been approved by an Administrator.\n"
         "You now have access to /status, /stats, /events, and will receive live security alerts.",
         reply_markup=_analyst_reply_keyboard(),
     )
@@ -858,18 +1109,23 @@ async def handle_approve(
 async def handle_reject(
     client: httpx.AsyncClient, chat_id: str, user_id: str, admin_id: str, target_id: str
 ) -> None:
-    """Admin: Reject a pending user."""
-    if user_id != admin_id:
-        await _send_msg(client, chat_id, "⛔ Unauthorized: Administrator privilege required.")
-        await _log_audit_event("UNAUTHORIZED_ADMIN_COMMAND", target_id, user_id, {"command": "/reject"})
-        return
-
-    target_id = target_id.strip()
-    if not target_id or not target_id.isdigit():
-        await _send_msg(client, chat_id, "⚠️ Usage: <code>/reject &lt;numeric_user_id&gt;</code>")
-        return
-
+    """Admin & Super Admin: Reject a pending user."""
+    is_super = user_id == admin_id
     async with AsyncSessionLocal() as session:
+        caller_res = await session.execute(select(TelegramUser).where(TelegramUser.telegram_id == user_id))
+        caller = caller_res.scalar_one_or_none()
+        is_admin = is_super or (caller is not None and caller.role == "admin" and caller.status == "approved")
+
+        if not is_admin:
+            await _send_msg(client, chat_id, "⛔ Unauthorized: Administrator privilege required.")
+            await _log_audit_event("UNAUTHORIZED_ADMIN_COMMAND", target_id, user_id, {"command": "/reject"})
+            return
+
+        target_id = target_id.strip()
+        if not target_id or not target_id.isdigit():
+            await _send_msg(client, chat_id, "⚠️ Usage: <code>/reject &lt;numeric_user_id&gt;</code>")
+            return
+
         res = await session.execute(select(TelegramUser).where(TelegramUser.telegram_id == target_id))
         user = res.scalar_one_or_none()
         if user:
@@ -877,19 +1133,16 @@ async def handle_reject(
             user.is_subscribed = False
             await session.commit()
 
-    await _log_audit_event("TELEGRAM_USER_REJECTED", target_id, admin_id, {"target_id": target_id})
+    await _log_audit_event("TELEGRAM_USER_REJECTED", target_id, user_id, {"target_id": target_id})
     await _send_msg(client, chat_id, f"❌ User <code>{target_id}</code> has been <b>REJECTED</b>.")
-    await _send_msg(client, target_id, "⛔ <b>REGISTRATION REJECTED</b>\nYour ARGUS bot registration was declined by the Administrator.")
+    await _send_msg(client, target_id, "⛔ <b>REGISTRATION REJECTED</b>\nYour ARGUS bot registration was declined by an Administrator.")
 
 
 async def handle_revoke(
     client: httpx.AsyncClient, chat_id: str, user_id: str, admin_id: str, target_id: str
 ) -> None:
-    """Admin: Revoke a user's access."""
-    if user_id != admin_id:
-        await _send_msg(client, chat_id, "⛔ Unauthorized: Administrator privilege required.")
-        await _log_audit_event("UNAUTHORIZED_ADMIN_COMMAND", target_id, user_id, {"command": "/revoke"})
-        return
+    """Admin & Super Admin: Revoke a user's access."""
+    is_super = user_id == admin_id
 
     target_id = target_id.strip()
     if not target_id or not target_id.isdigit():
@@ -897,27 +1150,42 @@ async def handle_revoke(
         return
 
     if target_id == admin_id:
-        await _send_msg(client, chat_id, "⚠️ Action refused: Cannot revoke the administrator account.")
+        await _send_msg(client, chat_id, "⚠️ Action refused: Cannot revoke the Super Administrator.")
         return
 
     now = datetime.now(timezone.utc)
     async with AsyncSessionLocal() as session:
+        caller_res = await session.execute(select(TelegramUser).where(TelegramUser.telegram_id == user_id))
+        caller = caller_res.scalar_one_or_none()
+        is_admin = is_super or (caller is not None and caller.role == "admin" and caller.status == "approved")
+
+        if not is_admin:
+            await _send_msg(client, chat_id, "⛔ Unauthorized: Administrator privilege required.")
+            await _log_audit_event("UNAUTHORIZED_ADMIN_COMMAND", target_id, user_id, {"command": "/revoke"})
+            return
+
         res = await session.execute(select(TelegramUser).where(TelegramUser.telegram_id == target_id))
         user = res.scalar_one_or_none()
+
+        # Secondary admin cannot revoke fellow admins
+        if not is_super and user and user.role in ("admin", "super_admin"):
+            await _send_msg(client, chat_id, "⛔ Action refused: Only the Super Administrator can revoke Administrator accounts.")
+            return
+
         if not user:
             user = TelegramUser(
                 id=uuid.uuid4(), telegram_id=target_id, role="user", status="revoked",
-                is_subscribed=False, registered_at=now, revoked_by=admin_id, revoked_at=now,
+                is_subscribed=False, registered_at=now, revoked_by=user_id, revoked_at=now,
             )
             session.add(user)
         else:
             user.status = "revoked"
             user.is_subscribed = False
-            user.revoked_by = admin_id
+            user.revoked_by = user_id
             user.revoked_at = now
         await session.commit()
 
-    await _log_audit_event("TELEGRAM_USER_REVOKED", target_id, admin_id, {"target_id": target_id})
+    await _log_audit_event("TELEGRAM_USER_REVOKED", target_id, user_id, {"target_id": target_id})
     action_nav = {
         "inline_keyboard": [
             [
@@ -935,16 +1203,16 @@ async def handle_revoke(
         f"🔒 User <code>{target_id}</code> has been <b>REVOKED</b>. Telemetry access and alerts terminated immediately.",
         reply_markup=action_nav,
     )
-    await _send_msg(client, target_id, "⛔ <b>ACCESS REVOKED</b>\nYour ARGUS bot authorization has been revoked by the Administrator.")
+    await _send_msg(client, target_id, "⛔ <b>ACCESS REVOKED</b>\nYour ARGUS bot authorization has been revoked by an Administrator.")
 
 
 async def handle_delete(
     client: httpx.AsyncClient, chat_id: str, user_id: str, admin_id: str, target_id: str
 ) -> None:
-    """Admin: Permanently delete a user record from the bot database."""
+    """Super Admin only: Permanently delete a user record from the bot database."""
     if user_id != admin_id:
-        await _send_msg(client, chat_id, "⛔ Unauthorized: Administrator privilege required.")
-        await _log_audit_event("UNAUTHORIZED_ADMIN_COMMAND", target_id, user_id, {"command": "/delete"})
+        await _send_msg(client, chat_id, "⛔ Unauthorized: Only the Super Administrator can permanently delete user records.")
+        await _log_audit_event("UNAUTHORIZED_SUPER_ADMIN_COMMAND", target_id, user_id, {"command": "/delete"})
         return
 
     target_id = target_id.strip()
@@ -953,7 +1221,7 @@ async def handle_delete(
         return
 
     if target_id == admin_id:
-        await _send_msg(client, chat_id, "⚠️ Action refused: Cannot delete the administrator account.")
+        await _send_msg(client, chat_id, "⚠️ Action refused: Cannot delete the administrator account (Super Administrator).")
         return
 
     async with AsyncSessionLocal() as session:
@@ -989,7 +1257,7 @@ async def handle_delete(
     await _send_msg(
         client, target_id,
         "🗑 <b>ACCOUNT REMOVED</b>\n\n"
-        "Your ARGUS bot account has been removed by the Administrator.\n"
+        "Your ARGUS bot account has been removed by the Super Administrator.\n"
         "Send /start to submit a new registration request.",
     )
 
@@ -1012,6 +1280,8 @@ BUTTON_COMMAND_MAP: Dict[str, str] = {
     "🔔 alerts": "/alerts",
     "alerts": "/alerts",
     "👥 manage users": "/users",
+    "👥 manage users & admins": "/users",
+    "👥 manage analysts": "/users",
     "👥 users": "/users",
     "users": "/users",
     "🚨 emergency lockdown": "/lockdown_prompt",
@@ -1044,12 +1314,35 @@ async def process_update(client: httpx.AsyncClient, update: Dict[str, Any]) -> N
         data       = cb.get("data", "")
         chat_id    = str(cb.get("message", {}).get("chat", {}).get("id", cb_user_id))
 
-        # Check authorization for admin-only callbacks
-        is_admin_cb = cb_user_id == admin_id
+        is_super = cb_user_id == admin_id
 
-        # User management callbacks
+        # Check caller admin role from database
+        async with AsyncSessionLocal() as session:
+            c_res = await session.execute(select(TelegramUser).where(TelegramUser.telegram_id == cb_user_id))
+            caller_rec = c_res.scalar_one_or_none()
+            is_admin = is_super or (caller_rec is not None and caller_rec.role == "admin" and caller_rec.status == "approved")
+
+        # Super Admin only promotions / demotions
+        if data.startswith("promote:"):
+            if not is_super:
+                await _answer_callback(client, cb_id, "⛔ Super Administrator only", alert=True)
+                return
+            target = data.split(":", 1)[1]
+            await handle_promote(client, chat_id, cb_user_id, admin_id, target)
+            await _answer_callback(client, cb_id, f"⭐ Promoted {target}")
+            return
+        elif data.startswith("demote:"):
+            if not is_super:
+                await _answer_callback(client, cb_id, "⛔ Super Administrator only", alert=True)
+                return
+            target = data.split(":", 1)[1]
+            await handle_demote(client, chat_id, cb_user_id, admin_id, target)
+            await _answer_callback(client, cb_id, f"🔻 Demoted {target}")
+            return
+
+        # General user management callbacks
         if data.startswith("approve:"):
-            if not is_admin_cb:
+            if not is_admin:
                 await _answer_callback(client, cb_id, "⛔ Unauthorized: Admin only", alert=True)
                 return
             target = data.split(":", 1)[1]
@@ -1057,7 +1350,7 @@ async def process_update(client: httpx.AsyncClient, update: Dict[str, Any]) -> N
             await _answer_callback(client, cb_id, f"✅ Approved {target}")
             return
         elif data.startswith("reject:"):
-            if not is_admin_cb:
+            if not is_admin:
                 await _answer_callback(client, cb_id, "⛔ Unauthorized: Admin only", alert=True)
                 return
             target = data.split(":", 1)[1]
@@ -1065,7 +1358,7 @@ async def process_update(client: httpx.AsyncClient, update: Dict[str, Any]) -> N
             await _answer_callback(client, cb_id, f"❌ Rejected {target}")
             return
         elif data.startswith("revoke:"):
-            if not is_admin_cb:
+            if not is_admin:
                 await _answer_callback(client, cb_id, "⛔ Unauthorized: Admin only", alert=True)
                 return
             target = data.split(":", 1)[1]
@@ -1073,15 +1366,15 @@ async def process_update(client: httpx.AsyncClient, update: Dict[str, Any]) -> N
             await _answer_callback(client, cb_id, f"🔒 Revoked {target}")
             return
         elif data.startswith("delete:"):
-            if not is_admin_cb:
-                await _answer_callback(client, cb_id, "⛔ Unauthorized: Admin only", alert=True)
+            if not is_super:
+                await _answer_callback(client, cb_id, "⛔ Super Administrator only", alert=True)
                 return
             target = data.split(":", 1)[1]
             await handle_delete(client, chat_id, cb_user_id, admin_id, target)
             await _answer_callback(client, cb_id, f"🗑 Deleted {target}")
             return
         elif data.startswith("info:"):
-            if not is_admin_cb:
+            if not is_admin:
                 await _answer_callback(client, cb_id, "⛔ Unauthorized: Admin only", alert=True)
                 return
             target = data.split(":", 1)[1]
@@ -1107,29 +1400,29 @@ async def process_update(client: httpx.AsyncClient, update: Dict[str, Any]) -> N
             await handle_alerts_toggle(client, chat_id, cb_user_id, admin_id, "toggle")
             return
         elif data == "cmd:users":
-            if not is_admin_cb:
+            if not is_admin:
                 await _answer_callback(client, cb_id, "⛔ Unauthorized: Admin only", alert=True)
                 return
             await _answer_callback(client, cb_id, "Auditing Users...")
             await handle_users(client, chat_id, cb_user_id, admin_id)
             return
         elif data == "cmd:lockdown_prompt":
-            if not is_admin_cb:
-                await _answer_callback(client, cb_id, "⛔ Unauthorized: Admin only", alert=True)
+            if not is_super:
+                await _answer_callback(client, cb_id, "⛔ Super Administrator only", alert=True)
                 return
             await _answer_callback(client, cb_id, "Lockdown confirmation")
             await handle_lockdown_prompt(client, chat_id, cb_user_id, admin_id)
             return
         elif data == "cmd:lockdown_confirm":
-            if not is_admin_cb:
-                await _answer_callback(client, cb_id, "⛔ Unauthorized: Admin only", alert=True)
+            if not is_super:
+                await _answer_callback(client, cb_id, "⛔ Super Administrator only", alert=True)
                 return
             await _answer_callback(client, cb_id, "Executing Emergency Lockdown...")
             await handle_lockdown(client, chat_id, cb_user_id, admin_id)
             return
         elif data == "cmd:lockdown_cancel":
             await _answer_callback(client, cb_id, "Lockdown cancelled")
-            await _send_msg(client, chat_id, "✅ Emergency lockdown cancelled.", reply_markup=_quick_nav_inline(is_admin=True))
+            await _send_msg(client, chat_id, "✅ Emergency lockdown cancelled.", reply_markup=_quick_nav_inline(is_admin=is_super))
             return
         elif data in ("cmd:menu", "cmd:refresh_menu"):
             await _answer_callback(client, cb_id, "Refreshing Menu...")
@@ -1181,6 +1474,10 @@ async def process_update(client: httpx.AsyncClient, update: Dict[str, Any]) -> N
         await handle_users(client, chat_id, user_id, admin_id)
     elif cmd == "/userinfo":
         await handle_userinfo(client, chat_id, user_id, admin_id, arg)
+    elif cmd == "/promote":
+        await handle_promote(client, chat_id, user_id, admin_id, arg)
+    elif cmd == "/demote":
+        await handle_demote(client, chat_id, user_id, admin_id, arg)
     elif cmd == "/approve":
         await handle_approve(client, chat_id, user_id, admin_id, arg)
     elif cmd == "/reject":
@@ -1212,7 +1509,7 @@ async def run_telegram_bot_poller() -> None:
         logger.error("FAIL CLOSED: Telegram bot poller will not start: TELEGRAM_ADMIN_ID is missing or invalid.")
         return
 
-    logger.info(f"Starting ARGUS Telegram Incident Command Bot — Admin Lockdown active (Admin ID: {admin_id})")
+    logger.info(f"Starting ARGUS Telegram Incident Command Bot — Super Admin active (Super Admin ID: {admin_id})")
 
     offset = 0
     async with httpx.AsyncClient(timeout=35.0) as client:
