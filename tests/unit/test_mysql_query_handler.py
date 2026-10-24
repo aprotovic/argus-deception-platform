@@ -266,7 +266,35 @@ def test_1064_includes_excerpt():
     pkts = dispatch_query(q, _ctx(), seq=1, version_string=VERSION)
     payload, _ = _unframe(pkts[0])
     msg = payload[9:].decode("utf-8", errors="replace")
-    assert q[:20] in msg
+    assert q[:80] in msg
+
+
+def test_1064_exact_message_format():
+    """The full ERR 1064 message must match MySQL's exact format, no escaping."""
+    from app.decoys.mysql.responses import _err1064_msg
+    near = "bad syntax here"
+    msg = _err1064_msg(near)
+    expected = (
+        "You have an error in your SQL syntax; check the manual that corresponds "
+        "to your MySQL server version for the right syntax to use near "
+        f"'{near}' at line 1"
+    )
+    assert msg == expected
+
+
+def test_1064_no_backslash_escaping_of_single_quote():
+    """Single quotes in the query must appear raw in the ERR message, not escaped."""
+    # Use a clearly invalid statement (not a SELECT...FROM) that goes to _syntax_err
+    q = "SELEC' broken query here"
+    pkts = dispatch_query(q, _ctx(), seq=1, version_string=VERSION)
+    payload, _ = _unframe(pkts[0])
+    assert payload[0] == 0xFF
+    code = struct.unpack_from("<H", payload, 1)[0]
+    assert code == 1064
+    msg = payload[9:].decode("utf-8", errors="replace")
+    # The single quote must appear verbatim in the near text — not escaped
+    assert "SELEC'" in msg
+    assert "SELEC\\'" not in msg
 
 
 def test_sequence_ids_increment():

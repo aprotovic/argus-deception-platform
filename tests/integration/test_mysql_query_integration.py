@@ -250,4 +250,4 @@ async def test_identified_by_redacted_in_event(query_server):
         raw = f.read()
 
     assert "VerySecretPw!" not in raw
-    assert "[REDACTED]" in raw
+    assert "IDENTIFIED BY '[REDACTED]'" in raw

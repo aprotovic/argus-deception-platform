@@ -49,9 +49,10 @@ def sanitize_query_text(raw: str) -> Tuple[str, bool]:
     """Strip control chars, redact secrets, truncate to 1024 chars.
 
     Returns (sanitized_text, truncated_flag).
+    Redaction keeps the space: "IDENTIFIED BY '[REDACTED]'".
     """
     text = _CONTROL_RE.sub("", raw)
-    text = _REDACT_RE.sub(r"\1'[REDACTED]'", text)
+    text = _REDACT_RE.sub(r"\1 '[REDACTED]'", text)
     truncated = len(text) > _QUERY_TEXT_MAX
     return text[:_QUERY_TEXT_MAX], truncated
 

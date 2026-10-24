@@ -90,12 +90,23 @@ def _err(code: int, msg: str, state: str, seq: int) -> List[bytes]:
 
 
 def _syntax_err(query_text: str, seq: int) -> List[bytes]:
-    excerpt = query_text[:20].replace("'", "\\'")
-    msg = (
-        f"You have an error in your SQL syntax; check the manual that corresponds "
-        f"to your MySQL server version for the right syntax to use near '{excerpt}' at line 1"
+    # No escaping: real MySQL shows the raw text from the failing token.
+    # Truncate to 80 chars matching real MySQL's excerpt length.
+    excerpt = query_text[:80]
+    return _err(1064, _err1064_msg(excerpt), "42000", seq)
+
+
+def _err1064_msg(near_text: str) -> str:
+    """Build the exact MySQL ERR 1064 message string.
+
+    Single shared function — no other code builds this message.
+    No backslash-escaping of the near_text (real MySQL shows raw text).
+    """
+    return (
+        "You have an error in your SQL syntax; check the manual that corresponds "
+        "to your MySQL server version for the right syntax to use near "
+        f"'{near_text}' at line 1"
     )
-    return _err(1064, msg, "42000", seq)
 
 
 def _unknown_table_err(table_name: str, db: str, seq: int) -> List[bytes]:

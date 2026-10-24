@@ -141,7 +141,7 @@ class TestSanitizeQueryText:
         q = "CREATE USER 'x'@'%' IDENTIFIED BY 'mypassword'"
         text, _ = sanitize_query_text(q)
         assert "mypassword" not in text
-        assert "[REDACTED]" in text
+        assert "IDENTIFIED BY '[REDACTED]'" in text
 
     def test_redacts_password_function(self):
         q = "SET PASSWORD FOR 'u'@'h' = PASSWORD('secret')"
