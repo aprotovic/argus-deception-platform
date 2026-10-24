@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Meridian Trust Bank — secure online banking for personal and business customers.">
+  <title>Meridian Trust Bank — Secure Online Banking</title>
+  <link rel="stylesheet" href="/bank/static/bank.css">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="nav" role="navigation" aria-label="Main navigation">
+    <a href="/bank" class="nav-brand" aria-label="Meridian Trust Bank home">
+      <!-- Stylized "M" shield logo -->
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M16 2L4 7V16C4 22.6 9.4 28.6 16 30C22.6 28.6 28 22.6 28 16V7L16 2Z" fill="#0d9488"/>
+        <path d="M10 22V10L16 17.5L22 10V22H20V14.5L16 20.5L12 14.5V22H10Z" fill="#ffffff"/>
+      </svg>
+      Meridian Trust Bank
+    </a>
+
+    <button class="nav-hamburger" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-links" id="nav-hamburger">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <ul class="nav-links" id="nav-links" role="list">
+      <li><a href="/bank" class="nav-link">Personal</a></li>
+      <li><a href="/bank" class="nav-link">Business</a></li>
+      <li><a href="/bank" class="nav-link">Mortgages</a></li>
+      <li><a href="/bank/support" class="nav-link">Support</a></li>
+      <li><a href="/bank/login" class="nav-link">Sign In</a></li>
+    </ul>
+  </nav>
+
+  <div class="nav-spacer" aria-hidden="true"></div>
+
+  <!-- Hero Section -->
+  <section class="hero" aria-labelledby="hero-heading">
+    <h1 class="hero-title" id="hero-heading">Banking Built Around You</h1>
+    <p class="hero-subtitle">
+      Manage your money with confidence. From personal checking to mortgages,
+      Meridian Trust Bank has the tools to help you thrive.
+    </p>
+    <div class="hero-actions">
+      <a href="/bank/login" class="btn-primary">Sign In</a>
+      <a href="#" class="btn-outline" style="color:white;border-color:rgba(255,255,255,0.6);" onclick="return false;">Open an Account</a>
+    </div>
+  </section>
+
+  <!-- Services Section -->
+  <section aria-labelledby="services-heading" style="padding:var(--s6) var(--s4);">
+    <div style="max-width:1200px;margin:0 auto;">
+      <h2 class="section-title" id="services-heading">Everything You Need</h2>
+      <p class="section-subtitle">From everyday banking to long-term goals, we&rsquo;ve got you covered.</p>
+
+      <div class="grid-4">
+        <!-- Personal Checking -->
+        <div class="service-card">
+          <div class="service-icon" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="22" x2="21" y2="22"/>
+              <rect x="2" y="6" width="20" height="14" rx="1"/>
+              <path d="M12 6V2"/>
+              <path d="M8 2h8"/>
+              <line x1="7" y1="10" x2="7" y2="18"/>
+              <line x1="12" y1="10" x2="12" y2="18"/>
+              <line x1="17" y1="10" x2="17" y2="18"/>
+            </svg>
+          </div>
+          <p class="service-name">Personal Checking</p>
+          <p class="service-desc">Fee-free everyday banking with instant transfers, mobile deposits, and zero minimum balance requirements.</p>
+        </div>
+
+        <!-- Savings Accounts -->
+        <div class="service-card">
+          <div class="service-icon" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-2c0-.4 0-1.2.5-2"/>
+              <path d="M2 9.5C2 9.5 3 8 4.5 8s2.5 1.5 2.5 1.5"/>
+              <circle cx="17" cy="5" r="3"/>
+              <path d="M16 4.5a.5.5 0 011 0v1a.5.5 0 01-1 0v-1z" fill="currentColor"/>
+            </svg>
+          </div>
+          <p class="service-name">Savings Accounts</p>
+          <p class="service-desc">Grow your savings with competitive APY rates and FDIC-insured protection up to $250,000.</p>
+        </div>
+
+        <!-- Mortgage Loans -->
+        <div class="service-card">
+          <div class="service-icon" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          </div>
+          <p class="service-name">Mortgage Loans</p>
+          <p class="service-desc">Flexible fixed and adjustable-rate mortgages with expert guidance from application to closing.</p>
+        </div>
+
+        <!-- Business Banking -->
+        <div class="service-card">
+          <div class="service-icon" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="7" width="20" height="14" rx="2"/>
+              <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
+              <line x1="12" y1="12" x2="12" y2="16"/>
+              <line x1="10" y1="14" x2="14" y2="14"/>
+            </svg>
+          </div>
+          <p class="service-name">Business Banking</p>
+          <p class="service-desc">Complete business solutions including commercial accounts, payroll services, and merchant processing.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trust / Security Section -->
+  <div class="trust-section" role="region" aria-labelledby="trust-heading">
+    <div style="max-width:1200px;margin:0 auto;">
+      <h2 class="section-title" id="trust-heading" style="text-align:center;margin-bottom:var(--s2);">Your Security Is Our Priority</h2>
+      <p class="section-subtitle" style="text-align:center;margin-left:auto;margin-right:auto;">We protect your money and your identity with industry-leading standards.</p>
+
+      <div class="trust-grid">
+        <!-- FDIC Insured -->
+        <div class="trust-item">
+          <div class="trust-icon" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+          <p class="trust-label">FDIC Insured</p>
+          <p class="trust-desc">Deposits insured up to $250,000 per depositor by the Federal Deposit Insurance Corporation.</p>
+        </div>
+
+        <!-- 256-Bit Encryption -->
+        <div class="trust-item">
+          <div class="trust-icon" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2"/>
+              <path d="M7 11V7a5 5 0 0110 0v4"/>
+            </svg>
+          </div>
+          <p class="trust-label">256-Bit SSL Encryption</p>
+          <p class="trust-desc">Bank-grade encryption protects every transaction and piece of personal data you share with us.</p>
+        </div>
+
+        <!-- Zero-Liability Fraud -->
+        <div class="trust-item">
+          <div class="trust-icon" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <circle cx="12" cy="13" r="2"/>
+              <line x1="12" y1="11" x2="12" y2="9"/>
+            </svg>
+          </div>
+          <p class="trust-label">Zero-Liability Protection</p>
+          <p class="trust-desc">You&rsquo;re never responsible for unauthorized transactions. Our fraud team monitors your account 24/7.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA Banner -->
+  <section style="background:var(--navy);padding:var(--s5) var(--s4);text-align:center;">
+    <h2 style="font-family:'Playfair Display',serif;color:white;font-size:1.75rem;margin-bottom:var(--s2);">Ready to get started?</h2>
+    <p style="color:rgba(255,255,255,0.75);margin-bottom:var(--s3);max-width:480px;margin-left:auto;margin-right:auto;">Join thousands of customers who trust Meridian Trust Bank with their financial future.</p>
+    <a href="/bank/login" class="btn-secondary">Sign In to Your Account</a>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer" role="contentinfo">
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div>
+          <div class="footer-brand">
+            <svg width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M16 2L4 7V16C4 22.6 9.4 28.6 16 30C22.6 28.6 28 22.6 28 16V7L16 2Z" fill="#0d9488"/>
+              <path d="M10 22V10L16 17.5L22 10V22H20V14.5L16 20.5L12 14.5V22H10Z" fill="#ffffff"/>
+            </svg>
+            Meridian Trust Bank
+          </div>
+          <p class="footer-tagline">
+            Your trusted financial partner. Secure, reliable, and always available when you need us.
+          </p>
+          <div class="badge-row" style="margin-top:16px;flex-wrap:wrap;">
+            <span class="badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+              SSL Secured
+            </span>
+            <span class="badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              FDIC Insured
+            </span>
+            <span class="badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2L3 7l9 5 9-5-9-5z"/><path d="M3 17l9 5 9-5M3 12l9 5 9-5"/></svg>
+              256-bit Encryption
+            </span>
+            <span class="badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              24/7 Fraud Monitoring
+            </span>
+          </div>
+        </div>
+
+        <div>
+          <p class="footer-col-title">Personal Banking</p>
+          <ul class="footer-links">
+            <li><a href="/bank" class="footer-link">Checking Accounts</a></li>
+            <li><a href="/bank" class="footer-link">Savings Accounts</a></li>
+            <li><a href="/bank" class="footer-link">Credit Cards</a></li>
+            <li><a href="/bank" class="footer-link">Personal Loans</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <p class="footer-col-title">Services</p>
+          <ul class="footer-links">
+            <li><a href="/bank/login" class="footer-link">Online Banking</a></li>
+            <li><a href="/bank" class="footer-link">Mobile App</a></li>
+            <li><a href="/bank" class="footer-link">Wire Transfers</a></li>
+            <li><a href="/bank" class="footer-link">Investments</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <p class="footer-col-title">Help</p>
+          <ul class="footer-links">
+            <li><a href="/bank/support" class="footer-link">Contact Us</a></li>
+            <li><a href="/bank/support" class="footer-link">FAQs</a></li>
+            <li><a href="/bank/recover" class="footer-link">Forgot Password</a></li>
+            <li><a href="/bank/accessibility" class="footer-link">Accessibility</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <hr class="footer-divider">
+
+      <div class="footer-bottom">
+        <p class="footer-legal">
+          Meridian Trust Bank, Member FDIC. Equal Housing Lender. NMLS #1234567.<br>
+          &copy; 2024 Meridian Trust Bank, N.A. All rights reserved.
+        </p>
+        <div class="footer-badges">
+          <span class="footer-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            FDIC Insured
+          </span>
+          <span class="footer-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+            Equal Housing Lender
+          </span>
+        </div>
+      </div>
+
+      <p style="font-size:0.75rem;color:rgba(255,255,255,0.4);margin-top:16px;line-height:1.5;">
+        <a href="/bank/privacy" class="footer-link" style="font-size:0.75rem;">Privacy Policy</a>
+        &nbsp;&middot;&nbsp;
+        <a href="/bank/terms" class="footer-link" style="font-size:0.75rem;">Terms of Service</a>
+        &nbsp;&middot;&nbsp;
+        <a href="/bank/accessibility" class="footer-link" style="font-size:0.75rem;">Accessibility</a>
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    // Hamburger menu toggle
+    (function () {
+      var btn = document.getElementById('nav-hamburger');
+      var links = document.getElementById('nav-links');
+      if (btn && links) {
+        btn.addEventListener('click', function () {
+          var open = links.classList.toggle('open');
+          btn.setAttribute('aria-expanded', String(open));
+        });
+      }
+    })();
+  </script>
+
+</body>
+</html>

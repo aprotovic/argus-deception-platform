@@ -123,6 +123,27 @@ async def _ensure_default_decoy(db: AsyncSession) -> uuid.UUID:
             await db.commit()
         except IntegrityError:
             await db.rollback()
+
+    meridian_id = uuid.UUID("00000000-0000-0000-0000-000000000002")
+    stmt_meridian = select(DecoyService).where(DecoyService.id == meridian_id)
+    result_meridian = await db.execute(stmt_meridian)
+    if not result_meridian.scalar_one_or_none():
+        meridian_decoy = DecoyService(
+            id=meridian_id,
+            name="Meridian Trust Bank Portal",
+            portal_type="online_banking_portal",
+            description="Fictional retail bank honeypot for credential and upload telemetry",
+            port=8080,
+            banner_title="Meridian Trust Bank",
+            config_metadata={"theme": "bank_navy_teal", "version": "2.1.0", "brand": "meridian_trust_bank"},
+            is_active=True,
+        )
+        db.add(meridian_decoy)
+        try:
+            await db.commit()
+        except IntegrityError:
+            await db.rollback()
+
     return default_id
 
 

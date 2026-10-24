@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Contact Meridian Trust Bank customer support or find answers to frequently asked questions.">
+  <title>Customer Support — Meridian Trust Bank</title>
+  <link rel="stylesheet" href="/bank/static/bank.css">
+  <style>
+    .page-header {
+      margin-bottom: var(--s4);
+    }
+    .page-header h1 {
+      font-family: 'Playfair Display', serif;
+      color: var(--navy);
+      font-size: 1.75rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    .page-header p {
+      color: var(--text-muted);
+      margin-top: var(--s1);
+      font-size: 1rem;
+    }
+    .support-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--s4);
+    }
+    .contact-info-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: var(--s3);
+      margin-top: var(--s2);
+    }
+    .contact-info-item {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--s2);
+    }
+    .contact-info-icon {
+      font-size: 1.375rem;
+      line-height: 1;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .contact-info-text strong {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 2px;
+    }
+    .contact-info-text span {
+      font-size: 0.9375rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .faq-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--s2);
+      margin-top: var(--s2);
+    }
+    .faq-item {
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+    .faq-question {
+      width: 100%;
+      background: var(--gray-50);
+      border: none;
+      text-align: left;
+      padding: var(--s2) var(--s3);
+      font-family: inherit;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--navy);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--s2);
+      transition: background var(--transition);
+      min-height: 44px;
+    }
+    .faq-question:hover {
+      background: var(--gray-200);
+    }
+    .faq-question:focus-visible {
+      outline: 2px solid var(--teal);
+      outline-offset: -2px;
+    }
+    .faq-question[aria-expanded="true"] {
+      background: #f0fdfa;
+      color: var(--teal);
+    }
+    .faq-chevron {
+      flex-shrink: 0;
+      transition: transform var(--transition);
+      color: var(--text-muted);
+    }
+    .faq-question[aria-expanded="true"] .faq-chevron {
+      transform: rotate(180deg);
+      color: var(--teal);
+    }
+    .faq-answer {
+      padding: var(--s2) var(--s3);
+      font-size: 0.9375rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      border-top: 1px solid var(--gray-200);
+      background: var(--white);
+    }
+    .faq-answer[hidden] {
+      display: none;
+    }
+    #contact-status {
+      border-radius: var(--radius-sm);
+      padding: var(--s2) var(--s3);
+      font-size: 0.9375rem;
+      line-height: 1.5;
+    }
+    #contact-status.success {
+      background: var(--success-bg);
+      border: 1px solid var(--success-border);
+      color: #166534;
+    }
+    #contact-status.error {
+      background: #fef2f2;
+      border: 1px solid #fca5a5;
+      color: var(--danger);
+    }
+    #contact-status.hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="nav" role="navigation" aria-label="Main navigation">
+    <a href="/bank" class="nav-brand" aria-label="Meridian Trust Bank home">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M16 2L4 7V16C4 22.6 9.4 28.6 16 30C22.6 28.6 28 22.6 28 16V7L16 2Z" fill="#0d9488"/>
+        <path d="M10 22V10L16 17.5L22 10V22H20V14.5L16 20.5L12 14.5V22H10Z" fill="#ffffff"/>
+      </svg>
+      Meridian Trust Bank
+    </a>
+
+    <button class="nav-hamburger" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-links" id="nav-hamburger">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <ul class="nav-links" id="nav-links" role="list">
+      <li><a href="/bank" class="nav-link">Personal</a></li>
+      <li><a href="/bank" class="nav-link">Business</a></li>
+      <li><a href="/bank" class="nav-link">Mortgages</a></li>
+      <li><a href="/bank/support" class="nav-link active" aria-current="page">Support</a></li>
+      <li><a href="/bank/login" class="nav-link">Sign In</a></li>
+    </ul>
+  </nav>
+
+  <div class="nav-spacer" aria-hidden="true"></div>
+
+  <noscript>
+    <div style="background:#fef9c3;border:1px solid #fde68a;color:#92400e;padding:12px 24px;font-size:0.875rem;text-align:center;">
+      JavaScript is required for full functionality. Please enable JavaScript in your browser settings and reload the page.
+    </div>
+  </noscript>
+
+  <!-- Main Content -->
+  <main id="main-content">
+    <div class="page-wrap">
+
+      <!-- Page Header -->
+      <header class="page-header">
+        <h1>Customer Support</h1>
+        <p>We're here to help. Reach us by phone, email, or use the form below.</p>
+      </header>
+
+      <div class="support-grid">
+
+        <!-- Contact Info Card -->
+        <section class="card" aria-labelledby="contact-info-title">
+          <h2 class="card-title" id="contact-info-title">Contact Us</h2>
+          <ul class="contact-info-list" aria-label="Contact information">
+            <li class="contact-info-item">
+              <span class="contact-info-icon" aria-hidden="true">📞</span>
+              <div class="contact-info-text">
+                <strong>Phone</strong>
+                <span>1-800-555-0199 (Mon–Fri 8am–8pm ET)</span>
+              </div>
+            </li>
+            <li class="contact-info-item">
+              <span class="contact-info-icon" aria-hidden="true">✉</span>
+              <div class="contact-info-text">
+                <strong>Email</strong>
+                <span>support@meridiantrustbank.example.com</span>
+              </div>
+            </li>
+            <li class="contact-info-item">
+              <span class="contact-info-icon" aria-hidden="true">📍</span>
+              <div class="contact-info-text">
+                <strong>Address</strong>
+                <span>100 Commerce Plaza, Suite 400, Hartford, CT 06103</span>
+              </div>
+            </li>
+          </ul>
+        </section>
+
+        <!-- FAQ Card -->
+        <section class="card" aria-labelledby="faq-title">
+          <h2 class="card-title" id="faq-title">Frequently Asked Questions</h2>
+          <div class="faq-list" role="list">
+
+            <div class="faq-item" role="listitem">
+              <button class="faq-question" aria-expanded="false" aria-controls="faq-answer-1" id="faq-btn-1">
+                <span>How do I reset my online banking password?</span>
+                <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              <div class="faq-answer" id="faq-answer-1" role="region" aria-labelledby="faq-btn-1" hidden>
+                Visit the login page and click 'Forgot Password?' to begin the reset process. You will receive an email with instructions within a few minutes.
+              </div>
+            </div>
+
+            <div class="faq-item" role="listitem">
+              <button class="faq-question" aria-expanded="false" aria-controls="faq-answer-2" id="faq-btn-2">
+                <span>How do I report a lost or stolen card?</span>
+                <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              <div class="faq-answer" id="faq-answer-2" role="region" aria-labelledby="faq-btn-2" hidden>
+                Call us immediately at 1-800-555-0199, available 24 hours a day, 7 days a week, to freeze or cancel your card.
+              </div>
+            </div>
+
+            <div class="faq-item" role="listitem">
+              <button class="faq-question" aria-expanded="false" aria-controls="faq-answer-3" id="faq-btn-3">
+                <span>What are the daily transfer limits?</span>
+                <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              <div class="faq-answer" id="faq-answer-3" role="region" aria-labelledby="faq-btn-3" hidden>
+                Standard accounts have a $5,000 daily transfer limit. Premium accounts may request higher limits through a branch representative.
+              </div>
+            </div>
+
+            <div class="faq-item" role="listitem">
+              <button class="faq-question" aria-expanded="false" aria-controls="faq-answer-4" id="faq-btn-4">
+                <span>How long does it take for a transfer to arrive?</span>
+                <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              <div class="faq-answer" id="faq-answer-4" role="region" aria-labelledby="faq-btn-4" hidden>
+                Transfers between Meridian Trust accounts are immediate. External bank transfers typically take 1-3 business days.
+              </div>
+            </div>
+
+            <div class="faq-item" role="listitem">
+              <button class="faq-question" aria-expanded="false" aria-controls="faq-answer-5" id="faq-btn-5">
+                <span>Is my money FDIC insured?</span>
+                <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              <div class="faq-answer" id="faq-answer-5" role="region" aria-labelledby="faq-btn-5" hidden>
+                Yes. All deposits are insured up to $250,000 per depositor by the Federal Deposit Insurance Corporation (FDIC).
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- Contact Form Card -->
+        <section class="card" aria-labelledby="contact-form-title">
+          <h2 class="card-title" id="contact-form-title">Send Us a Message</h2>
+          <p class="card-subtitle">We typically respond within 2 business days.</p>
+
+          <div id="contact-status" class="hidden" role="alert" aria-live="assertive"></div>
+
+          <form id="contact-form" novalidate aria-label="Contact form">
+
+            <div class="form-group">
+              <label class="form-label" for="full_name">
+                Full Name <span class="required" aria-hidden="true">*</span>
+              </label>
+              <input
+                type="text"
+                name="full_name"
+                id="full_name"
+                class="input"
+                autocomplete="name"
+                required
+                aria-required="true"
+                aria-describedby="full-name-error"
+                placeholder="Enter your full name"
+                maxlength="100"
+              >
+              <span id="full-name-error" class="alert-error hidden" role="alert" aria-live="polite"></span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="email">
+                Email Address <span class="required" aria-hidden="true">*</span>
+              </label>
+              <input
+                type="email"
+                name="email"
+                id="email"
+                class="input"
+                autocomplete="email"
+                required
+                aria-required="true"
+                aria-describedby="email-error"
+                placeholder="Enter your email address"
+                maxlength="254"
+              >
+              <span id="email-error" class="alert-error hidden" role="alert" aria-live="polite"></span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="subject">
+                Subject <span class="required" aria-hidden="true">*</span>
+              </label>
+              <select name="subject" id="subject" class="input" required aria-required="true" aria-describedby="subject-error">
+                <option value="" disabled selected>Select a subject</option>
+                <option value="Account Inquiry">Account Inquiry</option>
+                <option value="Loan Application">Loan Application</option>
+                <option value="Technical Support">Technical Support</option>
+                <option value="Fraud Report">Fraud Report</option>
+                <option value="Other">Other</option>
+              </select>
+              <span id="subject-error" class="alert-error hidden" role="alert" aria-live="polite"></span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="message">
+                Message <span class="required" aria-hidden="true">*</span>
+              </label>
+              <textarea
+                name="message"
+                id="message"
+                class="input"
+                maxlength="2000"
+                rows="5"
+                required
+                aria-required="true"
+                aria-describedby="message-error"
+                placeholder="Describe how we can help you"
+              ></textarea>
+              <span id="message-error" class="alert-error hidden" role="alert" aria-live="polite"></span>
+            </div>
+
+            <div class="form-group" style="margin-top: var(--s3);">
+              <button type="submit" id="submit-btn" class="btn-primary w-full">
+                Send Message
+              </button>
+            </div>
+
+          </form>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer" role="contentinfo">
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div>
+          <div class="footer-brand">
+            <svg width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M16 2L4 7V16C4 22.6 9.4 28.6 16 30C22.6 28.6 28 22.6 28 16V7L16 2Z" fill="#0d9488"/>
+              <path d="M10 22V10L16 17.5L22 10V22H20V14.5L16 20.5L12 14.5V22H10Z" fill="#ffffff"/>
+            </svg>
+            Meridian Trust Bank
+          </div>
+          <p class="footer-tagline">
+            Your trusted financial partner. Secure, reliable, and always available when you need us.
+          </p>
+          <div class="badge-row" style="margin-top:16px;flex-wrap:wrap;">
+            <span class="badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+              SSL Secured
+            </span>
+            <span class="badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              FDIC Insured
+            </span>
+            <span class="badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2L3 7l9 5 9-5-9-5z"/><path d="M3 17l9 5 9-5M3 12l9 5 9-5"/></svg>
+              256-bit Encryption
+            </span>
+            <span class="badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              24/7 Fraud Monitoring
+            </span>
+          </div>
+        </div>
+
+        <div>
+          <p class="footer-col-title">Personal Banking</p>
+          <ul class="footer-links">
+            <li><a href="/bank" class="footer-link">Checking Accounts</a></li>
+            <li><a href="/bank" class="footer-link">Savings Accounts</a></li>
+            <li><a href="/bank" class="footer-link">Credit Cards</a></li>
+            <li><a href="/bank" class="footer-link">Personal Loans</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <p class="footer-col-title">Services</p>
+          <ul class="footer-links">
+            <li><a href="/bank/login" class="footer-link">Online Banking</a></li>
+            <li><a href="/bank" class="footer-link">Mobile App</a></li>
+            <li><a href="/bank" class="footer-link">Wire Transfers</a></li>
+            <li><a href="/bank" class="footer-link">Investments</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <p class="footer-col-title">Help</p>
+          <ul class="footer-links">
+            <li><a href="/bank/support" class="footer-link">Contact Us</a></li>
+            <li><a href="/bank/support" class="footer-link">FAQs</a></li>
+            <li><a href="/bank/recover" class="footer-link">Forgot Password</a></li>
+            <li><a href="/bank/accessibility" class="footer-link">Accessibility</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <hr class="footer-divider">
+
+      <div class="footer-bottom">
+        <p class="footer-legal">
+          Meridian Trust Bank, Member FDIC. Equal Housing Lender. NMLS #1234567.<br>
+          &copy; 2024 Meridian Trust Bank, N.A. All rights reserved.
+        </p>
+        <div class="footer-badges">
+          <span class="footer-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            FDIC Insured
+          </span>
+          <span class="footer-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+            Equal Housing Lender
+          </span>
+        </div>
+      </div>
+
+      <p style="font-size:0.75rem;color:rgba(255,255,255,0.4);margin-top:16px;line-height:1.5;">
+        <a href="/bank/privacy" class="footer-link" style="font-size:0.75rem;">Privacy Policy</a>
+        &nbsp;&middot;&nbsp;
+        <a href="/bank/terms" class="footer-link" style="font-size:0.75rem;">Terms of Service</a>
+        &nbsp;&middot;&nbsp;
+        <a href="/bank/accessibility" class="footer-link" style="font-size:0.75rem;">Accessibility</a>
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    // Hamburger menu toggle
+    (function () {
+      var btn = document.getElementById('nav-hamburger');
+      var links = document.getElementById('nav-links');
+      if (btn && links) {
+        btn.addEventListener('click', function () {
+          var open = links.classList.toggle('open');
+          btn.setAttribute('aria-expanded', String(open));
+        });
+      }
+    })();
+
+    // ----------------------------------------------------------------
+    // FAQ accordion
+    // ----------------------------------------------------------------
+    (function () {
+      var buttons = document.querySelectorAll('.faq-question');
+      buttons.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var expanded = btn.getAttribute('aria-expanded') === 'true';
+          var answerId = btn.getAttribute('aria-controls');
+          var answer = document.getElementById(answerId);
+
+          // Close all other open items
+          buttons.forEach(function (other) {
+            if (other !== btn) {
+              other.setAttribute('aria-expanded', 'false');
+              var otherId = other.getAttribute('aria-controls');
+              var otherAnswer = document.getElementById(otherId);
+              if (otherAnswer) otherAnswer.hidden = true;
+            }
+          });
+
+          // Toggle current item
+          btn.setAttribute('aria-expanded', String(!expanded));
+          if (answer) answer.hidden = expanded;
+        });
+      });
+    })();
+
+    // ----------------------------------------------------------------
+    // Contact form submission
+    // ----------------------------------------------------------------
+    (function () {
+      var form = document.getElementById('contact-form');
+      var statusDiv = document.getElementById('contact-status');
+      var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      function showFieldError(errorId, msg) {
+        var el = document.getElementById(errorId);
+        if (el) {
+          el.textContent = msg;
+          el.classList.remove('hidden');
+        }
+      }
+
+      function clearErrors() {
+        ['full-name-error', 'email-error', 'subject-error', 'message-error'].forEach(function (id) {
+          var el = document.getElementById(id);
+          if (el) {
+            el.classList.add('hidden');
+            el.textContent = '';
+          }
+        });
+        statusDiv.className = 'hidden';
+        statusDiv.textContent = '';
+      }
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        clearErrors();
+
+        var fullName = document.getElementById('full_name').value.trim();
+        var email = document.getElementById('email').value.trim();
+        var subject = document.getElementById('subject').value;
+        var message = document.getElementById('message').value.trim();
+        var isValid = true;
+
+        if (!fullName) {
+          showFieldError('full-name-error', 'Please enter your full name.');
+          document.getElementById('full_name').focus();
+          isValid = false;
+        } else if (!email) {
+          showFieldError('email-error', 'Please enter your email address.');
+          document.getElementById('email').focus();
+          isValid = false;
+        } else if (!EMAIL_RE.test(email)) {
+          showFieldError('email-error', 'Please enter a valid email address.');
+          document.getElementById('email').focus();
+          isValid = false;
+        } else if (!subject) {
+          showFieldError('subject-error', 'Please select a subject.');
+          document.getElementById('subject').focus();
+          isValid = false;
+        } else if (!message) {
+          showFieldError('message-error', 'Please enter your message.');
+          document.getElementById('message').focus();
+          isValid = false;
+        }
+
+        if (!isValid) return;
+
+        var btn = document.getElementById('submit-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner" aria-hidden="true"></span> Sending\u2026';
+
+        var fd = new FormData(form);
+        try {
+          var res = await fetch('/api/v1/bank/support/contact', { method: 'POST', body: fd });
+          var data = await res.json();
+          if (res.ok) {
+            form.hidden = true;
+            statusDiv.className = 'success';
+            statusDiv.textContent = 'Thank you for contacting us. A representative will respond within 2 business days.';
+          } else {
+            statusDiv.className = 'error';
+            statusDiv.textContent = data.message || 'Something went wrong. Please try again.';
+          }
+        } catch (_) {
+          statusDiv.className = 'error';
+          statusDiv.textContent = 'An error occurred. Please try again.';
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Send Message';
+        }
+      });
+    })();
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sign in to your Meridian Trust Bank online account.">
+  <title>Sign In — Meridian Trust Bank</title>
+  <link rel="stylesheet" href="/bank/static/bank.css">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="nav" role="navigation" aria-label="Main navigation">
+    <a href="/bank" class="nav-brand" aria-label="Meridian Trust Bank home">
+      <!-- Stylized "M" shield logo -->
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M16 2L4 7V16C4 22.6 9.4 28.6 16 30C22.6 28.6 28 22.6 28 16V7L16 2Z" fill="#0d9488"/>
+        <path d="M10 22V10L16 17.5L22 10V22H20V14.5L16 20.5L12 14.5V22H10Z" fill="#ffffff"/>
+      </svg>
+      Meridian Trust Bank
+    </a>
+
+    <button class="nav-hamburger" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-links" id="nav-hamburger">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <ul class="nav-links" id="nav-links" role="list">
+      <li><a href="/bank" class="nav-link">Personal</a></li>
+      <li><a href="/bank" class="nav-link">Business</a></li>
+      <li><a href="/bank" class="nav-link">Mortgages</a></li>
+      <li><a href="/bank/support" class="nav-link">Support</a></li>
+      <li><a href="/bank/login" class="nav-link active" aria-current="page">Sign In</a></li>
+    </ul>
+  </nav>
+
+  <div class="nav-spacer" aria-hidden="true"></div>
+
+  <noscript>
+    <div style="background:#fef9c3;border:1px solid #fde68a;color:#92400e;padding:12px 24px;font-size:0.875rem;text-align:center;">
+      JavaScript is required to sign in. Please enable JavaScript in your browser settings and reload the page.
+    </div>
+  </noscript>
+
+  <!-- Login Section -->
+  <main class="auth-wrap" id="main-content">
+    <div class="auth-card" role="main">
+      <h1 class="auth-title">Welcome back</h1>
+      <p class="auth-subtitle">Sign in to your account</p>
+
+      <!-- General error (shown on 401/429) -->
+      <div id="general-error" class="alert-error hidden" role="alert" aria-live="assertive"></div>
+
+      <form id="login-form" novalidate aria-label="Sign in form">
+        <!-- Online ID -->
+        <div class="form-group">
+          <label class="form-label" for="username">
+            Online ID <span class="required" aria-hidden="true">*</span>
+          </label>
+          <input
+            type="text"
+            name="username"
+            id="username"
+            class="input"
+            autocomplete="username"
+            required
+            aria-required="true"
+            aria-describedby="username-error"
+            placeholder="Enter your Online ID"
+            maxlength="256"
+          >
+          <span id="username-error" class="alert-error hidden" role="alert" aria-live="polite"></span>
+        </div>
+
+        <!-- Password -->
+        <div class="form-group">
+          <label class="form-label" for="password">
+            Password <span class="required" aria-hidden="true">*</span>
+          </label>
+          <input
+            type="password"
+            name="password"
+            id="password"
+            class="input"
+            autocomplete="current-password"
+            required
+            aria-required="true"
+            aria-describedby="password-error"
+            placeholder="Enter your password"
+            maxlength="256"
+          >
+          <span id="password-error" class="alert-error hidden" role="alert" aria-live="polite"></span>
+        </div>
+
+        <!-- Remember me -->
+        <div class="form-group">
+          <label class="form-check">
+            <input type="checkbox" id="remember-me" name="remember_me">
+            <span>Remember my Online ID</span>
+          </label>
+        </div>
+
+        <!-- Submit -->
+        <div class="form-group">
+          <button type="submit" id="signin-btn" class="btn-primary w-full">
+            Sign In
+          </button>
+        </div>
+
+        <!-- Forgot password -->
+        <div style="text-align:center;margin-top:4px;">
+          <a href="/bank/recover" class="btn-link text-sm">Forgot Password?</a>
+        </div>
+      </form>
+
+      <p class="text-sm text-muted" style="text-align:center;margin-top:24px;">
+        New customer?
+        <a href="/bank" class="btn-link text-sm" style="display:inline;min-height:auto;">Open an Account</a>
+      </p>
+    </div>
+  </main>
+
+  <!-- OTP Overlay (hidden by default) -->
+  <div id="otp-overlay" class="otp-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="otp-title" aria-describedby="otp-hint">
+    <div class="otp-card">
+      <div class="otp-icon" aria-hidden="true">
+        <!-- Shield / lock icon -->
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M14 2L3 7V14C3 20.1 7.9 25.8 14 27C20.1 25.8 25 20.1 25 14V7L14 2Z" fill="currentColor" opacity="0.2"/>
+          <path d="M14 2L3 7V14C3 20.1 7.9 25.8 14 27C20.1 25.8 25 20.1 25 14V7L14 2Z" stroke="currentColor" stroke-width="1.5" fill="none"/>
+          <rect x="10" y="13" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.5" fill="none"/>
+          <path d="M11.5 13V11a2.5 2.5 0 015 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+          <circle cx="14" cy="16.5" r="1" fill="currentColor"/>
+        </svg>
+      </div>
+
+      <h2 class="otp-title" id="otp-title">Verify Your Identity</h2>
+      <p class="otp-hint" id="otp-hint">
+        We sent a 6-digit code to your registered phone ending in
+        <strong><span id="otp-phone"></span></strong>. Enter it below.
+      </p>
+
+      <input
+        type="text"
+        id="otp-code"
+        name="otp_code"
+        class="input otp-input"
+        inputmode="numeric"
+        pattern="[0-9]{6}"
+        maxlength="6"
+        placeholder="••••••"
+        autocomplete="one-time-code"
+        aria-label="6-digit verification code"
+        aria-describedby="otp-error"
+      >
+
+      <span id="otp-error" class="alert-error hidden" role="alert" aria-live="polite" style="display:block;text-align:left;margin-top:8px;"></span>
+
+      <div style="margin-top:16px;">
+        <button id="verify-btn" class="btn-primary w-full">Verify Code</button>
+      </div>
+
+      <div style="margin-top:8px;">
+        <button id="resend-btn" class="btn-link w-full mt-2">Resend Code</button>
+      </div>
+
+      <p class="text-sm text-muted mt-2" style="text-align:center;">
+        This code expires in 10 minutes.
+      </p>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer" role="contentinfo">
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div>
+          <div class="footer-brand">
+            <svg width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M16 2L4 7V16C4 22.6 9.4 28.6 16 30C22.6 28.6 28 22.6 28 16V7L16 2Z" fill="#0d9488"/>
+              <path d="M10 22V10L16 17.5L22 10V22H20V14.5L16 20.5L12 14.5V22H10Z" fill="#ffffff"/>
+            </svg>
+            Meridian Trust Bank
+          </div>
+          <p class="footer-tagline">
+            Your trusted financial partner. Secure, reliable, and always available when you need us.
+          </p>
+          <div class="badge-row" style="margin-top:16px;flex-wrap:wrap;">
+            <span class="badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+              SSL Secured
+            </span>
+            <span class="badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              FDIC Insured
+            </span>
+            <span class="badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2L3 7l9 5 9-5-9-5z"/><path d="M3 17l9 5 9-5M3 12l9 5 9-5"/></svg>
+              256-bit Encryption
+            </span>
+            <span class="badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              24/7 Fraud Monitoring
+            </span>
+          </div>
+        </div>
+
+        <div>
+          <p class="footer-col-title">Personal Banking</p>
+          <ul class="footer-links">
+            <li><a href="/bank" class="footer-link">Checking Accounts</a></li>
+            <li><a href="/bank" class="footer-link">Savings Accounts</a></li>
+            <li><a href="/bank" class="footer-link">Credit Cards</a></li>
+            <li><a href="/bank" class="footer-link">Personal Loans</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <p class="footer-col-title">Services</p>
+          <ul class="footer-links">
+            <li><a href="/bank/login" class="footer-link">Online Banking</a></li>
+            <li><a href="/bank" class="footer-link">Mobile App</a></li>
+            <li><a href="/bank" class="footer-link">Wire Transfers</a></li>
+            <li><a href="/bank" class="footer-link">Investments</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <p class="footer-col-title">Help</p>
+          <ul class="footer-links">
+            <li><a href="/bank/support" class="footer-link">Contact Us</a></li>
+            <li><a href="/bank/support" class="footer-link">FAQs</a></li>
+            <li><a href="/bank/recover" class="footer-link">Forgot Password</a></li>
+            <li><a href="/bank/accessibility" class="footer-link">Accessibility</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <hr class="footer-divider">
+
+      <div class="footer-bottom">
+        <p class="footer-legal">
+          Meridian Trust Bank, Member FDIC. Equal Housing Lender. NMLS #1234567.<br>
+          &copy; 2024 Meridian Trust Bank, N.A. All rights reserved.
+        </p>
+        <div class="footer-badges">
+          <span class="footer-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            FDIC Insured
+          </span>
+          <span class="footer-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+            Equal Housing Lender
+          </span>
+        </div>
+      </div>
+
+      <p style="font-size:0.75rem;color:rgba(255,255,255,0.4);margin-top:16px;line-height:1.5;">
+        <a href="/bank/privacy" class="footer-link" style="font-size:0.75rem;">Privacy Policy</a>
+        &nbsp;&middot;&nbsp;
+        <a href="/bank/terms" class="footer-link" style="font-size:0.75rem;">Terms of Service</a>
+        &nbsp;&middot;&nbsp;
+        <a href="/bank/accessibility" class="footer-link" style="font-size:0.75rem;">Accessibility</a>
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    // Hamburger menu toggle
+    (function () {
+      var btn = document.getElementById('nav-hamburger');
+      var links = document.getElementById('nav-links');
+      if (btn && links) {
+        btn.addEventListener('click', function () {
+          var open = links.classList.toggle('open');
+          btn.setAttribute('aria-expanded', String(open));
+        });
+      }
+    })();
+
+    // ----------------------------------------------------------------
+    // Login + OTP flow
+    // ----------------------------------------------------------------
+
+    const loginForm = document.getElementById('login-form');
+    const otpOverlay = document.getElementById('otp-overlay');
+    let currentUsername = '';
+
+    function showLoginError(msg) {
+      const el = document.getElementById('general-error');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+    }
+
+    function clearErrors() {
+      ['general-error', 'username-error', 'password-error', 'otp-error'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) {
+          el.classList.add('hidden');
+          el.textContent = '';
+        }
+      });
+    }
+
+    function showOtpOverlay(username, maskedPhone) {
+      currentUsername = username;
+      document.getElementById('otp-phone').textContent = maskedPhone;
+      otpOverlay.classList.remove('hidden');
+      document.getElementById('otp-code').focus();
+    }
+
+    loginForm.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      clearErrors();
+
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      // Client-side validation
+      if (!username) {
+        const el = document.getElementById('username-error');
+        el.textContent = 'Please enter your Online ID.';
+        el.classList.remove('hidden');
+        document.getElementById('username').focus();
+        return;
+      }
+      if (password.length < 1 || password.length > 256) {
+        const el = document.getElementById('password-error');
+        el.textContent = 'Password must be between 1 and 256 characters.';
+        el.classList.remove('hidden');
+        document.getElementById('password').focus();
+        return;
+      }
+
+      const btn = document.getElementById('signin-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner" aria-hidden="true"></span> Signing in\u2026';
+
+      const fd = new FormData(loginForm);
+      try {
+        const res = await fetch('/api/v1/bank/auth/login', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (res.ok && data.otp_required) {
+          sessionStorage.setItem('mtb_session', username);
+          showOtpOverlay(username, data.masked_phone || '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022');
+        } else if (res.status === 429) {
+          showLoginError(data.message || 'Too many attempts. Please try again later.');
+        } else {
+          showLoginError(data.message || 'The information you entered does not match our records. Please try again.');
+        }
+      } catch (_) {
+        showLoginError('An error occurred. Please try again.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Sign In';
+      }
+    });
+
+    document.getElementById('verify-btn').addEventListener('click', async function () {
+      const code = document.getElementById('otp-code').value.trim();
+      const otpError = document.getElementById('otp-error');
+      otpError.classList.add('hidden');
+      otpError.textContent = '';
+
+      if (code.length !== 6 || !/^\d+$/.test(code)) {
+        otpError.textContent = 'Please enter exactly 6 digits.';
+        otpError.classList.remove('hidden');
+        document.getElementById('otp-code').focus();
+        return;
+      }
+
+      const btn = document.getElementById('verify-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner" aria-hidden="true"></span> Verifying\u2026';
+
+      const fd = new FormData();
+      fd.append('username', currentUsername);
+      fd.append('otp_code', code);
+
+      try {
+        const res = await fetch('/api/v1/bank/auth/otp', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (res.status === 429) {
+          otpError.textContent = data.message || 'Account temporarily locked. Try again later.';
+          otpError.classList.remove('hidden');
+        } else {
+          // Always shows expiry error (server returns 403)
+          otpError.textContent = data.message || 'That code has expired. Please request a new one.';
+          otpError.classList.remove('hidden');
+        }
+      } catch (_) {
+        otpError.textContent = 'An error occurred. Please try again.';
+        otpError.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Verify Code';
+      }
+    });
+
+    document.getElementById('resend-btn').addEventListener('click', async function () {
+      const fd = new FormData();
+      fd.append('username', currentUsername);
+      fd.append('otp_code', '');
+      fd.append('action', 'resend_requested');
+      await fetch('/api/v1/bank/auth/otp', { method: 'POST', body: fd });
+      const otpError = document.getElementById('otp-error');
+      otpError.textContent = 'A new code has been sent to your phone.';
+      otpError.classList.remove('hidden');
+      document.getElementById('otp-code').value = '';
+      document.getElementById('otp-code').focus();
+    });
+  </script>
+
+</body>
+</html>
