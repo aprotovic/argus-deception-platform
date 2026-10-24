@@ -195,6 +195,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Real-Time Notification Bell & Dropdown */}
         <div style={{ position: 'relative' }}>
           <button
+            id="notification-bell-btn"
             onClick={() => setDrawerOpen(!drawerOpen)}
             title="Real-Time Threat Notifications"
             style={{

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useNotifications } from '../../context/NotificationContext';
 import {
   Bell,
@@ -36,10 +36,40 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({ isOpen, 
     setInvestigationEventId,
   } = useNotifications();
 
+  const drawerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (drawerRef.current && !drawerRef.current.contains(e.target as Node)) {
+        const bellBtn = document.getElementById('notification-bell-btn');
+        if (bellBtn && bellBtn.contains(e.target as Node)) {
+          return;
+        }
+        onClose();
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
     <div
+      ref={drawerRef}
       style={{
         position: 'absolute',
         top: '100%',
