@@ -386,3 +386,84 @@ async def test_admin_delete_user_and_callback(db_session, monkeypatch):
     # Verify again gone
     user_after_cb = (await db_session.execute(stmt)).scalar_one_or_none()
     assert user_after_cb is None
+
+
+@pytest.mark.asyncio
+async def test_button_driven_navigation_and_callbacks(db_session, monkeypatch):
+    """Verify persistent keyboard button clicks and inline command callbacks without typing slash commands."""
+    admin_id = "6288136999"
+    monkeypatch.setattr(settings, "TELEGRAM_ADMIN_ID", admin_id)
+
+    mock_client = AsyncMock()
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_client.post.return_value = mock_resp
+
+    # 1. Admin taps persistent reply keyboard button "🛡️ Status" (no slash command)
+    btn_status = {
+        "update_id": 601,
+        "message": {
+            "chat": {"id": admin_id},
+            "from": {"id": int(admin_id), "username": "admin"},
+            "text": "🛡️ Status",
+        },
+    }
+    await process_update(mock_client, btn_status)
+    assert any("ARGUS PLATFORM OPERATIONAL STATUS" in str(c) for c in mock_client.post.call_args_list)
+
+    # 2. Admin taps persistent reply keyboard button "📊 Stats"
+    mock_client.reset_mock()
+    btn_stats = {
+        "update_id": 602,
+        "message": {
+            "chat": {"id": admin_id},
+            "from": {"id": int(admin_id)},
+            "text": "📊 Stats",
+        },
+    }
+    await process_update(mock_client, btn_stats)
+    assert any("ARGUS THREAT TELEMETRY STATS" in str(c) for c in mock_client.post.call_args_list)
+
+    # 3. Admin taps inline button callback "cmd:events"
+    mock_client.reset_mock()
+    cb_events = {
+        "update_id": 603,
+        "callback_query": {
+            "id": "cb_ev_1",
+            "from": {"id": int(admin_id)},
+            "message": {"chat": {"id": int(admin_id)}},
+            "data": "cmd:events",
+        },
+    }
+    await process_update(mock_client, cb_events)
+    sent_events = str(mock_client.post.call_args_list)
+    assert ("RECENT TRAPPED INCIDENTS" in sent_events or "No security events" in sent_events)
+
+    # 4. Admin taps inline button callback "cmd:lockdown_prompt"
+    mock_client.reset_mock()
+    cb_lock_prompt = {
+        "update_id": 604,
+        "callback_query": {
+            "id": "cb_lock_1",
+            "from": {"id": int(admin_id)},
+            "message": {"chat": {"id": int(admin_id)}},
+            "data": "cmd:lockdown_prompt",
+        },
+    }
+    await process_update(mock_client, cb_lock_prompt)
+    assert any("CONFIRM EMERGENCY LOCKDOWN" in str(c) for c in mock_client.post.call_args_list)
+
+    # 5. Non-admin tapping admin-only callback is rejected
+    non_admin_id = "1122334455"
+    mock_client.reset_mock()
+    cb_unauth = {
+        "update_id": 605,
+        "callback_query": {
+            "id": "cb_unauth_1",
+            "from": {"id": int(non_admin_id)},
+            "message": {"chat": {"id": int(non_admin_id)}},
+            "data": "cmd:users",
+        },
+    }
+    await process_update(mock_client, cb_unauth)
+    assert any("Unauthorized" in str(c) for c in mock_client.post.call_args_list)
