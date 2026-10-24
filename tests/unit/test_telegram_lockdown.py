@@ -597,3 +597,99 @@ async def test_super_admin_and_secondary_admin_hierarchy(db_session, monkeypatch
     await db_session.refresh(sec_user)
     assert sec_user.role == "user"
     assert sec_user.promoted_by is None
+
+
+@pytest.mark.asyncio
+async def test_super_admin_quick_action_buttons_and_lists(db_session, monkeypatch):
+    """Verify Super Admin one-tap Quick Action buttons: Make Admin, Make Analyst, Revoke."""
+    super_admin_id = "6288136999"
+    analyst_id = "111222333"
+    secondary_admin_id = "444555666"
+    monkeypatch.setattr(settings, "TELEGRAM_ADMIN_ID", super_admin_id)
+
+    mock_client = AsyncMock()
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_client.post.return_value = mock_resp
+
+    # Register Super Admin
+    await process_update(mock_client, {
+        "update_id": 801,
+        "message": {"chat": {"id": super_admin_id}, "from": {"id": int(super_admin_id)}, "text": "/start"},
+    })
+
+    # Register Analyst (user role, approved)
+    await process_update(mock_client, {
+        "update_id": 802,
+        "message": {"chat": {"id": analyst_id}, "from": {"id": int(analyst_id), "username": "analyst_bob"}, "text": "/start"},
+    })
+    # Approve analyst
+    await process_update(mock_client, {
+        "update_id": 803,
+        "message": {"chat": {"id": super_admin_id}, "from": {"id": int(super_admin_id)}, "text": f"/approve {analyst_id}"},
+    })
+
+    # Register Secondary Admin
+    await process_update(mock_client, {
+        "update_id": 804,
+        "message": {"chat": {"id": secondary_admin_id}, "from": {"id": int(secondary_admin_id), "username": "admin_charlie"}, "text": "/start"},
+    })
+    await process_update(mock_client, {
+        "update_id": 805,
+        "message": {"chat": {"id": super_admin_id}, "from": {"id": int(super_admin_id)}, "text": f"/promote {secondary_admin_id}"},
+    })
+
+    # 1. Test Quick Promote callback
+    mock_client.reset_mock()
+    cb_promote = {
+        "update_id": 806,
+        "callback_query": {
+            "id": "cb_qp_1",
+            "from": {"id": int(super_admin_id)},
+            "message": {"chat": {"id": int(super_admin_id)}},
+            "data": "cmd:quick_promote",
+        },
+    }
+    await process_update(mock_client, cb_promote)
+    assert any("MAKE ADMINISTRATOR" in str(c) for c in mock_client.post.call_args_list)
+
+    # 2. Test Quick Demote callback
+    mock_client.reset_mock()
+    cb_demote = {
+        "update_id": 807,
+        "callback_query": {
+            "id": "cb_qd_1",
+            "from": {"id": int(super_admin_id)},
+            "message": {"chat": {"id": int(super_admin_id)}},
+            "data": "cmd:quick_demote",
+        },
+    }
+    await process_update(mock_client, cb_demote)
+    assert any("MAKE ANALYST" in str(c) for c in mock_client.post.call_args_list)
+
+    # 3. Test Quick Revoke callback
+    mock_client.reset_mock()
+    cb_revoke = {
+        "update_id": 808,
+        "callback_query": {
+            "id": "cb_qr_1",
+            "from": {"id": int(super_admin_id)},
+            "message": {"chat": {"id": int(super_admin_id)}},
+            "data": "cmd:quick_revoke",
+        },
+    }
+    await process_update(mock_client, cb_revoke)
+    assert any("REVOKE ACCESS" in str(c) for c in mock_client.post.call_args_list)
+
+    # 4. Test persistent keyboard text translation
+    mock_client.reset_mock()
+    btn_text_update = {
+        "update_id": 809,
+        "message": {
+            "chat": {"id": super_admin_id},
+            "from": {"id": int(super_admin_id)},
+            "text": "⭐ Make Admin",
+        },
+    }
+    await process_update(mock_client, btn_text_update)
+    assert any("MAKE ADMINISTRATOR" in str(c) for c in mock_client.post.call_args_list)

@@ -190,4 +190,65 @@ export const api = {
     document.body.removeChild(a);
   },
 
+
+  // User Profile & Management
+  async updateProfile(data: { username?: string; email?: string }): Promise<User> {
+    return request("/users/me", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  },
+
+  async changePassword(data: { current_password: string; new_password: string; confirm_password: string }): Promise<{ detail: string }> {
+    return request("/users/me/password", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  },
+
+  async listUsers(): Promise<User[]> {
+    return request("/users");
+  },
+
+  async createUser(data: { username: string; email: string; password: string; role: string }): Promise<User> {
+    return request("/users", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  async updateUserRole(userId: string, role: string): Promise<User> {
+    return request(`/users/${userId}/role`, {
+      method: "PUT",
+      body: JSON.stringify({ role }),
+    });
+  },
+
+  async updateUserStatus(userId: string, isActive: boolean): Promise<User> {
+    return request(`/users/${userId}/status`, {
+      method: "PUT",
+      body: JSON.stringify({ is_active: isActive }),
+    });
+  },
+
+  async deleteUser(userId: string): Promise<void> {
+    const token = getAuthToken();
+    const response = await fetch(`${API_BASE}/users/${userId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+    if (!response.ok) {
+      let errorMsg = "Failed to delete user";
+      try {
+        const errData = await response.json();
+        errorMsg = errData.detail || errorMsg;
+      } catch {
+        errorMsg = response.statusText || errorMsg;
+      }
+      throw new ApiError(response.status, errorMsg);
+    }
+  },
 };

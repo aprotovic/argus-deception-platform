@@ -22,6 +22,7 @@ interface NavbarProps {
   onToggleMobileNav?: () => void;
   isSidebarOpen?: boolean;
   onToggleSidebar?: () => void;
+  onNavigateProfile?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -29,6 +30,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onToggleMobileNav,
   isSidebarOpen = true,
   onToggleSidebar,
+  onNavigateProfile,
 }) => {
   const { user, logout } = useAuth();
   const { isConnected, liveEventCount } = useWebSocket();
@@ -299,6 +301,8 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* User Badge */}
         <div
           className="nav-user-badge"
+          onClick={onNavigateProfile}
+          title="Open Profile & Team settings"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -307,6 +311,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             borderRadius: '4px',
             background: user?.role === 'admin' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)',
             border: `1px solid ${user?.role === 'admin' ? 'rgba(239, 68, 68, 0.45)' : 'rgba(16, 185, 129, 0.45)'}`,
+            cursor: onNavigateProfile ? 'pointer' : 'default',
+            transition: 'all 0.2s',
           }}
         >
           <UserIcon size={14} color={user?.role === 'admin' ? '#f87171' : '#10b981'} />

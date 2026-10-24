@@ -12,6 +12,7 @@ import { EvidenceLockerView } from './components/evidence/EvidenceLockerView';
 import { AuditLogView } from './components/audit/AuditLogView';
 import { LoginView } from './components/auth/LoginView';
 import { ThreatMapView } from './components/intel/ThreatMapView';
+import { ProfilePage } from './components/profile/ProfilePage';
 import { CyberLoader } from './components/common/CyberLoader';
 
 const DashboardLayout: React.FC = () => {
@@ -38,6 +39,7 @@ const DashboardLayout: React.FC = () => {
         onToggleMobileNav={() => setIsMobileNavOpen((prev) => !prev)}
         isSidebarOpen={isSidebarOpen}
         onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
+        onNavigateProfile={() => setActiveTab('profile')}
       />
       <NotificationToasts />
       <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden', position: 'relative' }}>
@@ -68,6 +70,7 @@ const DashboardLayout: React.FC = () => {
             {activeTab === 'evidence' && <EvidenceLockerView />}
             {activeTab === 'audit' && <AuditLogView />}
             {activeTab === 'intel' && <ThreatMapView />}
+            {activeTab === 'profile' && <ProfilePage />}
           </div>
         </main>
       </div>

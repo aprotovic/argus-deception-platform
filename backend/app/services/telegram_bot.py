@@ -45,6 +45,7 @@ def _super_admin_reply_keyboard() -> Dict[str, Any]:
         "keyboard": [
             [{"text": "🛡️ Status"}, {"text": "📊 Stats"}, {"text": "🚨 Events"}],
             [{"text": "🔔 Toggle Alerts"}, {"text": "👥 Manage Users"}],
+            [{"text": "⭐ Make Admin"}, {"text": "🛡️ Make Analyst"}, {"text": "🔒 Revoke User"}],
             [{"text": "🚨 Emergency Lockdown"}, {"text": "🏠 Main Menu"}],
         ],
         "resize_keyboard": True,
@@ -90,6 +91,11 @@ def _super_admin_dashboard_inline() -> Dict[str, Any]:
             [
                 {"text": "🔔 Toggle Alerts", "callback_data": "cmd:alerts_toggle"},
                 {"text": "👥 User Directory", "callback_data": "cmd:users"},
+            ],
+            [
+                {"text": "⭐ Make Admin", "callback_data": "cmd:quick_promote"},
+                {"text": "🛡️ Make Analyst", "callback_data": "cmd:quick_demote"},
+                {"text": "🔒 Revoke User", "callback_data": "cmd:quick_revoke"},
             ],
             [
                 {"text": "🚨 Emergency Lockdown", "callback_data": "cmd:lockdown_prompt"},
@@ -824,6 +830,169 @@ async def handle_demote(
     )
 
 
+async def handle_quick_promote_list(
+    client: httpx.AsyncClient, chat_id: str, user_id: str, admin_id: str, message_id: Optional[int] = None
+) -> None:
+    """Super Admin only: Show one-tap buttons to promote users to Administrator."""
+    if user_id != admin_id:
+        await _send_msg(client, chat_id, "⛔ Unauthorized: Only the Super Administrator can promote users.")
+        return
+
+    async with AsyncSessionLocal() as session:
+        res = await session.execute(
+            select(TelegramUser)
+            .where(TelegramUser.telegram_id != admin_id, TelegramUser.role == "user")
+            .order_by(TelegramUser.registered_at)
+        )
+        candidates = res.scalars().all()
+
+    if not candidates:
+        text = (
+            "⭐ <b>MAKE ADMINISTRATOR — USER SELECTION</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            "ℹ️ <i>No registered analysts available to promote.</i>\n\n"
+            "Users must start the bot to register before they can be promoted."
+        )
+        markup = {
+            "inline_keyboard": [
+                [{"text": "👥 User Directory", "callback_data": "cmd:users"}, {"text": "🏠 Main Menu", "callback_data": "cmd:menu"}]
+            ]
+        }
+        await _edit_or_send_msg(client, chat_id, text, reply_markup=markup, message_id=message_id)
+        return
+
+    lines = [
+        "⭐ <b>MAKE ADMINISTRATOR — SELECT USER</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        "<i>Tap a user below to grant Administrator privileges immediately:</i>\n"
+    ]
+    buttons = []
+    for u in candidates:
+        name_str = f"@{u.username}" if u.username else f"ID {u.telegram_id}"
+        semoji = _status_emoji(u.status)
+        lines.append(f"{semoji} <b>{html.escape(name_str)}</b> (<code>{u.telegram_id}</code>)")
+        buttons.append({"text": f"⭐ Promote {name_str}", "callback_data": f"promote:{u.telegram_id}"})
+
+    rows = []
+    for i in range(0, len(buttons), 2):
+        rows.append(buttons[i:i+2])
+    rows.append([
+        {"text": "👥 User Directory", "callback_data": "cmd:users"},
+        {"text": "🏠 Main Menu", "callback_data": "cmd:menu"},
+    ])
+
+    await _edit_or_send_msg(client, chat_id, "\n".join(lines), reply_markup={"inline_keyboard": rows}, message_id=message_id)
+
+
+async def handle_quick_demote_list(
+    client: httpx.AsyncClient, chat_id: str, user_id: str, admin_id: str, message_id: Optional[int] = None
+) -> None:
+    """Super Admin only: Show one-tap buttons to demote an Administrator to Analyst."""
+    if user_id != admin_id:
+        await _send_msg(client, chat_id, "⛔ Unauthorized: Only the Super Administrator can demote Administrators.")
+        return
+
+    async with AsyncSessionLocal() as session:
+        res = await session.execute(
+            select(TelegramUser)
+            .where(TelegramUser.telegram_id != admin_id, TelegramUser.role == "admin")
+            .order_by(TelegramUser.registered_at)
+        )
+        admins = res.scalars().all()
+
+    if not admins:
+        text = (
+            "🛡️ <b>MAKE ANALYST — DEMOTE ADMINISTRATOR</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            "ℹ️ <i>No secondary Administrators currently appointed.</i>\n\n"
+            "Use ⭐ <b>Make Admin</b> to appoint administrators first."
+        )
+        markup = {
+            "inline_keyboard": [
+                [{"text": "⭐ Make Admin", "callback_data": "cmd:quick_promote"}, {"text": "🏠 Main Menu", "callback_data": "cmd:menu"}]
+            ]
+        }
+        await _edit_or_send_msg(client, chat_id, text, reply_markup=markup, message_id=message_id)
+        return
+
+    lines = [
+        "🛡️ <b>MAKE ANALYST — SELECT ADMIN TO DEMOTE</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        "<i>Tap an Administrator below to demote back to Analyst:</i>\n"
+    ]
+    buttons = []
+    for u in admins:
+        name_str = f"@{u.username}" if u.username else f"ID {u.telegram_id}"
+        lines.append(f"⭐ <b>{html.escape(name_str)}</b> (<code>{u.telegram_id}</code>)")
+        buttons.append({"text": f"🔻 Demote {name_str}", "callback_data": f"demote:{u.telegram_id}"})
+
+    rows = []
+    for i in range(0, len(buttons), 2):
+        rows.append(buttons[i:i+2])
+    rows.append([
+        {"text": "👥 User Directory", "callback_data": "cmd:users"},
+        {"text": "🏠 Main Menu", "callback_data": "cmd:menu"},
+    ])
+
+    await _edit_or_send_msg(client, chat_id, "\n".join(lines), reply_markup={"inline_keyboard": rows}, message_id=message_id)
+
+
+async def handle_quick_revoke_list(
+    client: httpx.AsyncClient, chat_id: str, user_id: str, admin_id: str, message_id: Optional[int] = None
+) -> None:
+    """Admin & Super Admin: Show one-tap buttons to revoke user access."""
+    is_super = user_id == admin_id
+    async with AsyncSessionLocal() as session:
+        caller_res = await session.execute(select(TelegramUser).where(TelegramUser.telegram_id == user_id))
+        caller = caller_res.scalar_one_or_none()
+        is_admin = is_super or (caller is not None and caller.role == "admin" and caller.status == "approved")
+        if not is_admin:
+            await _send_msg(client, chat_id, "⛔ Unauthorized: Administrator privilege required.")
+            return
+
+        query = select(TelegramUser).where(TelegramUser.telegram_id != admin_id, TelegramUser.status == "approved")
+        if not is_super:
+            query = query.where(TelegramUser.role != "admin")
+        res = await session.execute(query.order_by(TelegramUser.registered_at))
+        active_users = res.scalars().all()
+
+    if not active_users:
+        text = (
+            "🔒 <b>REVOKE ACCESS — USER SELECTION</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            "ℹ️ <i>No active approved users to revoke.</i>"
+        )
+        markup = {
+            "inline_keyboard": [
+                [{"text": "👥 User Directory", "callback_data": "cmd:users"}, {"text": "🏠 Main Menu", "callback_data": "cmd:menu"}]
+            ]
+        }
+        await _edit_or_send_msg(client, chat_id, text, reply_markup=markup, message_id=message_id)
+        return
+
+    lines = [
+        "🔒 <b>REVOKE ACCESS — SELECT USER</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        "<i>Tap a user below to immediately revoke platform access:</i>\n"
+    ]
+    buttons = []
+    for u in active_users:
+        name_str = f"@{u.username}" if u.username else f"ID {u.telegram_id}"
+        role_label = "Admin" if u.role == "admin" else "Analyst"
+        lines.append(f"• <b>{html.escape(name_str)}</b> (<code>{u.telegram_id}</code>) — <i>{role_label}</i>")
+        buttons.append({"text": f"🔒 Revoke {name_str}", "callback_data": f"revoke:{u.telegram_id}"})
+
+    rows = []
+    for i in range(0, len(buttons), 2):
+        rows.append(buttons[i:i+2])
+    rows.append([
+        {"text": "👥 User Directory", "callback_data": "cmd:users"},
+        {"text": "🏠 Main Menu", "callback_data": "cmd:menu"},
+    ])
+
+    await _edit_or_send_msg(client, chat_id, "\n".join(lines), reply_markup={"inline_keyboard": rows}, message_id=message_id)
+
+
 async def handle_lockdown_prompt(
     client: httpx.AsyncClient, chat_id: str, user_id: str, admin_id: str, message_id: Optional[int] = None
 ) -> None:
@@ -1348,6 +1517,13 @@ BUTTON_COMMAND_MAP: Dict[str, str] = {
     "🚨 emergency lockdown": "/lockdown_prompt",
     "🔒 lockdown": "/lockdown_prompt",
     "lockdown": "/lockdown_prompt",
+    "⭐ make admin": "/quick_promote",
+    "make admin": "/quick_promote",
+    "🛡️ make analyst": "/quick_demote",
+    "make analyst": "/quick_demote",
+    "🔒 revoke user": "/quick_revoke",
+    "revoke user": "/quick_revoke",
+    "revoke": "/quick_revoke",
     "🏠 main menu": "/start",
     "main menu": "/start",
     "menu": "/start",
@@ -1468,6 +1644,27 @@ async def process_update(client: httpx.AsyncClient, update: Dict[str, Any]) -> N
             await _answer_callback(client, cb_id)
             await handle_users(client, chat_id, cb_user_id, admin_id, message_id=msg_id)
             return
+        elif data == "cmd:quick_promote":
+            if not is_super:
+                await _answer_callback(client, cb_id, "⛔ Super Administrator only", alert=True)
+                return
+            await _answer_callback(client, cb_id)
+            await handle_quick_promote_list(client, chat_id, cb_user_id, admin_id, message_id=msg_id)
+            return
+        elif data == "cmd:quick_demote":
+            if not is_super:
+                await _answer_callback(client, cb_id, "⛔ Super Administrator only", alert=True)
+                return
+            await _answer_callback(client, cb_id)
+            await handle_quick_demote_list(client, chat_id, cb_user_id, admin_id, message_id=msg_id)
+            return
+        elif data == "cmd:quick_revoke":
+            if not is_admin:
+                await _answer_callback(client, cb_id, "⛔ Unauthorized: Admin only", alert=True)
+                return
+            await _answer_callback(client, cb_id)
+            await handle_quick_revoke_list(client, chat_id, cb_user_id, admin_id, message_id=msg_id)
+            return
         elif data == "cmd:lockdown_prompt":
             if not is_super:
                 await _answer_callback(client, cb_id, "⛔ Super Administrator only", alert=True)
@@ -1555,6 +1752,12 @@ async def process_update(client: httpx.AsyncClient, update: Dict[str, Any]) -> N
         await handle_delete(client, chat_id, user_id, admin_id, arg)
     elif cmd == "/lockdown":
         await handle_lockdown(client, chat_id, user_id, admin_id)
+    elif cmd in ("/quick_promote", "/make_admin"):
+        await handle_quick_promote_list(client, chat_id, user_id, admin_id)
+    elif cmd in ("/quick_demote", "/make_analyst"):
+        await handle_quick_demote_list(client, chat_id, user_id, admin_id)
+    elif cmd in ("/quick_revoke", "/revoke_menu"):
+        await handle_quick_revoke_list(client, chat_id, user_id, admin_id)
     elif cmd == "/lockdown_prompt":
         await handle_lockdown_prompt(client, chat_id, user_id, admin_id)
     elif cmd in ("/help", "/menu"):

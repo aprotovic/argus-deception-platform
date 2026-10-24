@@ -1,7 +1,7 @@
 import React from 'react';
-import { BarChart3, Activity, Lock, FileText, Globe, X, Eye } from 'lucide-react';
+import { BarChart3, Activity, Lock, FileText, Globe, X, Eye, User as UserIcon } from 'lucide-react';
 
-export type NavTab = 'overview' | 'stream' | 'evidence' | 'audit' | 'intel';
+export type NavTab = 'overview' | 'stream' | 'evidence' | 'audit' | 'intel' | 'profile';
 
 interface SidebarProps {
   activeTab: NavTab;
@@ -24,6 +24,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'evidence', label: 'Evidence Locker', icon: <Lock size={18} /> },
     { id: 'audit', label: 'Audit Trail', icon: <FileText size={18} /> },
     { id: 'intel', label: 'Threat Intel', icon: <Globe size={18} /> },
+    { id: 'profile', label: 'Profile & Team', icon: <UserIcon size={18} /> },
   ];
 
   return (
