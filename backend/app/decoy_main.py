@@ -94,8 +94,8 @@ from fastapi import APIRouter
 _decoy_v1 = APIRouter(prefix="/api/v1")
 _decoy_v1.include_router(decoy_router)
 _decoy_v1.include_router(decoy_personnel_router)
-_decoy_v1.include_router(bank_router.router)
 app.include_router(_decoy_v1)
+app.include_router(bank_router.router)
 
 # Unified 404/405 handler — every unmatched path returns the same Apache-style
 # HTML 404 body, regardless of whether it's an admin path, /docs, /openapi.json,

@@ -222,7 +222,7 @@ async def bank_login_page() -> HTMLResponse:
 # ----------------------------------------------------------------------------
 
 
-@router.post("/bank/auth/login")
+@router.post("/api/v1/bank/auth/login")
 async def bank_login(
     request: Request,
     username: str = Form(default=""),
@@ -396,7 +396,7 @@ async def bank_login(
 # ----------------------------------------------------------------------------
 
 
-@router.post("/bank/auth/otp")
+@router.post("/api/v1/bank/auth/otp")
 async def bank_otp(
     request: Request,
     username: str = Form(default=""),
@@ -649,7 +649,7 @@ async def bank_recover_page() -> HTMLResponse:
 # ----------------------------------------------------------------------------
 
 
-@router.post("/bank/auth/recover")
+@router.post("/api/v1/bank/auth/recover")
 async def bank_recover(
     request: Request,
     identifier: str = Form(default=""),
