@@ -9,7 +9,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import verify_internal_ingestion_token
+import asyncio
 from app.config import settings
+from app.core.alerts import send_telegram_alert
 from app.core.websocket_manager import ws_manager
 from app.database import get_db
 from app.models.captured_file import CapturedFile
@@ -78,6 +80,17 @@ async def ingest_internal_event(
     await db.commit()
 
     await ws_manager.broadcast_event(_build_event_summary(sec_event))
+
+    # Fire Telegram alert for high/critical events (non-blocking)
+    if event_in.severity in ("critical", "high") and not event_in.is_test_event:
+        summary = str(event_in.metadata_payload.get("summary", event_in.request_path))[:200]
+        asyncio.create_task(send_telegram_alert(
+            event_type=event_in.event_type,
+            severity=event_in.severity,
+            source_ip=event_in.source_ip,
+            summary=summary,
+            event_id=str(event_id),
+        ))
 
     return {"status": "ingested", "event_id": str(event_id)}
 

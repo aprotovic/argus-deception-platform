@@ -30,6 +30,13 @@ class Settings(BaseSettings):
     # Ingestion Token for mutual Decoy-to-Backend authentication
     INTERNAL_INGESTION_TOKEN: str = "argus_internal_decoy_token_secret_replace_in_prod"
 
+    # Telegram Alert Notifications (optional)
+    TELEGRAM_BOT_TOKEN: str = ""  # Set via TELEGRAM_BOT_TOKEN env var
+    TELEGRAM_CHAT_ID: str = ""    # Set via TELEGRAM_CHAT_ID env var
+    # Telegram Alert Notifications
+    TELEGRAM_BOT_TOKEN: str = ""   # Set via TELEGRAM_BOT_TOKEN env var
+    TELEGRAM_CHAT_ID: str = ""     # Set via TELEGRAM_CHAT_ID env var
+
     # Database Settings
     DATABASE_URL: str = "postgresql+asyncpg://argus_user:argus_secure_password@localhost:5432/argus_telemetry"
     

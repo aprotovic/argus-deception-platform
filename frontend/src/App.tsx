@@ -11,6 +11,7 @@ import { LiveStreamView } from './components/stream/LiveStreamView';
 import { EvidenceLockerView } from './components/evidence/EvidenceLockerView';
 import { AuditLogView } from './components/audit/AuditLogView';
 import { LoginView } from './components/auth/LoginView';
+import { ThreatMapView } from './components/intel/ThreatMapView';
 import { CyberLoader } from './components/common/CyberLoader';
 
 const DashboardLayout: React.FC = () => {
@@ -62,6 +63,7 @@ const DashboardLayout: React.FC = () => {
             {activeTab === 'stream' && <LiveStreamView />}
             {activeTab === 'evidence' && <EvidenceLockerView />}
             {activeTab === 'audit' && <AuditLogView />}
+            {activeTab === 'intel' && <ThreatMapView />}
           </div>
         </main>
       </div>

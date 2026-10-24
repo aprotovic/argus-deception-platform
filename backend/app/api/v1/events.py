@@ -11,6 +11,7 @@ from app.api.deps import get_current_user
 from app.database import get_db
 from app.models.security_event import SecurityEvent
 from app.models.user import User
+from app.core.mitre import get_mitre
 from app.schemas.event import (
     EventListResponse,
     SecurityEventDetailResponse,
@@ -97,8 +98,13 @@ async def list_security_events(
 
     pages = (total + limit - 1) // limit if total > 0 else 1
 
+    def _enrich(ev):
+        r = SecurityEventResponse.model_validate(ev)
+        r.mitre_attack = get_mitre(ev.event_type)
+        return r
+
     return EventListResponse(
-        items=[SecurityEventResponse.model_validate(e) for e in events],
+        items=[_enrich(e) for e in events],
         total=total,
         page=page,
         limit=limit,
@@ -148,8 +154,13 @@ async def get_security_event_detail(
     corr_results = await db.execute(corr_stmt)
     correlated = corr_results.scalars().all()
 
-    base_response = SecurityEventResponse.model_validate(event)
+    def _enrich(ev):
+        r = SecurityEventResponse.model_validate(ev)
+        r.mitre_attack = get_mitre(ev.event_type)
+        return r
+
+    base_response = _enrich(event)
     return SecurityEventDetailResponse(
         **base_response.model_dump(),
-        correlated_events=[SecurityEventResponse.model_validate(c) for c in correlated],
+        correlated_events=[_enrich(c) for c in correlated],
     )
