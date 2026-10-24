@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { WebSocketProvider } from './context/WebSocketContext';
 import { NotificationProvider, useNotifications } from './context/NotificationContext';
@@ -15,15 +15,46 @@ import { RefreshCw } from 'lucide-react';
 
 const DashboardLayout: React.FC = () => {
   const [activeTab, setActiveTab] = useState<NavTab>('overview');
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState<boolean>(false);
   const { investigationEventId, setInvestigationEventId } = useNotifications();
 
+  // Close mobile drawer on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isMobileNavOpen) {
+        setIsMobileNavOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMobileNavOpen]);
+
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-      <Navbar />
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
+      <Navbar
+        isMobileNavOpen={isMobileNavOpen}
+        onToggleMobileNav={() => setIsMobileNavOpen((prev) => !prev)}
+      />
       <NotificationToasts />
-      <div style={{ display: 'flex', flex: 1 }}>
-        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
-        <main style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-primary)' }}>
+      <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden', position: 'relative' }}>
+        <Sidebar
+          activeTab={activeTab}
+          onTabChange={(tab) => {
+            setActiveTab(tab);
+            setIsMobileNavOpen(false);
+          }}
+          isOpen={isMobileNavOpen}
+          onClose={() => setIsMobileNavOpen(false)}
+        />
+        {/* Mobile Backdrop Overlay */}
+        {isMobileNavOpen && (
+          <div
+            className="mobile-nav-backdrop"
+            onClick={() => setIsMobileNavOpen(false)}
+            aria-label="Close navigation backdrop"
+          />
+        )}
+        <main style={{ flex: 1, minWidth: 0, height: '100%', overflowY: 'auto', background: 'var(--bg-primary)' }}>
           {activeTab === 'overview' && (
             <OverviewView onNavigateToStream={() => setActiveTab('stream')} />
           )}
@@ -55,7 +86,7 @@ const DashboardContent: React.FC = () => {
         alignItems: 'center',
         justifyContent: 'center',
         background: 'var(--bg-primary)',
-        color: '#00b4d8',
+        color: '#10b981',
         fontFamily: "'Chakra Petch', sans-serif",
       }}>
         <RefreshCw size={24} className="animate-spin" />

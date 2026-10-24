@@ -33,7 +33,7 @@ export const AuditLogView: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <FileText size={22} color="#00b4d8" />
+            <FileText size={22} color="#10b981" />
             <h1 style={{
               fontFamily: "'Chakra Petch', sans-serif",
               fontSize: '1.5rem',
@@ -130,20 +130,19 @@ export const AuditLogView: React.FC = () => {
                         background: log.action.includes('FAIL')
                           ? 'rgba(239, 68, 68, 0.15)'
                           : log.action.includes('DOWNLOAD')
-                          ? 'rgba(245, 158, 11, 0.15)'
-                          : 'rgba(0, 180, 216, 0.15)',
+                            ? 'rgba(245, 158, 11, 0.15)'
+                            : 'rgba(16, 185, 129, 0.15)',
                         color: log.action.includes('FAIL')
                           ? '#f87171'
                           : log.action.includes('DOWNLOAD')
-                          ? '#fbbf24'
-                          : '#38bdf8',
-                        border: `1px solid ${
-                          log.action.includes('FAIL')
+                            ? '#fbbf24'
+                            : '#10b981',
+                        border: `1px solid ${log.action.includes('FAIL')
                             ? 'rgba(239, 68, 68, 0.3)'
                             : log.action.includes('DOWNLOAD')
-                            ? 'rgba(245, 158, 11, 0.3)'
-                            : 'rgba(0, 180, 216, 0.3)'
-                        }`,
+                              ? 'rgba(245, 158, 11, 0.3)'
+                              : 'rgba(16, 185, 129, 0.3)'
+                          }`,
                       }}>
                         {log.action}
                       </span>

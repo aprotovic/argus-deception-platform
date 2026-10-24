@@ -68,7 +68,7 @@ export const EvidenceLockerView: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Lock size={22} color="#00b4d8" />
+            <Lock size={22} color="#10b981" />
             <h1 style={{
               fontFamily: "'Chakra Petch', sans-serif",
               fontSize: '1.5rem',
@@ -158,7 +158,7 @@ export const EvidenceLockerView: React.FC = () => {
                     {/* Filename */}
                     <td style={{ padding: '12px 16px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <FileCode size={16} color="#00b4d8" />
+                        <FileCode size={16} color="#10b981" />
                         <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, color: '#ffffff' }}>
                           {file.original_filename_sanitized}
                         </span>
@@ -204,7 +204,7 @@ export const EvidenceLockerView: React.FC = () => {
                     </td>
 
                     {/* Detected MIME */}
-                    <td style={{ padding: '12px 16px', fontFamily: "'JetBrains Mono', monospace", color: '#38bdf8' }}>
+                    <td style={{ padding: '12px 16px', fontFamily: "'JetBrains Mono', monospace", color: '#10b981' }}>
                       {file.detected_mime_type}
                     </td>
 
