@@ -261,6 +261,38 @@ def test_garbage_returns_1064():
     assert code == 1064
 
 
+# ── admin statements return OK (item 3) ───────────────────────────────────────
+@pytest.mark.parametrize("stmt", [
+    "CREATE USER 'zz'@'%' IDENTIFIED BY '[REDACTED]'",
+    "DROP USER 'zz'@'%'",
+    "ALTER USER 'root'@'%' IDENTIFIED BY '[REDACTED]'",
+    "GRANT ALL ON *.* TO 'zz'@'%'",
+    "REVOKE ALL ON *.* FROM 'zz'@'%'",
+    "FLUSH PRIVILEGES",
+    "SET PASSWORD FOR 'x'@'%' = '[REDACTED]'",
+    "CREATE DATABASE nexis_ops",
+    "DROP DATABASE nexis_ops",
+])
+def test_admin_stmt_returns_ok(stmt):
+    pkts = dispatch_query(stmt, _ctx(), seq=1, version_string=VERSION)
+    assert len(pkts) == 1
+    payload, _ = _unframe(pkts[0])
+    assert payload[0] == 0x00, f"Expected OK for: {stmt!r}, got 0x{payload[0]:02x}"
+
+
+def test_create_user_password_redacted_before_dispatch():
+    """After sanitize_query_text, IDENTIFIED BY literal is redacted in stored text."""
+    from app.decoys.mysql.classifier import sanitize_query_text
+    raw = "CREATE USER 'zz'@'%' IDENTIFIED BY 'LeakCheck999'"
+    clean, _ = sanitize_query_text(raw)
+    assert "LeakCheck999" not in clean
+    assert "IDENTIFIED BY '[REDACTED]'" in clean
+    # dispatch_query sees the sanitized text; result is still OK
+    pkts = dispatch_query(clean, _ctx(), seq=1, version_string=VERSION)
+    payload, _ = _unframe(pkts[0])
+    assert payload[0] == 0x00
+
+
 def test_1064_includes_excerpt():
     q = "BLARG WHOOPS SELECT"
     pkts = dispatch_query(q, _ctx(), seq=1, version_string=VERSION)

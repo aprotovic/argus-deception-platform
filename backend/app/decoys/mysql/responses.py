@@ -26,6 +26,10 @@ Handled queries (all case-insensitive, trimmed):
   USE <db>                        → OK, updates ctx.database
   COM_INIT_DB payload             → handled in server.py
 
+Admin DDL/DCL (nothing executed, OK returned, event logged as high):
+  CREATE USER, DROP USER, ALTER USER, GRANT, REVOKE, FLUSH PRIVILEGES,
+  SET PASSWORD, CREATE DATABASE, DROP DATABASE
+
 Error responses:
   mysql.user access               → ERR 1142 (command denied)
   unknown table                   → ERR 1146
@@ -272,6 +276,17 @@ def dispatch_query(
         if tbl not in ("personnel", "access_log", "departments", "dual"):
             db = ctx.database or "nexis_hr"
             return _unknown_table_err(tbl, db, seq)
+
+    # ── Admin DDL / DCL → OK (nothing executed, event still logged as high) ────
+    # CREATE USER, DROP USER, ALTER USER, GRANT, REVOKE, FLUSH PRIVILEGES,
+    # SET PASSWORD, CREATE DATABASE, DROP DATABASE → OK (affected rows 0)
+    if re.match(
+        r"^(create\s+user|drop\s+user|alter\s+user|grant\b|revoke\b|"
+        r"flush\s+privileges|set\s+password|create\s+(?:database|schema)|"
+        r"drop\s+(?:database|schema))\b",
+        n,
+    ):
+        return _ok(seq)
 
     # ── Fallthrough: ERR 1064 ──────────────────────────────────────────────────
     return _syntax_err(query_text, seq)
