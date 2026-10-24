@@ -324,7 +324,7 @@ def dispatch_query(
         return _information_schema_tables(seq)
 
     # ── SELECT COUNT(*) FROM <table> ──────────────────────────────────────────
-    m_count = re.match(r"^select\s+count\s*\(\s*\*\s*\)\s+from\s+(`?\w+`?\.)?`?(\w+)`?", n)
+    m_count = re.match(r"^select\s+count\s*\(\s*\*\s*\)\s*from\s+(`?\w+`?\.)?`?(\w+)`?", n)
     if m_count:
         db_prefix = (m_count.group(1) or "").strip("`.").lower()
         tbl = m_count.group(2).lower()
@@ -344,12 +344,14 @@ def dispatch_query(
     # ── Generic SELECT ... FROM ... ────────────────────────────────────────────
     # Handles: SELECT */col-list FROM [db.]table [WHERE col='val'] [LIMIT n]
     m_sel = re.match(
-        r"^select\s+(.*?)\s+from\s+(`?\w+`?(?:\s*\.\s*`?\w+`?)?)((?:\s+where\s+.*?)?)"
+        r"^select\s*(.*?)\s*from\s+(`?\w+`?(?:\s*\.\s*`?\w+`?)?)((?:\s+where\s+.*?)?)"
         r"((?:\s+limit\s+\d+)?)\s*$",
         n,
     )
     if m_sel:
         select_list = m_sel.group(1).strip()
+        if not select_list:
+            select_list = "*"
         tbl_expr    = m_sel.group(2).replace(" ", "").strip()
         where_part  = m_sel.group(3).strip()
         limit_part  = m_sel.group(4).strip()
