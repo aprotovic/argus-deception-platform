@@ -62,14 +62,14 @@ ADMIN_PATHS = [
 @pytest.mark.asyncio
 @pytest.mark.parametrize("path", ADMIN_PATHS)
 async def test_admin_paths_return_404_on_decoy(decoy_client, path):
-    """Every admin API path must return 404 on the decoy app (R1.1)."""
+    """Every admin API path must return 404 on the decoy app."""
     response = await decoy_client.get(path)
     assert response.status_code == 404, f"{path} returned {response.status_code}"
 
 
 @pytest.mark.asyncio
 async def test_docs_return_404_on_decoy(decoy_client):
-    """/docs, /redoc, /openapi.json must return 404 on the decoy app (R1.1)."""
+    """/docs, /redoc, /openapi.json must return 404 on the decoy app."""
     for path in ["/docs", "/redoc", "/openapi.json"]:
         response = await decoy_client.get(path)
         assert response.status_code == 404, f"{path} returned {response.status_code}"

@@ -1,6 +1,6 @@
 """Root-level scanner traps, honeytoken breadcrumbs, and decoy portal routes.
 
-Extracted from app/main.py (task 2 of the decoy-split spec) so that
+Extracted from app/main.py so that
 app/decoy_main.py can include this router without pulling in the full
 admin API or the database engine.
 

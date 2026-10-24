@@ -1,6 +1,5 @@
 """MySQL native-password authentication helpers.
 
-Task 2 of db-decoy spec (R2.2, R3.1).
 
 mysql_native_password scramble:
   expected = SHA1(password) XOR SHA1(salt + SHA1(SHA1(password)))

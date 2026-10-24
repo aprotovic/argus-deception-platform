@@ -83,12 +83,12 @@ async def ingest_internal_event(
 
 
 # ---------------------------------------------------------------------------
-# Batch ingest endpoint (task 5, R3.2–R3.5)
+# Batch ingest endpoint
 # ---------------------------------------------------------------------------
 async def _ensure_default_decoy(db: AsyncSession) -> uuid.UUID:
     """Ensure the default DecoyService exists. Return its fixed id.
 
-    Created on first ingest if missing (R3.5). Committed in its own
+    Created on first ingest if missing. Committed in its own
     transaction so it survives even if the batch commit later fails.
     """
     default_id = uuid.UUID(settings.DEFAULT_DECOY_ID)
@@ -189,10 +189,10 @@ async def ingest_batch(
     """
     Batch ingest security events from an isolated decoy container.
 
-    Idempotent per event id (R3.3): a repeated event is ignored without error.
+    Idempotent per event id: a repeated event is ignored without error.
     Duplicate events skip their child records and are not broadcast.
-    Token checked via hmac.compare_digest (R3.2).
-    Max 100 events per batch. Default DecoyService created on first ingest (R3.5).
+    Token checked via hmac.compare_digest.
+    Max 100 events per batch. Default DecoyService created on first ingest.
     """
     # 1. Ensure default decoy exists (own transaction)
     default_decoy_id = await _ensure_default_decoy(db)

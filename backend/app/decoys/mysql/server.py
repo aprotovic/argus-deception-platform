@@ -1,6 +1,5 @@
 """MySQL decoy server — asyncio TCP server with limits and timeouts.
 
-Tasks 3 + 4 + query-handling milestone of db-decoy spec (R1, R3.1, R4).
 
 Entry point: python -m app.decoys.mysql.server
 Starts a ForwardingEventSink (BACKEND_INGEST_URL set) or JSONL stub sink.

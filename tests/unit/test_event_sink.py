@@ -1,4 +1,4 @@
-"""Unit tests for the event sink abstraction (task 3, decoy-split spec).
+"""Unit tests for the event sink abstraction .
 
 Tests cover:
 - DbEventSink persists objects and broadcasts summary

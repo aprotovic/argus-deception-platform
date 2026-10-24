@@ -73,7 +73,7 @@ services:
       QUARANTINE_STORAGE_DIR: /var/lib/argus/quarantine
       MAX_UPLOAD_SIZE_BYTES: 10485760
       DECOY_SPOOL_DIR: /var/lib/argus/decoy_spool
-      # NO DATABASE_URL — decoy does not connect to a database (R2.1)
+      # NO DATABASE_URL — decoy does not connect to a database
     security_opt:
       - no-new-privileges:true
     tmpfs:
@@ -89,7 +89,7 @@ services:
       - decoy_spool:/var/lib/argus/decoy_spool
     networks:
       - decoy-net
-      - backend-internal   # can reach backend, NOT db-net (R2.2)
+      - backend-internal   # can reach backend, NOT db-net 
     depends_on:
       - argus-backend
     deploy:

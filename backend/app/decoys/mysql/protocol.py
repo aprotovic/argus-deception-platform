@@ -1,6 +1,5 @@
 """MySQL protocol packet helpers — pure functions, no sockets.
 
-Task 1 of db-decoy spec (R1).
 
 All functions work on bytes/bytearray. No imports from the app —
 the protocol layer is self-contained and testable in isolation.
@@ -11,7 +10,7 @@ from __future__ import annotations
 import struct
 from typing import Optional, Tuple
 
-# Cap: any packet payload larger than this is rejected (R4.1).
+# Cap: any packet payload larger than this is rejected.
 MAX_PACKET_BYTES = 1_048_576  # 1 MB
 
 # MySQL capability flags we advertise (never SSL, compression, LOCAL INFILE).

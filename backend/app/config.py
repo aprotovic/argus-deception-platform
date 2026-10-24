@@ -56,13 +56,13 @@ class Settings(BaseSettings):
     ADMIN_EMAIL: str = "admin@argus-defense.local"
     ADMIN_PASSWORD: str = "ArgusAdmin2026!ChangeMe"
 
-    # Decoy Split — Event Forwarding (R3, R4)
+    # Decoy Split — Event Forwarding
     BACKEND_INGEST_URL: str = "http://argus-backend:8000"
     DECOY_SPOOL_DIR: str = "/tmp/argus_decoy_spool"
     DECOY_SPOOL_MAX_BYTES: int = 100 * 1024 * 1024  # 100 MB
     DEFAULT_DECOY_ID: str = "00000000-0000-0000-0000-000000000001"
 
-    # MySQL Protocol Decoy (db-decoy spec)
+    # MySQL Protocol Decoy
     MYSQL_DECOY_PORT: int = 3306
     MYSQL_DECOY_VERSION_STRING: str = "8.0.36-0ubuntu0.22.04.1"
     MYSQL_DECOY_BAIT_CREDENTIALS: str = "[]"   # JSON: [{"username":"root","password":"..."}]

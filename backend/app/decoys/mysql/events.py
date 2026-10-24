@@ -1,6 +1,5 @@
 """MySQL decoy event builders.
 
-Task 4 of db-decoy spec (R3.1, R3.2).
 
 Builds SecurityEvent (+optional LoginAttempt) objects for the two event
 types emitted by the MySQL decoy:

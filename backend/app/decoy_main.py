@@ -1,6 +1,5 @@
 """ARGUS Decoy-only FastAPI application.
 
-Task 7 of the decoy-split spec (R1, R2).
 
 This app is used by the decoy container only. It:
 - Mounts ONLY root_traps_router + decoy_router + decoy_personnel_router

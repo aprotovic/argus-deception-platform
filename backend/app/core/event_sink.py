@@ -1,6 +1,5 @@
 """Event sink abstraction for decoy security event persistence.
 
-Tasks 3 and 6 of the decoy-split spec (R5.1, R3.1, R4).
 
 EventSink              — abstract interface: async persist(objects)
 DbEventSink             — default: opens AsyncSessionLocal, adds, commits.
@@ -336,7 +335,7 @@ class ForwardingEventSink(EventSink):
                 if success:
                     batch.clear()
                     backoff = 1.0
-                    # If spool has events, try replaying now that backend is up (R4.1)
+                    # If spool has events, try replaying now that backend is up
                     if self._spool_file.exists():
                         await self._replay_spool(httpx)
                 else:

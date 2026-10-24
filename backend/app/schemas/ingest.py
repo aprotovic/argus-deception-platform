@@ -1,6 +1,5 @@
 """Pydantic models for batch ingestion from isolated decoy containers.
 
-Task 5 of the decoy-split spec (R3.2–R3.5).
 
 Every string field has max_length matching the corresponding DB column
 so oversized payloads are rejected with 422 before touching the database.
