@@ -363,14 +363,19 @@ body {
    Responsive Small Screen / Mobile Layout & Navigation
    ========================================================= */
 
+/* Shield/hamburger button — always clickable on all screen sizes */
 .mobile-nav-toggle {
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 6px;
   padding: 6px;
-  cursor: default;
+  cursor: pointer;
   transition: all 0.2s ease;
+}
+
+.mobile-nav-toggle:hover {
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.4);
 }
 
 .sidebar-close-btn {
@@ -395,6 +400,19 @@ body {
     flex-shrink: 0 !important;
     overflow-y: auto !important;
     z-index: 30;
+  }
+
+  /* Collapsed state: zero width, invisible, does not affect layout */
+  .sidebar-aside.desktop-collapsed {
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    padding: 0 !important;
+    border-right: none !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
   }
 }
 

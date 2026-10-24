@@ -20,11 +20,15 @@ import {
 interface NavbarProps {
   isMobileNavOpen?: boolean;
   onToggleMobileNav?: () => void;
+  isSidebarOpen?: boolean;
+  onToggleSidebar?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   isMobileNavOpen = false,
   onToggleMobileNav,
+  isSidebarOpen = true,
+  onToggleSidebar,
 }) => {
   const { user, logout } = useAuth();
   const { isConnected, liveEventCount } = useWebSocket();
@@ -68,21 +72,41 @@ export const Navbar: React.FC<NavbarProps> = ({
           alignItems: 'center',
           gap: '10px',
         }}>
+          {/* Shield Button: Toggles Sidebar (Desktop & Mobile) */}
           <button
-            onClick={onToggleMobileNav}
-            aria-label={isMobileNavOpen ? 'Close navigation drawer' : 'Open navigation drawer'}
-            className="mobile-nav-toggle"
+            onClick={() => {
+              if (window.innerWidth <= 1024) {
+                if (onToggleMobileNav) onToggleMobileNav();
+              } else {
+                if (onToggleSidebar) onToggleSidebar();
+              }
+            }}
+            aria-label={
+              window.innerWidth <= 1024
+                ? (isMobileNavOpen ? 'Close navigation drawer' : 'Open navigation drawer')
+                : (isSidebarOpen ? 'Close navigation sidebar' : 'Open navigation sidebar')
+            }
+            title={
+              window.innerWidth <= 1024
+                ? (isMobileNavOpen ? 'Close navigation' : 'Open navigation')
+                : (isSidebarOpen ? 'Close sidebar (Click shield)' : 'Open sidebar (Click shield)')
+            }
+            className="mobile-nav-toggle sidebar-shield-toggle"
             style={{
-              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2))',
-              border: '1px solid var(--border-accent)',
-              boxShadow: isMobileNavOpen ? '0 0 10px rgba(16, 185, 129, 0.35)' : 'none',
+              background: isSidebarOpen
+                ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.22), rgba(5, 150, 105, 0.22))'
+                : 'rgba(255, 255, 255, 0.05)',
+              border: isSidebarOpen ? '1px solid var(--border-accent)' : '1px solid rgba(255, 255, 255, 0.2)',
+              boxShadow: isSidebarOpen ? '0 0 12px rgba(16, 185, 129, 0.4)' : 'none',
+              cursor: 'pointer',
               outline: 'none',
+              transition: 'all 0.2s ease',
             }}
           >
             {isMobileNavOpen ? (
               <X size={20} color="#10b981" />
             ) : (
-              <Shield size={20} color="#10b981" />
+              <Shield size={20} color={isSidebarOpen ? '#10b981' : '#94a3b8'} />
             )}
           </button>
           <div>
@@ -330,4 +354,3 @@ export const Navbar: React.FC<NavbarProps> = ({
     </header>
   );
 };
-

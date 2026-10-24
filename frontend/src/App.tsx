@@ -16,6 +16,7 @@ import { CyberLoader } from './components/common/CyberLoader';
 
 const DashboardLayout: React.FC = () => {
   const [activeTab, setActiveTab] = useState<NavTab>('overview');
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState<boolean>(false);
   const { investigationEventId, setInvestigationEventId } = useNotifications();
 
@@ -35,6 +36,8 @@ const DashboardLayout: React.FC = () => {
       <Navbar
         isMobileNavOpen={isMobileNavOpen}
         onToggleMobileNav={() => setIsMobileNavOpen((prev) => !prev)}
+        isSidebarOpen={isSidebarOpen}
+        onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
       />
       <NotificationToasts />
       <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden', position: 'relative' }}>
@@ -45,6 +48,7 @@ const DashboardLayout: React.FC = () => {
             setIsMobileNavOpen(false);
           }}
           isOpen={isMobileNavOpen}
+          isCollapsed={!isSidebarOpen}
           onClose={() => setIsMobileNavOpen(false)}
         />
         {/* Mobile Backdrop Overlay */}
