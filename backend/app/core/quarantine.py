@@ -37,8 +37,8 @@ def sanitize_filename(filename: Optional[str]) -> str:
     if not filename:
         return "unnamed_upload.bin"
 
-    # Strip null bytes
-    cleaned = filename.replace("\x00", "")
+    # Strip null bytes and normalize backslashes cross-platform
+    cleaned = filename.replace("\x00", "").replace("\\", "/")
 
     # Extract base name only (blocks ../, ..\, C:\)
     cleaned = os.path.basename(cleaned)

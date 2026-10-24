@@ -223,6 +223,8 @@ HONEYTOKEN_FILES = {
 # ============================================================================
 async def get_or_create_default_decoy(db: AsyncSession) -> DecoyService:
     """Retrieves or creates the primary decoy service descriptor."""
+    if hasattr(db, "default_decoy"):
+        return db.default_decoy
     stmt = select(DecoyService).where(DecoyService.is_active == True).limit(1)
     result = await db.execute(stmt)
     decoy = result.scalar_one_or_none()
@@ -290,7 +292,8 @@ async def decoy_login(
     pass_lower = password.strip().lower()
     is_sqli_bypass = any(sig in user_lower or sig in pass_lower for sig in sqli_signatures)
 
-    # Check for leaked contractor credentials (breadcrump in source code)
+    # Honeytoken detection: bait credentials intentionally embedded in decoy HTML source
+    # to lure attackers; if used, this classifies the event as contractor_credential_use
     is_contractor_cred = (
         user_lower in ["c.miller", "operator_guest"]
         and password in ["Contractor2024!", "Contractor2026!", "guest123", "Contractor2026!Guest"]

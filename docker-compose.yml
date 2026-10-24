@@ -28,6 +28,7 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
+    image: argus-app:latest   # built once here; the decoy reuses this exact image
     container_name: argus-backend
     restart: unless-stopped
     environment:
@@ -54,31 +55,41 @@ services:
           cpus: "1.5"
           memory: 1024M
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
 
   # Public-Facing Decoy Honeypot (Strictly isolated from PostgreSQL db-net)
   argus-decoy:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
+    image: argus-app:latest   # same image as the backend, no second build
+    pull_policy: never        # never try to pull argus-app from Docker Hub
     container_name: argus-decoy
     restart: unless-stopped
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+    command: ["uvicorn", "app.decoy_main:app", "--host", "0.0.0.0", "--port", "8080"]
     environment:
       ENVIRONMENT: production
       LOG_LEVEL: INFO
+      BACKEND_INGEST_URL: http://argus-backend:8000
       INTERNAL_INGESTION_TOKEN: ${INTERNAL_INGESTION_TOKEN:-argus_internal_decoy_token_secret_replace_in_prod}
+      ARGUS_PASSWORD_FINGERPRINT_SECRET: ${ARGUS_PASSWORD_FINGERPRINT_SECRET:-argus_hmac_fingerprint_salt_secret_change_in_prod}
       QUARANTINE_STORAGE_DIR: /var/lib/argus/quarantine
       MAX_UPLOAD_SIZE_BYTES: 10485760
+      DECOY_SPOOL_DIR: /var/lib/argus/decoy_spool
+      # NO DATABASE_URL — decoy does not connect to a database
     security_opt:
       - no-new-privileges:true
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=64m
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health/live').read()"]
+      interval: 15s
+      timeout: 5s
+      start_period: 5s
+      retries: 3
     volumes:
       - quarantine_data:/var/lib/argus/quarantine
+      - decoy_spool:/var/lib/argus/decoy_spool
     networks:
       - decoy-net
-      - backend-internal
+      - backend-internal   # can reach backend, NOT db-net 
     depends_on:
       - argus-backend
     deploy:
@@ -87,7 +98,52 @@ services:
           cpus: "1.0"
           memory: 512M
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
+
+  # MySQL Protocol Decoy — raw TCP honeypot on port 3306
+  argus-mysql-decoy:
+    image: argus-app:latest
+    pull_policy: never
+    container_name: argus-mysql-decoy
+    restart: unless-stopped
+    command: ["python", "-m", "app.decoys.mysql.server"]
+    environment:
+      LOG_LEVEL: INFO
+      BACKEND_INGEST_URL: http://argus-backend:8000
+      INTERNAL_INGESTION_TOKEN: ${INTERNAL_INGESTION_TOKEN:-argus_internal_decoy_token_secret_replace_in_prod}
+      ARGUS_PASSWORD_FINGERPRINT_SECRET: ${ARGUS_PASSWORD_FINGERPRINT_SECRET:-argus_hmac_fingerprint_salt_secret_change_in_prod}
+      MYSQL_DECOY_PORT: "3306"
+      MYSQL_DECOY_SPOOL_DIR: /var/lib/argus/mysql-spool
+      MYSQL_DECOY_BAIT_CREDENTIALS: ${MYSQL_DECOY_BAIT_CREDENTIALS:-[]}
+      # NO DATABASE_URL, no POSTGRES_* — no database access
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import socket; s=socket.create_connection(('localhost',3306),timeout=3); s.close()"]
+      interval: 15s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    volumes:
+      - mysql_decoy_spool:/var/lib/argus/mysql-spool
+    networks:
+      - decoy-net
+      - backend-internal   # can reach backend, NOT db-net
+    depends_on:
+      - argus-backend
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+    ports:
+      - "127.0.0.1:3306:3306"
 
   # SOC Operations Dashboard (React + TypeScript + Nginx)
   argus-dashboard:
@@ -99,7 +155,7 @@ services:
     networks:
       - backend-internal
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     depends_on:
       - argus-backend
     deploy:
@@ -120,3 +176,5 @@ networks:
 volumes:
   postgres_data:
   quarantine_data:
+  decoy_spool:
+  mysql_decoy_spool:

@@ -49,6 +49,7 @@ class SecurityEventResponse(SecurityEventBase):
     created_at: datetime
     login_attempt: Optional[LoginAttemptResponse] = None
     captured_file: Optional[CapturedFileResponse] = None
+    mitre_attack: Optional[Dict[str, str]] = None
 
     model_config = ConfigDict(from_attributes=True)
 

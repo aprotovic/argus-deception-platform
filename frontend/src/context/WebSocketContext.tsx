@@ -19,9 +19,28 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const reconnectTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
+    const safeCloseSocket = (socket: WebSocket | null) => {
+      if (!socket) return;
+      socket.onclose = null;
+      socket.onerror = null;
+      socket.onmessage = null;
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.close();
+      } else if (socket.readyState === WebSocket.CONNECTING) {
+        socket.onopen = () => {
+          try {
+            socket.close();
+          } catch {
+            // ignore
+          }
+        };
+      }
+    };
+
     if (!token) {
       if (wsRef.current) {
-        wsRef.current.close();
+        safeCloseSocket(wsRef.current);
+        wsRef.current = null;
       }
       setIsConnected(false);
       return;
@@ -52,18 +71,27 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
       };
 
-      ws.onclose = () => {
+      ws.onclose = (event) => {
         setIsConnected(false);
-        // Attempt reconnect after 3 seconds
-        reconnectTimeoutRef.current = window.setTimeout(() => {
-          if (token) {
-            connectWebSocket();
-          }
-        }, 3000);
+        // If authentication failed (1008 Policy Violation), dispatch expired event instead of looping
+        if (event.code === 1008) {
+          window.dispatchEvent(new Event('argus_auth_expired'));
+          return;
+        }
+
+        // Attempt reconnect after 3 seconds if token still present and not unmounted
+        if (token && !reconnectTimeoutRef.current) {
+          reconnectTimeoutRef.current = window.setTimeout(() => {
+            reconnectTimeoutRef.current = null;
+            if (token) {
+              connectWebSocket();
+            }
+          }, 3000);
+        }
       };
 
       ws.onerror = () => {
-        ws.close();
+        setIsConnected(false);
       };
     };
 
@@ -74,15 +102,17 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
         wsRef.current.send('ping');
       }
-    }, 25000);
+    }, 20000);
 
     return () => {
       window.clearInterval(pingInterval);
       if (reconnectTimeoutRef.current) {
         window.clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
       }
       if (wsRef.current) {
-        wsRef.current.close();
+        safeCloseSocket(wsRef.current);
+        wsRef.current = null;
       }
     };
   }, [token]);

@@ -19,11 +19,13 @@ async def websocket_events_endpoint(
     """
     # Authenticate token
     if not token:
+        await websocket.accept()
         await websocket.close(code=1008, reason="Authentication token required")
         return
 
     payload = decode_access_token(token)
     if not payload:
+        await websocket.accept()
         await websocket.close(code=1008, reason="Invalid access token")
         return
 
@@ -34,7 +36,7 @@ async def websocket_events_endpoint(
             data = await websocket.receive_text()
             if data == "ping":
                 await websocket.send_text('{"type": "PONG"}')
-    except WebSocketDisconnect:
+    except (WebSocketDisconnect, ConnectionResetError):
         ws_manager.disconnect(websocket)
     except Exception as e:
         logger.warning(f"WebSocket client error: {str(e)}")

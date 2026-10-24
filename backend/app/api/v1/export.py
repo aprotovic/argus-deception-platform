@@ -3,7 +3,7 @@
 import csv
 import io
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, Query, Request, Response, status
 from sqlalchemy import desc, select
@@ -130,4 +130,66 @@ async def export_security_events(
         headers={
             "Content-Disposition": f"attachment; filename=argus_events_{timestamp_str}.json"
         },
+    )
+
+
+@router.get("/incident-report/{ip_address}")
+async def export_incident_report(
+    ip_address: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Export a full PDF incident report for a given attacker IP address."""
+    from app.core.pdf_report import generate_incident_report
+    from fastapi.responses import Response as FastAPIResponse
+
+    cutoff = datetime.now(timezone.utc) - timedelta(days=30)
+    stmt = (
+        select(SecurityEvent)
+        .where(SecurityEvent.source_ip == ip_address)
+        .where(SecurityEvent.timestamp >= cutoff)
+        .where(SecurityEvent.is_test_event == False)
+        .order_by(SecurityEvent.timestamp)
+    )
+    result = await db.execute(stmt)
+    events = result.scalars().all()
+
+    # Compute threat score
+    weights = {
+        "recon_probe": 1, "login_attempt": 2, "file_upload": 3,
+        "terminal_exec": 4, "sql_injection": 5, "honeytoken_access": 4,
+        "contractor_credential_use": 5, "unauthorized_access": 2,
+    }
+    score = sum(weights.get(e.event_type, 1) for e in events)
+    severities = {e.severity for e in events}
+    if "critical" in severities:
+        score += 5
+    elif "high" in severities:
+        score += 3
+    level = (
+        "critical" if score >= 25 else
+        "high"     if score >= 15 else
+        "medium"   if score >= 6  else
+        "low"
+    )
+
+    event_dicts = [
+        {
+            "timestamp": e.timestamp,
+            "event_type": e.event_type,
+            "severity": e.severity,
+            "request_path": e.request_path,
+            "summary": e.metadata_payload.get("summary", ""),
+        }
+        for e in events
+    ]
+
+    pdf_bytes = generate_incident_report(event_dicts, ip_address, score, level)
+    safe_ip = ip_address.replace(".", "_").replace(":", "_")
+    filename = f"argus_incident_{safe_ip}.pdf"
+
+    return FastAPIResponse(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )

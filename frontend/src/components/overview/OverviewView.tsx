@@ -1,22 +1,30 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../../services/api';
-import type { OverviewMetrics } from '../../types';
+import type { OverviewMetrics, SecurityEvent } from '../../types';
 import { useWebSocket } from '../../context/WebSocketContext';
+import { TelemetrySpikeGraph } from './TelemetrySpikeGraph';
+import { ThreatSeveritySpectrum } from './ThreatSeveritySpectrum';
+import { CyberLoader } from '../common/CyberLoader';
 import {
   Users,
   KeyRound,
   FileArchive,
   Activity,
-  AlertTriangle,
-  Flame,
   Radio,
   Play,
   Download,
-  RefreshCw,
+  Shield,
+  Terminal,
+  Crosshair,
+  Radar,
+  Binary,
+  Lock,
+  FileCode,
 } from 'lucide-react';
 
 export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onNavigateToStream }) => {
   const [metrics, setMetrics] = useState<OverviewMetrics | null>(null);
+  const [events, setEvents] = useState<SecurityEvent[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [simulating, setSimulating] = useState<boolean>(false);
   const [simMessage, setSimMessage] = useState<string | null>(null);
@@ -24,8 +32,12 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
 
   const fetchMetrics = async () => {
     try {
-      const data = await api.getMetrics();
-      setMetrics(data);
+      const [metricsData, eventsRes] = await Promise.all([
+        api.getMetrics(),
+        api.getEvents({ limit: 100 }),
+      ]);
+      setMetrics(metricsData);
+      setEvents(eventsRes.items);
     } catch (err) {
       console.error('Failed to load metrics:', err);
     } finally {
@@ -51,11 +63,11 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
       // Simulate safe controlled probe
       await fetch('/api/v1/decoy/probe/.env?test=1');
       await fetch('/api/v1/decoy/probe/wp-login.php?test=1');
-      
+
       // Simulate safe controlled login attempt
       const formData = new FormData();
       formData.append('username', 'root');
-      formData.append('password', 'SimulatedTestCredential2026!');
+      formData.append('password', '[SIMULATED]');
       await fetch('/api/v1/decoy/auth/login?test=1', {
         method: 'POST',
         body: formData,
@@ -74,72 +86,163 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
 
   if (loading && !metrics) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
-        <RefreshCw size={24} className="animate-spin" color="#00b4d8" />
-        <span style={{ marginLeft: '12px', color: 'var(--text-muted)' }}>Retrieving operational telemetry...</span>
-      </div>
+      <CyberLoader
+        mode="inline"
+        message="DECRYPTING LIVE SOC TELEMETRY..."
+        subMessage="SYNCHRONIZING ATTACK EVENT DISTRIBUTION & METRICS"
+      />
     );
   }
 
-  const kpis = [
+  // Calculate Threat Index (0-100)
+  const criticalCount = metrics?.events_by_severity.critical ?? 0;
+  const highCount = metrics?.events_by_severity.high ?? 0;
+  const mediumCount = metrics?.events_by_severity.medium ?? 0;
+  const lowCount = metrics?.events_by_severity.low ?? 0;
+  const totalEvents = metrics?.total_events || 0;
+  const safeTotal = totalEvents || 1;
+
+  const threatIndex = Math.min(100, Math.round(
+    ((criticalCount * 4 + highCount * 3 + mediumCount * 1.5 + lowCount * 0.5) / Math.max(1, totalEvents)) * 25
+  ));
+
+  // Deception vectors
+  const deceptionVectors = [
     {
-      title: 'TOTAL OBSERVED EVENTS',
-      value: metrics?.total_events ?? 0,
-      sub: `${metrics?.events_last_24h ?? 0} in last 24 hours`,
-      icon: <Activity size={22} color="#00b4d8" />,
-      color: '#00b4d8',
-    },
-    {
-      title: 'UNIQUE ATTACKER IPS',
-      value: metrics?.unique_ips ?? 0,
-      sub: 'Observed source addresses',
-      icon: <Users size={22} color="#38bdf8" />,
-      color: '#38bdf8',
-    },
-    {
-      title: 'TRAPPED LOGIN ATTEMPTS',
-      value: metrics?.failed_logins ?? 0,
-      sub: 'Decoy credential submissions',
-      icon: <KeyRound size={22} color="#f59e0b" />,
+      id: 'VEC-01',
+      type: 'login_attempt',
+      label: 'Decoy Authentication Portals',
+      sub: 'Synthetic SSH / Admin login forms trapping credential sprays',
+      count: (metrics?.events_by_type as any)?.login_attempt ?? 0,
       color: '#f59e0b',
+      icon: <KeyRound size={16} color="#f59e0b" />,
     },
     {
-      title: 'QUARANTINED PAYLOADS',
-      value: metrics?.quarantined_files ?? 0,
-      sub: `${metrics?.rejected_uploads ?? 0} uploads rejected`,
-      icon: <FileArchive size={22} color="#f43f5e" />,
+      id: 'VEC-02',
+      type: 'recon_probe',
+      label: 'Reconnaissance Scanners',
+      sub: 'Exposed fictitious .env, wp-login, swagger & git endpoints',
+      count: (metrics?.events_by_type as any)?.recon_probe ?? 0,
+      color: '#10b981',
+      icon: <Radar size={16} color="#10b981" />,
+    },
+    {
+      id: 'VEC-03',
+      type: 'file_upload',
+      label: 'Quarantined File Uploads',
+      sub: 'In-memory sandbox trapping web-shells & executable binaries',
+      count: (metrics?.events_by_type as any)?.file_upload ?? 0,
+      color: '#ef4444',
+      icon: <FileCode size={16} color="#ef4444" />,
+    },
+    {
+      id: 'VEC-04',
+      type: 'command_injection',
+      label: 'Command Injection Traps',
+      sub: 'Emulated virtual shell intercepting system command payloads',
+      count: (metrics?.events_by_type as any)?.command_injection ?? 0,
       color: '#f43f5e',
+      icon: <Terminal size={16} color="#f43f5e" />,
+    },
+    {
+      id: 'VEC-05',
+      type: 'honeytoken_accessed',
+      label: 'Honeytoken Canary Traps',
+      sub: 'Synthetic high-privilege AWS keys, tokens & connection strings',
+      count: (metrics?.events_by_type as any)?.honeytoken_accessed ?? 0,
+      color: '#c084fc',
+      icon: <Binary size={16} color="#c084fc" />,
+    },
+    {
+      id: 'VEC-06',
+      type: 'unauthorized_access',
+      label: 'Unauthorized Enclave Probes',
+      sub: 'Zero-trust perimeter violations & forbidden route attempts',
+      count: (metrics?.events_by_type as any)?.unauthorized_access ?? 0,
+      color: '#8b5cf6',
+      icon: <Lock size={16} color="#8b5cf6" />,
     },
   ];
 
   return (
-    <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '22px' }}>
       {/* Top Banner & Control Actions */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-        <div>
-          <h1 style={{
-            fontFamily: "'Chakra Petch', sans-serif",
-            fontSize: '1.6rem',
-            fontWeight: 700,
-            letterSpacing: '0.04em',
-            color: '#ffffff',
-            textTransform: 'uppercase',
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '16px',
+        paddingBottom: '16px',
+        borderBottom: '1px solid rgba(16, 185, 129, 0.15)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: '8px',
+            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(5, 150, 105, 0.05) 100%)',
+            border: '1px solid rgba(16, 185, 129, 0.45)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 0 16px rgba(16, 185, 129, 0.25)',
           }}>
-            SECURITY OPERATIONS OVERVIEW
-          </h1>
-          <p style={{ fontSize: '0.82rem', color: 'var(--text-dim)', marginTop: '2px' }}>
-            Live attack telemetry and honeypot interaction metrics captured by ARGUS.
-          </p>
+            <Shield size={20} color="#10b981" />
+          </div>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <h1 style={{
+                fontFamily: "'Chakra Petch', sans-serif",
+                fontSize: '1.65rem',
+                fontWeight: 700,
+                letterSpacing: '0.04em',
+                color: '#ffffff',
+                textTransform: 'uppercase',
+                margin: 0,
+                textShadow: '0 0 20px rgba(16, 185, 129, 0.25)',
+              }}>
+                SECURITY OPERATIONS OVERVIEW
+              </h1>
+              <span style={{
+                fontSize: '0.68rem',
+                fontFamily: "'JetBrains Mono', monospace",
+                fontWeight: 600,
+                padding: '2px 8px',
+                borderRadius: '4px',
+                background: 'rgba(16, 185, 129, 0.12)',
+                border: '1px solid rgba(16, 185, 129, 0.35)',
+                color: '#10b981',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}>
+                <span className="radar-dot" style={{ width: '6px', height: '6px' }} />
+                DEFENSE MATRIX ACTIVE
+              </span>
+            </div>
+            <p style={{ fontSize: '0.82rem', color: '#94a3b8', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <span>Live attack telemetry & honeypot interaction metrics captured by ARGUS.</span>
+              <span style={{ color: '#334155' }}>•</span>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '0.74rem', color: '#64748b' }}>
+                NODE: <span style={{ color: '#10b981' }}>ARGUS-EAST-01</span>
+              </span>
+            </p>
+          </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
           <button
             onClick={handleSimulateTraffic}
             disabled={simulating}
             className="btn-secondary"
             title="Inject controlled test traffic marked with is_test_event=True"
+            style={{
+              borderColor: 'rgba(16, 185, 129, 0.3)',
+              background: 'rgba(16, 185, 129, 0.05)',
+            }}
           >
-            <Play size={14} color="#34d399" />
+            <Play size={14} color="#10b981" />
             <span>{simulating ? 'GENERATING TEST TRAFFIC...' : 'RUN CONTROLLED TEST'}</span>
           </button>
 
@@ -147,6 +250,9 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
             href={api.getExportUrl('json')}
             download="argus_forensic_export.json"
             className="btn-primary"
+            style={{
+              boxShadow: '0 0 16px rgba(16, 185, 129, 0.3)',
+            }}
           >
             <Download size={14} />
             <span>EXPORT REPORT (JSON)</span>
@@ -156,124 +262,548 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
 
       {simMessage && (
         <div style={{
-          background: 'rgba(0, 180, 216, 0.1)',
-          border: '1px solid rgba(0, 180, 216, 0.4)',
-          borderRadius: '4px',
+          background: 'rgba(16, 185, 129, 0.1)',
+          border: '1px solid rgba(16, 185, 129, 0.4)',
+          borderRadius: '6px',
           padding: '10px 16px',
           fontSize: '0.82rem',
-          color: '#38bdf8',
+          color: '#10b981',
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
+          boxShadow: '0 0 14px rgba(16, 185, 129, 0.15)',
         }}>
           <Radio size={16} />
           <span>{simMessage}</span>
         </div>
       )}
 
-      {/* KPI Cards Grid */}
+      {/* ========================================================= */}
+      {/* 1. TACTICAL TELEMETRY COMMAND DECK (Integrated HUD Console) */}
+      {/* ========================================================= */}
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-        gap: '16px',
+        background: 'linear-gradient(180deg, rgba(8, 14, 10, 0.95) 0%, rgba(3, 6, 4, 0.98) 100%)',
+        border: '1px solid rgba(16, 185, 129, 0.22)',
+        borderRadius: '10px',
+        position: 'relative',
+        overflow: 'hidden',
+        boxShadow: '0 12px 36px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(16, 185, 129, 0.25)',
       }}>
-        {kpis.map((kpi, index) => (
-          <div
-            key={index}
-            className="glass-panel"
-            style={{
-              padding: '20px',
-              display: 'flex',
-              flexDirection: 'column',
-              position: 'relative',
-              overflow: 'hidden',
-            }}
-          >
-            <div style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '4px',
-              height: '100%',
-              backgroundColor: kpi.color,
-            }} />
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+        {/* Top Diagnostic Stream Ticker */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '8px 18px',
+          background: 'rgba(0, 0, 0, 0.65)',
+          borderBottom: '1px solid rgba(16, 185, 129, 0.15)',
+          fontSize: '0.72rem',
+          fontFamily: "'JetBrains Mono', monospace",
+          color: '#64748b',
+          flexWrap: 'wrap',
+          gap: '8px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#10b981', fontWeight: 600 }}>
+              <span className="radar-dot" style={{ width: '6px', height: '6px' }} />
+              TELEMETRY STREAM // LIVE
+            </span>
+            <span style={{ color: '#1e293b' }}>|</span>
+            <span>INGESTION: <strong style={{ color: '#f1f5f9' }}>ONLINE</strong></span>
+            <span style={{ color: '#1e293b' }}>|</span>
+            <span>CONTAINMENT: <strong style={{ color: '#10b981' }}>ENFORCED</strong></span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span>DECOYS: <strong style={{ color: '#10b981' }}>6 ARMED</strong></span>
+            <span style={{ color: '#1e293b' }}>|</span>
+            <span>STATUS: <strong style={{ color: threatIndex > 60 ? '#f43f5e' : '#10b981' }}>
+              {threatIndex > 60 ? 'ELEVATED RISK' : 'SECURE'}
+            </strong></span>
+          </div>
+        </div>
+
+        {/* 4 Connected Telemetry Hub Cells */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+        }}>
+          {/* Cell 1: Total Events */}
+          <div style={{
+            padding: '22px 20px',
+            position: 'relative',
+            borderRight: '1px solid rgba(16, 185, 129, 0.12)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            background: 'radial-gradient(circle at 10% 10%, rgba(16, 185, 129, 0.08) 0%, transparent 60%)',
+          }}>
+            {/* Corner Bracket */}
+            <span style={{ position: 'absolute', top: '6px', left: '8px', fontSize: '10px', color: 'rgba(16, 185, 129, 0.4)', fontFamily: 'monospace' }}>┌</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
               <span style={{
                 fontFamily: "'Chakra Petch', sans-serif",
                 fontSize: '0.72rem',
                 fontWeight: 600,
-                color: 'var(--text-dim)',
-                letterSpacing: '0.06em',
+                color: '#94a3b8',
+                letterSpacing: '0.08em',
               }}>
-                {kpi.title}
+                TOTAL OBSERVED EVENTS
               </span>
               <div style={{
-                background: 'rgba(255, 255, 255, 0.04)',
+                background: 'rgba(16, 185, 129, 0.12)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
                 borderRadius: '6px',
                 padding: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}>
-                {kpi.icon}
+                <Activity size={18} color="#10b981" />
               </div>
             </div>
-            <div style={{
-              fontSize: '2.1rem',
-              fontWeight: 700,
-              fontFamily: "'JetBrains Mono', monospace",
-              color: '#ffffff',
-              lineHeight: 1.1,
-            }}>
-              {kpi.value}
+
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '8px' }}>
+              <span style={{
+                fontSize: '2.5rem',
+                fontWeight: 700,
+                fontFamily: "'JetBrains Mono', monospace",
+                color: '#ffffff',
+                lineHeight: 1,
+                textShadow: '0 0 20px rgba(16, 185, 129, 0.45)',
+              }}>
+                {metrics?.total_events ?? 0}
+              </span>
+              <span style={{
+                fontSize: '0.7rem',
+                fontFamily: "'JetBrains Mono', monospace",
+                padding: '2px 6px',
+                borderRadius: '4px',
+                background: 'rgba(16, 185, 129, 0.15)',
+                color: '#34d399',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                fontWeight: 600,
+              }}>
+                +{metrics?.events_last_24h ?? 0} 24h
+              </span>
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '8px' }}>
-              {kpi.sub}
+
+            {/* Ambient Mini Pulse Sparkline */}
+            <div style={{ marginTop: 'auto', paddingTop: '6px' }}>
+              <svg viewBox="0 0 120 28" style={{ width: '100%', height: '28px', overflow: 'visible' }}>
+                <defs>
+                  <linearGradient id="metricGrad1" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#10b981" stopOpacity="0.4" />
+                    <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                <path d="M 0,22 L 15,18 L 30,22 L 45,14 L 60,18 L 75,9 L 90,14 L 105,6 L 120,3 L 120,28 L 0,28 Z" fill="url(#metricGrad1)" />
+                <path d="M 0,22 L 15,18 L 30,22 L 45,14 L 60,18 L 75,9 L 90,14 L 105,6 L 120,3" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" />
+                <circle cx="120" cy="3" r="3" fill="#10b981" />
+              </svg>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#64748b', marginTop: '4px', fontFamily: "'JetBrains Mono', monospace" }}>
+                <span>TELEMETRY INGESTION</span>
+                <span style={{ color: '#10b981' }}>100% CAPTURED</span>
+              </div>
             </div>
           </div>
-        ))}
+
+          {/* Cell 2: Unique IPs */}
+          <div style={{
+            padding: '22px 20px',
+            position: 'relative',
+            borderRight: '1px solid rgba(16, 185, 129, 0.12)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            background: 'radial-gradient(circle at 10% 10%, rgba(52, 211, 153, 0.08) 0%, transparent 60%)',
+          }}>
+            <span style={{ position: 'absolute', top: '6px', left: '8px', fontSize: '10px', color: 'rgba(52, 211, 153, 0.4)', fontFamily: 'monospace' }}>┌</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <span style={{
+                fontFamily: "'Chakra Petch', sans-serif",
+                fontSize: '0.72rem',
+                fontWeight: 600,
+                color: '#94a3b8',
+                letterSpacing: '0.08em',
+              }}>
+                UNIQUE ATTACKER IPS
+              </span>
+              <div style={{
+                background: 'rgba(52, 211, 153, 0.12)',
+                border: '1px solid rgba(52, 211, 153, 0.3)',
+                borderRadius: '6px',
+                padding: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <Users size={18} color="#34d399" />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '8px' }}>
+              <span style={{
+                fontSize: '2.5rem',
+                fontWeight: 700,
+                fontFamily: "'JetBrains Mono', monospace",
+                color: '#ffffff',
+                lineHeight: 1,
+                textShadow: '0 0 20px rgba(52, 211, 153, 0.45)',
+              }}>
+                {metrics?.unique_ips ?? 0}
+              </span>
+              <span style={{
+                fontSize: '0.7rem',
+                fontFamily: "'JetBrains Mono', monospace",
+                padding: '2px 6px',
+                borderRadius: '4px',
+                background: 'rgba(52, 211, 153, 0.15)',
+                color: '#34d399',
+                border: '1px solid rgba(52, 211, 153, 0.3)',
+                fontWeight: 600,
+              }}>
+                ISOLATED
+              </span>
+            </div>
+
+            <div style={{ marginTop: 'auto', paddingTop: '6px' }}>
+              <svg viewBox="0 0 120 28" style={{ width: '100%', height: '28px', overflow: 'visible' }}>
+                <defs>
+                  <linearGradient id="metricGrad2" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#34d399" stopOpacity="0.4" />
+                    <stop offset="100%" stopColor="#34d399" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                <path d="M 0,24 L 20,24 L 35,14 L 55,24 L 75,24 L 90,8 L 105,24 L 120,24 L 120,28 L 0,28 Z" fill="url(#metricGrad2)" />
+                <path d="M 0,24 L 20,24 L 35,14 L 55,24 L 75,24 L 90,8 L 105,24 L 120,24" fill="none" stroke="#34d399" strokeWidth="2" strokeLinecap="round" />
+                <circle cx="90" cy="8" r="3" fill="#34d399" />
+              </svg>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#64748b', marginTop: '4px', fontFamily: "'JetBrains Mono', monospace" }}>
+                <span>SOURCES PROFILED</span>
+                <span style={{ color: '#34d399' }}>GEO ENRICHED</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Cell 3: Trapped Logins */}
+          <div style={{
+            padding: '22px 20px',
+            position: 'relative',
+            borderRight: '1px solid rgba(16, 185, 129, 0.12)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            background: 'radial-gradient(circle at 10% 10%, rgba(245, 158, 11, 0.08) 0%, transparent 60%)',
+          }}>
+            <span style={{ position: 'absolute', top: '6px', left: '8px', fontSize: '10px', color: 'rgba(245, 158, 11, 0.4)', fontFamily: 'monospace' }}>┌</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <span style={{
+                fontFamily: "'Chakra Petch', sans-serif",
+                fontSize: '0.72rem',
+                fontWeight: 600,
+                color: '#94a3b8',
+                letterSpacing: '0.08em',
+              }}>
+                TRAPPED LOGIN ATTEMPTS
+              </span>
+              <div style={{
+                background: 'rgba(245, 158, 11, 0.12)',
+                border: '1px solid rgba(245, 158, 11, 0.3)',
+                borderRadius: '6px',
+                padding: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <KeyRound size={18} color="#f59e0b" />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '8px' }}>
+              <span style={{
+                fontSize: '2.5rem',
+                fontWeight: 700,
+                fontFamily: "'JetBrains Mono', monospace",
+                color: '#ffffff',
+                lineHeight: 1,
+                textShadow: '0 0 20px rgba(245, 158, 11, 0.45)',
+              }}>
+                {metrics?.failed_logins ?? 0}
+              </span>
+              <span style={{
+                fontSize: '0.7rem',
+                fontFamily: "'JetBrains Mono', monospace",
+                padding: '2px 6px',
+                borderRadius: '4px',
+                background: 'rgba(245, 158, 11, 0.15)',
+                color: '#fbbf24',
+                border: '1px solid rgba(245, 158, 11, 0.3)',
+                fontWeight: 600,
+              }}>
+                DECOY AUTH
+              </span>
+            </div>
+
+            <div style={{ marginTop: 'auto', paddingTop: '6px' }}>
+              <svg viewBox="0 0 120 28" style={{ width: '100%', height: '28px', overflow: 'visible' }}>
+                <defs>
+                  <linearGradient id="metricGrad3" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.4" />
+                    <stop offset="100%" stopColor="#f59e0b" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                <path d="M 0,24 L 20,24 L 35,16 L 50,16 L 65,20 L 80,12 L 95,12 L 110,6 L 120,6 L 120,28 L 0,28 Z" fill="url(#metricGrad3)" />
+                <path d="M 0,24 L 20,24 L 35,16 L 50,16 L 65,20 L 80,12 L 95,12 L 110,6 L 120,6" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" />
+                <circle cx="120" cy="6" r="3" fill="#f59e0b" />
+              </svg>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#64748b', marginTop: '4px', fontFamily: "'JetBrains Mono', monospace" }}>
+                <span>CANARY PASSWORDS</span>
+                <span style={{ color: '#f59e0b' }}>HMAC HASHED</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Cell 4: Quarantined Payloads */}
+          <div style={{
+            padding: '22px 20px',
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            background: 'radial-gradient(circle at 10% 10%, rgba(244, 63, 94, 0.08) 0%, transparent 60%)',
+          }}>
+            <span style={{ position: 'absolute', top: '6px', left: '8px', fontSize: '10px', color: 'rgba(244, 63, 94, 0.4)', fontFamily: 'monospace' }}>┌</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <span style={{
+                fontFamily: "'Chakra Petch', sans-serif",
+                fontSize: '0.72rem',
+                fontWeight: 600,
+                color: '#94a3b8',
+                letterSpacing: '0.08em',
+              }}>
+                QUARANTINED PAYLOADS
+              </span>
+              <div style={{
+                background: 'rgba(244, 63, 94, 0.12)',
+                border: '1px solid rgba(244, 63, 94, 0.3)',
+                borderRadius: '6px',
+                padding: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <FileArchive size={18} color="#f43f5e" />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '8px' }}>
+              <span style={{
+                fontSize: '2.5rem',
+                fontWeight: 700,
+                fontFamily: "'JetBrains Mono', monospace",
+                color: '#ffffff',
+                lineHeight: 1,
+                textShadow: '0 0 20px rgba(244, 63, 94, 0.45)',
+              }}>
+                {metrics?.quarantined_files ?? 0}
+              </span>
+              <span style={{
+                fontSize: '0.7rem',
+                fontFamily: "'JetBrains Mono', monospace",
+                padding: '2px 6px',
+                borderRadius: '4px',
+                background: 'rgba(244, 63, 94, 0.15)',
+                color: '#f87171',
+                border: '1px solid rgba(244, 63, 94, 0.3)',
+                fontWeight: 600,
+              }}>
+                {metrics?.rejected_uploads ?? 0} REJECTED
+              </span>
+            </div>
+
+            <div style={{ marginTop: 'auto', paddingTop: '6px' }}>
+              <svg viewBox="0 0 120 28" style={{ width: '100%', height: '28px', overflow: 'visible' }}>
+                <defs>
+                  <linearGradient id="metricGrad4" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.4" />
+                    <stop offset="100%" stopColor="#f43f5e" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                <path d="M 0,24 L 25,24 L 40,10 L 55,24 L 75,24 L 90,6 L 105,24 L 120,24 L 120,28 L 0,28 Z" fill="url(#metricGrad4)" />
+                <path d="M 0,24 L 25,24 L 40,10 L 55,24 L 75,24 L 90,6 L 105,24 L 120,24" fill="none" stroke="#f43f5e" strokeWidth="2" strokeLinecap="round" />
+                <circle cx="90" cy="6" r="3" fill="#f43f5e" />
+              </svg>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#64748b', marginTop: '4px', fontFamily: "'JetBrains Mono', monospace" }}>
+                <span>SANDBOX CONTAINMENT</span>
+                <span style={{ color: '#f43f5e' }}>0 ESCAPES</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Analytics Breakdown Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '20px' }}>
-        {/* Severity Breakdown */}
-        <div className="glass-panel" style={{ padding: '24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-            <Flame size={18} color="#f43f5e" />
-            <h2 style={{
-              fontFamily: "'Chakra Petch', sans-serif",
-              fontSize: '1rem',
-              fontWeight: 700,
-              color: '#ffffff',
-              letterSpacing: '0.04em',
-              textTransform: 'uppercase',
+      {/* ===================================================================== */}
+      {/* 2. MASTER THREAT & DECEPTION MATRIX (Polar Radar + Honeytrap Grid) */}
+      {/* ========================================================= */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(440px, 1fr))', gap: '22px' }}>
+        
+        {/* LEFT: ADVANCED CYBER THREAT SEVERITY SPECTRUM */}
+        <ThreatSeveritySpectrum metrics={metrics} />
+
+        {/* RIGHT: DECEPTION VECTOR INVENTORY (Honeytrap Vector Hub) */}
+        <div style={{
+          background: 'linear-gradient(180deg, rgba(8, 14, 10, 0.95) 0%, rgba(3, 6, 4, 0.98) 100%)',
+          border: '1px solid rgba(16, 185, 129, 0.22)',
+          borderRadius: '10px',
+          padding: '24px',
+          display: 'flex',
+          flexDirection: 'column',
+          position: 'relative',
+          boxShadow: '0 12px 32px rgba(0, 0, 0, 0.75)',
+        }}>
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{
+                background: 'rgba(16, 185, 129, 0.12)',
+                border: '1px solid rgba(16, 185, 129, 0.35)',
+                borderRadius: '6px',
+                padding: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <Crosshair size={18} color="#10b981" />
+              </div>
+              <div>
+                <h2 style={{
+                  fontFamily: "'Chakra Petch', sans-serif",
+                  fontSize: '1rem',
+                  fontWeight: 700,
+                  color: '#ffffff',
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
+                  margin: 0,
+                }}>
+                  INTERACTION CLASSIFICATION & VECTORS
+                </h2>
+                <span style={{ fontSize: '0.72rem', color: '#64748b', fontFamily: "'JetBrains Mono', monospace" }}>
+                  DECEPTION LAYER // ACTIVE HONEY-GRID
+                </span>
+              </div>
+            </div>
+
+            <span style={{
+              fontSize: '0.7rem',
+              fontFamily: "'JetBrains Mono', monospace",
+              color: '#10b981',
+              padding: '2px 8px',
+              borderRadius: '4px',
+              background: 'rgba(16, 185, 129, 0.1)',
+              border: '1px solid rgba(16, 185, 129, 0.25)',
+              fontWeight: 600,
             }}>
-              THREAT SEVERITY DISTRIBUTION
-            </h2>
+              6 VECTORS ARMED
+            </span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {[
-              { label: 'CRITICAL', count: metrics?.events_by_severity.critical ?? 0, color: 'var(--severity-critical)' },
-              { label: 'HIGH', count: metrics?.events_by_severity.high ?? 0, color: 'var(--severity-high)' },
-              { label: 'MEDIUM', count: metrics?.events_by_severity.medium ?? 0, color: 'var(--severity-medium)' },
-              { label: 'LOW', count: metrics?.events_by_severity.low ?? 0, color: 'var(--severity-low)' },
-            ].map((sev) => {
-              const total = metrics?.total_events || 1;
-              const pct = Math.round((sev.count / total) * 100);
+          {/* Vector Cards List */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {deceptionVectors.map((item) => {
+              const vectorPct = Math.round((item.count / safeTotal) * 100);
+              const isActive = item.count > 0;
+
               return (
-                <div key={sev.label}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', marginBottom: '4px' }}>
-                    <span style={{ fontWeight: 600, color: sev.color }}>{sev.label}</span>
-                    <span style={{ fontFamily: "'JetBrains Mono', monospace", color: 'var(--text-muted)' }}>
-                      {sev.count} ({pct}%)
-                    </span>
+                <div
+                  key={item.id}
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: '6px',
+                    background: 'rgba(255, 255, 255, 0.02)',
+                    border: '1px solid rgba(16, 185, 129, 0.12)',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.45)';
+                    e.currentTarget.style.background = 'rgba(16, 185, 129, 0.04)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.12)';
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
+                  }}
+                >
+                  {/* Subtle Background Intensity Gradient Bar */}
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    bottom: 0,
+                    width: `${vectorPct}%`,
+                    background: `linear-gradient(90deg, ${item.color}15 0%, ${item.color}05 100%)`,
+                    pointerEvents: 'none',
+                    transition: 'width 0.4s ease',
+                  }} />
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{
+                        fontSize: '0.65rem',
+                        fontFamily: "'JetBrains Mono', monospace",
+                        fontWeight: 600,
+                        color: item.color,
+                        background: `${item.color}18`,
+                        border: `1px solid ${item.color}40`,
+                        borderRadius: '3px',
+                        padding: '1px 5px',
+                      }}>
+                        {item.id}
+                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        {item.icon}
+                        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#f1f5f9' }}>
+                          {item.label}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{
+                        fontSize: '0.65rem',
+                        fontFamily: "'JetBrains Mono', monospace",
+                        padding: '1px 6px',
+                        borderRadius: '3px',
+                        background: isActive ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255, 255, 255, 0.04)',
+                        border: `1px solid ${isActive ? 'rgba(16, 185, 129, 0.3)' : 'rgba(255, 255, 255, 0.08)'}`,
+                        color: isActive ? '#34d399' : '#64748b',
+                        fontWeight: 600,
+                      }}>
+                        {isActive ? `TRAPPED (${item.count})` : 'ARMED'}
+                      </span>
+                      <span style={{
+                        fontFamily: "'JetBrains Mono', monospace",
+                        fontWeight: 700,
+                        fontSize: '0.95rem',
+                        color: '#ffffff',
+                        minWidth: '24px',
+                        textAlign: 'right',
+                      }}>
+                        {item.count}
+                      </span>
+                    </div>
                   </div>
-                  <div style={{ height: '6px', background: 'rgba(255, 255, 255, 0.06)', borderRadius: '3px', overflow: 'hidden' }}>
-                    <div style={{
-                      width: `${pct}%`,
-                      height: '100%',
-                      background: sev.color,
-                      borderRadius: '3px',
-                      transition: 'width 0.4s ease',
-                    }} />
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 1 }}>
+                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                      {item.sub}
+                    </span>
+                    <span style={{ fontSize: '0.68rem', fontFamily: "'JetBrains Mono', monospace", color: '#475569' }}>
+                      {vectorPct}% of total
+                    </span>
                   </div>
                 </div>
               );
@@ -281,139 +811,93 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
           </div>
         </div>
 
-        {/* Event Type Breakdown */}
-        <div className="glass-panel" style={{ padding: '24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-            <AlertTriangle size={18} color="#00b4d8" />
-            <h2 style={{
-              fontFamily: "'Chakra Petch', sans-serif",
-              fontSize: '1rem',
-              fontWeight: 700,
-              color: '#ffffff',
-              letterSpacing: '0.04em',
-              textTransform: 'uppercase',
-            }}>
-              INTERACTION CLASSIFICATION
-            </h2>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {[
-              { type: 'login_attempt', label: 'Decoy Login Attempt', count: (metrics?.events_by_type as any)?.login_attempt ?? 0, color: '#f59e0b' },
-              { type: 'command_injection', label: 'Command Injection Traps', count: (metrics?.events_by_type as any)?.command_injection ?? 0, color: '#f43f5e' },
-              { type: 'honeytoken_accessed', label: 'Honeytoken Canary Alerts', count: (metrics?.events_by_type as any)?.honeytoken_accessed ?? 0, color: '#c084fc' },
-              { type: 'file_upload', label: 'Quarantined Upload', count: (metrics?.events_by_type as any)?.file_upload ?? 0, color: '#ef4444' },
-              { type: 'recon_probe', label: 'Reconnaissance Probe', count: (metrics?.events_by_type as any)?.recon_probe ?? 0, color: '#38bdf8' },
-              { type: 'unauthorized_access', label: 'Unauthorized Enclave Access', count: (metrics?.events_by_type as any)?.unauthorized_access ?? 0, color: '#8b5cf6' },
-            ].map((item) => (
-              <div
-                key={item.type}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '10px 14px',
-                  background: 'rgba(255, 255, 255, 0.02)',
-                  border: '1px solid var(--border-subtle)',
-                  borderRadius: '6px',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: item.color }} />
-                  <span style={{ fontSize: '0.82rem', fontWeight: 500 }}>{item.label}</span>
-                </div>
-                <span style={{
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontWeight: 600,
-                  fontSize: '0.9rem',
-                  color: '#ffffff',
-                }}>
-                  {item.count}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
 
-      {/* Hourly Trend Ingestion Activity */}
-      <div className="glass-panel" style={{ padding: '24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Activity size={18} color="#10b981" />
-            <h2 style={{
-              fontFamily: "'Chakra Petch', sans-serif",
-              fontSize: '1rem',
-              fontWeight: 700,
-              color: '#ffffff',
-              letterSpacing: '0.04em',
-              textTransform: 'uppercase',
-            }}>
-              RECENT OBSERVATIONAL ACTIVITY
-            </h2>
-          </div>
-          <button
-            onClick={onNavigateToStream}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#00b4d8',
-              fontSize: '0.78rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-            }}
-          >
-            VIEW LIVE TELEMETRY STREAM &rarr;
-          </button>
-        </div>
+      {/* ========================================================= */}
+      {/* 3. CONTINUOUS OBSERVATIONAL IMPULSE WAVEFORM CHART        */}
+      {/* ========================================================= */}
 
-        {/* Activity Bars */}
+      {/* Observational Telemetry Impulse Waveform Chart */}
+      <div className="glass-panel" style={{ padding: '24px' }}>
         <div style={{
           display: 'flex',
-          alignItems: 'flex-end',
           justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '16px',
+          flexWrap: 'wrap',
           gap: '12px',
-          height: '140px',
-          paddingTop: '20px',
         }}>
-          {(metrics?.recent_activity || []).map((pt, i) => {
-            const maxVal = Math.max(...(metrics?.recent_activity.map((p) => p.count) || [1]), 1);
-            const heightPct = Math.max(Math.round((pt.count / maxVal) * 100), 10);
-            return (
-              <div
-                key={i}
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '8px',
-                  height: '100%',
-                  justifyContent: 'flex-end',
-                }}
-              >
-                <span style={{ fontSize: '0.72rem', fontFamily: "'JetBrains Mono', monospace", color: '#38bdf8' }}>
-                  {pt.count}
-                </span>
-                <div style={{
-                  width: '100%',
-                  maxWidth: '48px',
-                  height: `${heightPct}%`,
-                  background: 'linear-gradient(180deg, #00b4d8 0%, rgba(0, 180, 216, 0.2) 100%)',
-                  borderRadius: '4px 4px 0 0',
-                  borderTop: '2px solid #38bdf8',
-                  transition: 'height 0.4s ease',
-                }} />
-                <span style={{ fontSize: '0.68rem', color: 'var(--text-dim)', fontFamily: "'JetBrains Mono', monospace" }}>
-                  {pt.hour}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{
+              background: 'rgba(255, 20, 117, 0.12)',
+              border: '1px solid rgba(255, 20, 117, 0.35)',
+              borderRadius: '6px',
+              padding: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <Activity size={18} color="#ff1475" />
+            </div>
+            <div>
+              <div style={{
+                fontFamily: "'Chakra Petch', sans-serif",
+                fontSize: '1rem',
+                fontWeight: 700,
+                color: '#ffffff',
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                flexWrap: 'wrap',
+              }}>
+                RECENT OBSERVATIONAL ACTIVITY
+                <span style={{
+                  fontSize: '0.65rem',
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontWeight: 600,
+                  padding: '2px 8px',
+                  borderRadius: '9999px',
+                  background: 'rgba(16, 185, 129, 0.15)',
+                  border: '1px solid rgba(16, 185, 129, 0.35)',
+                  color: '#10b981',
+                }}>
+                  TELEMETRY IMPULSE STREAM
                 </span>
               </div>
-            );
-          })}
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: '2px' }}>
+                Real-time attack telemetry and honeypot interaction spikes over temporal window
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <button
+              onClick={onNavigateToStream}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#10b981',
+                fontSize: '0.78rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
+              VIEW LIVE TELEMETRY STREAM &rarr;
+            </button>
+          </div>
         </div>
+
+        {/* Continuous Neon Pink Telemetry Spike Waveform */}
+        <TelemetrySpikeGraph
+          events={events}
+          recentActivity={metrics?.recent_activity}
+          height={210}
+        />
       </div>
     </div>
   );

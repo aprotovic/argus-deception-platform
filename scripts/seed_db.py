@@ -51,7 +51,7 @@ async def seed():
             analyst = User(
                 username=analyst_name,
                 email="analyst@argus-defense.local",
-                hashed_password=hash_password("Analyst2026!SecOps"),
+                hashed_password=hash_password(settings.ANALYST_PASSWORD),
                 role="analyst",
                 is_active=True,
             )

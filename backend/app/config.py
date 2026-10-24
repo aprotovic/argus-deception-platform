@@ -30,6 +30,13 @@ class Settings(BaseSettings):
     # Ingestion Token for mutual Decoy-to-Backend authentication
     INTERNAL_INGESTION_TOKEN: str = "argus_internal_decoy_token_secret_replace_in_prod"
 
+    # Telegram Alert Notifications (optional)
+    TELEGRAM_BOT_TOKEN: str = ""  # Set via TELEGRAM_BOT_TOKEN env var
+    TELEGRAM_CHAT_ID: str = ""    # Set via TELEGRAM_CHAT_ID env var
+    # Telegram Alert Notifications
+    TELEGRAM_BOT_TOKEN: str = ""   # Set via TELEGRAM_BOT_TOKEN env var
+    TELEGRAM_CHAT_ID: str = ""     # Set via TELEGRAM_CHAT_ID env var
+
     # Database Settings
     DATABASE_URL: str = "postgresql+asyncpg://argus_user:argus_secure_password@localhost:5432/argus_telemetry"
     
@@ -54,7 +61,23 @@ class Settings(BaseSettings):
     # Initial Admin Seed
     ADMIN_USERNAME: str = "argus_admin"
     ADMIN_EMAIL: str = "admin@argus-defense.local"
-    ADMIN_PASSWORD: str = "ArgusAdmin2026!ChangeMe"
+    ANALYST_PASSWORD: str = ""  # Set via ANALYST_PASSWORD env var
+    ADMIN_PASSWORD: str = ""  # Set via ADMIN_PASSWORD env var
+
+    # Decoy Split — Event Forwarding
+    BACKEND_INGEST_URL: str = "http://argus-backend:8000"
+    DECOY_SPOOL_DIR: str = "/tmp/argus_decoy_spool"
+    DECOY_SPOOL_MAX_BYTES: int = 100 * 1024 * 1024  # 100 MB
+    DEFAULT_DECOY_ID: str = "00000000-0000-0000-0000-000000000001"
+
+    # MySQL Protocol Decoy
+    MYSQL_DECOY_PORT: int = 3306
+    MYSQL_DECOY_VERSION_STRING: str = "8.0.36-0ubuntu0.22.04.1"
+    MYSQL_DECOY_BAIT_CREDENTIALS: str = "[]"   # JSON: [{"username":"root","password":"..."}]
+    MYSQL_DECOY_HANDSHAKE_TIMEOUT: float = 10.0   # seconds: TCP connect → login packet
+    MYSQL_DECOY_IDLE_TIMEOUT: float = 30.0        # seconds: per-command idle after login
+    MYSQL_DECOY_MAX_CONNECTIONS: int = 100         # 201st is closed immediately
+    MYSQL_DECOY_SPOOL_DIR: str = "/tmp/argus_mysql_decoy_spool"
 
     @property
     def quarantine_path(self) -> Path:
