@@ -157,4 +157,37 @@ export const api = {
     if (token) query.set('token', token);
     return `${API_BASE}/export/events?${query.toString()}`;
   },
+
+  // Threat Intelligence
+  async getGeoMap(): Promise<any[]> {
+    return request('/intel/geo-map');
+  },
+
+  async getThreatScores(): Promise<any[]> {
+    return request('/intel/threat-scores');
+  },
+
+  async simulateGlobalThreats(): Promise<any> {
+    return request('/intel/simulate-sample', { method: 'POST' });
+  },
+
+  async downloadIncidentReport(ip: string): Promise<void> {
+    const token = getAuthToken();
+    const response = await fetch(`${API_BASE}/export/incident-report/${encodeURIComponent(ip)}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!response.ok) {
+      throw new ApiError(response.status, 'Incident report export failed');
+    }
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `argus_incident_${ip.replace(/\./g, '_')}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  },
+
 };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Globe, Shield, AlertTriangle, TrendingUp, RefreshCw, Download, Zap, Radio } from 'lucide-react';
+import { Globe, Shield, AlertTriangle, TrendingUp, RefreshCw, Download, Zap, Radio, AlertCircle } from 'lucide-react';
+import { api } from '../../services/api';
 
 interface GeoEntry {
   ip: string;
@@ -37,7 +38,7 @@ const SEV_COLOR: Record<string, string> = {
 function ll2xy(lat: number, lon: number): [number, number] {
   const x = ((lon + 180) / 360) * 1000;
   const y = ((90 - lat) / 180) * 500;
-  return [Math.max(10, Math.min(990, x)), Math.max(10, Math.min(490, y))];
+  return [Math.max(12, Math.min(988, x)), Math.max(12, Math.min(488, y))];
 }
 
 function fmtDt(dt: string) {
@@ -53,18 +54,21 @@ export const ThreatMapView: React.FC = () => {
   const [selectedIP, setSelectedIP] = useState<string | null>(null);
   const [section, setSection] = useState<'map' | 'scores'>('map');
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setErrorMsg(null);
     try {
-      const [gRes, tRes] = await Promise.all([
-        fetch('/api/v1/intel/geo-map', { credentials: 'include' }),
-        fetch('/api/v1/intel/threat-scores', { credentials: 'include' }),
+      const [gData, tData] = await Promise.all([
+        api.getGeoMap(),
+        api.getThreatScores(),
       ]);
-      if (gRes.ok) setGeoData(await gRes.json());
-      if (tRes.ok) setThreats(await tRes.json());
-    } catch (e) {
+      setGeoData(gData || []);
+      setThreats(tData || []);
+    } catch (e: any) {
       console.error('Intel fetch failed:', e);
+      setErrorMsg(e?.message || 'Failed to fetch threat intelligence data');
     } finally {
       setLoading(false);
     }
@@ -74,35 +78,27 @@ export const ThreatMapView: React.FC = () => {
 
   const handleSimulateGlobal = async () => {
     setSimulating(true);
+    setErrorMsg(null);
     try {
-      const res = await fetch('/api/v1/intel/simulate-sample', {
-        method: 'POST',
-        credentials: 'include',
-      });
-      if (res.ok) {
-        setToastMsg('Simulated 5 international threat actors across US, Europe, Asia & Africa');
-        await fetchData();
-        setTimeout(() => setToastMsg(null), 4000);
-      }
-    } catch (e) {
+      await api.simulateGlobalThreats();
+      setToastMsg('Simulated 5 international threat actors across US, Europe, Asia & Africa');
+      await fetchData();
+      setTimeout(() => setToastMsg(null), 4500);
+    } catch (e: any) {
       console.error('Simulation error:', e);
+      setErrorMsg(e?.message || 'Threat simulation request failed');
     } finally {
       setSimulating(false);
     }
   };
 
-  const downloadPDF = async (ip: string) => {
+  const handleDownloadPDF = async (ip: string) => {
     try {
-      const res = await fetch(`/api/v1/export/incident-report/${encodeURIComponent(ip)}`, { credentials: 'include' });
-      if (!res.ok) return;
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `argus_incident_${ip.replace(/\./g, '_')}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (e) { console.error('PDF download failed:', e); }
+      await api.downloadIncidentReport(ip);
+    } catch (e: any) {
+      console.error('PDF download failed:', e);
+      setErrorMsg(`Failed to download incident report for ${ip}: ${e?.message}`);
+    }
   };
 
   const validGeo = geoData.filter(g => g.lat !== 0 || g.lon !== 0);
@@ -169,6 +165,17 @@ export const ThreatMapView: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {errorMsg && (
+        <div style={{
+          background: 'rgba(239,68,68,0.15)', border: '1px solid #ef4444',
+          borderRadius: '8px', padding: '12px 18px', color: '#f87171',
+          marginBottom: '20px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '10px'
+        }}>
+          <AlertCircle size={16} />
+          <span>{errorMsg}</span>
+        </div>
+      )}
 
       {toastMsg && (
         <div style={{
@@ -284,9 +291,9 @@ export const ThreatMapView: React.FC = () => {
               {validGeo.map(g => {
                 const [x, y] = ll2xy(g.lat, g.lon);
                 const col = SEV_COLOR[g.max_severity] || '#22c55e';
-                const baseR = Math.min(4 + Math.log2(g.event_count + 1) * 2.5, 16);
+                const baseR = Math.min(5 + Math.log2(g.event_count + 1) * 2.5, 18);
                 const isHov = hoveredIP === g.ip || selectedIP === g.ip;
-                const r = isHov ? baseR + 3 : baseR;
+                const r = isHov ? baseR + 4 : baseR;
 
                 return (
                   <g key={g.ip} style={{ cursor: 'pointer' }}
@@ -294,15 +301,15 @@ export const ThreatMapView: React.FC = () => {
                      onMouseEnter={() => setHoveredIP(g.ip)}
                      onMouseLeave={() => setHoveredIP(null)}>
                     {/* Concentric radar wave rings */}
-                    <circle cx={x} cy={y} r={r + 14} fill="none" stroke={col} strokeWidth="0.5" opacity={isHov ? 0.6 : 0.15}>
-                      <animate attributeName="r" values={`${r+4};${r+18};${r+4}`} dur="2.4s" repeatCount="indefinite" />
-                      <animate attributeName="opacity" values="0.4;0.05;0.4" dur="2.4s" repeatCount="indefinite" />
+                    <circle cx={x} cy={y} r={r + 14} fill="none" stroke={col} strokeWidth="0.6" opacity={isHov ? 0.7 : 0.2}>
+                      <animate attributeName="r" values={`${r+4};${r+20};${r+4}`} dur="2.4s" repeatCount="indefinite" />
+                      <animate attributeName="opacity" values="0.5;0.05;0.5" dur="2.4s" repeatCount="indefinite" />
                     </circle>
-                    <circle cx={x} cy={y} r={r + 6} fill="none" stroke={col} strokeWidth="0.8" opacity={isHov ? 0.7 : 0.25} />
+                    <circle cx={x} cy={y} r={r + 6} fill="none" stroke={col} strokeWidth="0.9" opacity={isHov ? 0.8 : 0.3} />
 
                     {/* Target crosshair for hovered/selected dot */}
                     {isHov && (
-                      <g stroke={col} strokeWidth="0.7" opacity="0.8">
+                      <g stroke={col} strokeWidth="0.8" opacity="0.9">
                         <line x1={x - r - 8} y1={y} x2={x - r - 2} y2={y} />
                         <line x1={x + r + 2} y1={y} x2={x + r + 8} y2={y} />
                         <line x1={x} y1={y - r - 8} x2={x} y2={y - r - 2} />
@@ -315,21 +322,21 @@ export const ThreatMapView: React.FC = () => {
                       cx={x} cy={y} r={r}
                       fill={col}
                       opacity={0.9}
-                      style={{ filter: `drop-shadow(0 0 ${isHov ? 10 : 5}px ${col})`, transition: 'all 0.2s' }}
+                      style={{ filter: `drop-shadow(0 0 ${isHov ? 12 : 6}px ${col})`, transition: 'all 0.2s' }}
                     />
 
-                    {/* Inner high-energy white centroid */}
+                    {/* Inner high-energy centroid */}
                     <circle cx={x} cy={y} r={Math.max(2, r * 0.35)} fill="#ffffff" opacity="0.95" />
 
                     {/* Country callout pill */}
                     <text
                       x={x} y={y - r - 6}
                       fill="#e2e8f0"
-                      fontSize="9"
+                      fontSize="9.5"
                       fontFamily="'Chakra Petch',sans-serif"
-                      fontWeight="600"
+                      fontWeight="700"
                       textAnchor="middle"
-                      style={{ textShadow: '0 1px 4px #000', pointerEvents: 'none' }}
+                      style={{ textShadow: '0 1px 4px #000, 0 0 6px #000', pointerEvents: 'none' }}
                     >
                       {g.country_code ? `${g.country_code} • ${g.event_count}` : g.ip}
                     </text>
@@ -462,7 +469,7 @@ export const ThreatMapView: React.FC = () => {
                       <td style={{ padding: '12px 16px', color: 'var(--text-dim)', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{fmtDt(t.first_seen)}</td>
                       <td style={{ padding: '12px 16px', color: 'var(--text-dim)', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{fmtDt(t.last_seen)}</td>
                       <td style={{ padding: '12px 16px' }}>
-                        <button onClick={() => downloadPDF(t.ip)} title={`Download forensic report for ${t.ip}`} style={{
+                        <button onClick={() => handleDownloadPDF(t.ip)} title={`Download forensic report for ${t.ip}`} style={{
                           display: 'flex', alignItems: 'center', gap: '6px',
                           background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.35)',
                           borderRadius: '4px', color: '#60a5fa', padding: '6px 10px',
