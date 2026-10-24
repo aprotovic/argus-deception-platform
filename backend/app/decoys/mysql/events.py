@@ -85,6 +85,7 @@ def build_connection_event(
     bytes_in: int,
     bytes_out: int,
     correlation_id: str,
+    queries_total: int = 0,
     timestamp: Optional[datetime] = None,
 ) -> Any:
     """Build a SecurityEvent ORM-like object for a db_connection event."""
@@ -118,6 +119,7 @@ def build_connection_event(
             "bytes_out": bytes_out,
             "authenticated": authenticated,
             "username": _truncate(username or "", _MAX_USERNAME),
+            "queries_total": queries_total,
         },
     )
 
@@ -183,6 +185,44 @@ def build_login_attempt_event(
     )
 
     return sec_event, login_attempt
+
+
+def build_query_event(
+    *,
+    event_id: uuid.UUID,
+    source_ip: str,
+    source_port: Optional[int],
+    query_text: str,
+    query_truncated: bool,
+    tag: str,
+    severity: str,
+    correlation_id: str,
+    timestamp: Optional[datetime] = None,
+) -> Any:
+    """Build a SecurityEvent for a db_query event."""
+    from app.models.security_event import SecurityEvent
+
+    return SecurityEvent(
+        id=event_id,
+        timestamp=timestamp or datetime.now(timezone.utc),
+        source_ip=_truncate(source_ip, _MAX_IP),
+        source_port=source_port,
+        http_method="SQL"[:_MAX_METHOD],
+        request_path="/mysql/query"[:_MAX_PATH],
+        query_params={},
+        headers_sanitized={},
+        user_agent="",
+        event_type="db_query"[:_MAX_EVENT_TYPE],
+        severity=severity[:_MAX_SEVERITY],
+        is_test_event=False,
+        correlation_id=_truncate(correlation_id, _MAX_CORR_ID),
+        metadata_payload={
+            "query_text": query_text,          # already sanitized/truncated
+            "query_truncated": query_truncated,
+            "command_type": "COM_QUERY",
+            "query_tag": tag,
+        },
+    )
 
 
 def _serialize_for_stub(obj: Any) -> Dict[str, Any]:

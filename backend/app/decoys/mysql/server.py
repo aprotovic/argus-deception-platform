@@ -1,6 +1,6 @@
 """MySQL decoy server — asyncio TCP server with limits and timeouts.
 
-Tasks 3 + 4 of db-decoy spec (R1, R3.1, R4).
+Tasks 3 + 4 + query-handling milestone of db-decoy spec (R1, R3.1, R4).
 
 Entry point: python -m app.decoys.mysql.server
 Starts a ForwardingEventSink (BACKEND_INGEST_URL set) or JSONL stub sink.
@@ -9,6 +9,7 @@ Safety:
 - HANDSHAKE_TIMEOUT (10s default): covers TCP-connect → login-packet.
 - IDLE_TIMEOUT (30s default): covers each command after login.
 - Packet length checked before payload is read.
+- COM_QUERY payloads over 64 KB → ERR 1153, then close the connection.
 - 201st connection is closed immediately (not queued on a semaphore).
 - All errors caught; writer always closed in finally.
 - No LOCAL INFILE, SSL or compression advertised.
@@ -18,6 +19,7 @@ Safety:
 from __future__ import annotations
 
 import asyncio
+import itertools
 import json
 import os
 import secrets
@@ -27,9 +29,11 @@ from datetime import datetime, timezone
 from typing import List, Optional, Tuple
 
 from app.decoys.mysql.auth import verify_native_password
+from app.decoys.mysql.classifier import classify, sanitize_query_text
 from app.decoys.mysql.events import (
     build_connection_event,
     build_login_attempt_event,
+    build_query_event,
     _serialize_for_stub,
 )
 from app.decoys.mysql.protocol import (
@@ -41,7 +45,17 @@ from app.decoys.mysql.protocol import (
     parse_handshake_response_41,
     read_packet,
 )
+from app.decoys.mysql.responses import dispatch_query
 from app.logging_config import logger
+
+# Per-process connection ID counter (starts at 11, wraps at 16 M)
+_CONNECTION_ID_COUNTER = itertools.count(11)
+
+# Maximum COM_QUERY payload in bytes (64 KB; oversize → ERR 1153 + close)
+MAX_QUERY_BYTES = 65_536
+
+# Maximum db_query events logged per connection before only counting
+MAX_QUERY_EVENTS_PER_CONN = 200
 
 
 # ---------------------------------------------------------------------------
@@ -97,6 +111,7 @@ class ConnectionContext:
         "username", "database", "authenticated",
         "has_login_attempt", "correlation_id",
         "login_event_id", "conn_event_id",
+        "query_events_logged", "queries_total",
     )
 
     def __init__(self, writer: asyncio.StreamWriter):
@@ -104,7 +119,7 @@ class ConnectionContext:
         self.peer_ip: str = peername[0] if peername else "0.0.0.0"
         self.peer_port: Optional[int] = peername[1] if peername else None
         self.salt: bytes = secrets.token_bytes(20)
-        self.connection_id: int = id(self) & 0xFFFFFFFF
+        self.connection_id: int = next(_CONNECTION_ID_COUNTER) & 0xFFFFFF
         self.start_time: float = time.monotonic()
         self.bytes_in: int = 0
         self.bytes_out: int = 0
@@ -116,6 +131,8 @@ class ConnectionContext:
         self.correlation_id: str = str(uuid.uuid4())[:8]
         self.login_event_id: uuid.UUID = uuid.uuid4()
         self.conn_event_id: uuid.UUID = uuid.uuid4()
+        self.query_events_logged: int = 0   # db_query events emitted this connection
+        self.queries_total: int = 0          # total COM_QUERY packets received
 
 
 # ---------------------------------------------------------------------------
@@ -208,7 +225,8 @@ async def handle_connection(
         # ── 7. Command phase (only if authenticated) ─────────────────────────
         if ctx.authenticated:
             await _command_phase(
-                ctx, reader, writer, deadline, idle_timeout, max_commands
+                ctx, reader, writer, deadline, idle_timeout, max_commands,
+                sink, version_string,
             )
 
     except Exception as e:
@@ -255,6 +273,8 @@ async def _command_phase(
     deadline: float,
     idle_timeout: float,
     max_commands: int,
+    sink,
+    version_string: str,
 ):
     """Handle COM_* commands after a successful login."""
     while time.monotonic() < deadline and ctx.commands < max_commands:
@@ -276,25 +296,64 @@ async def _command_phase(
         cmd = cmd_payload[0]
         if cmd == 0x01:  # COM_QUIT
             break
+
         elif cmd == 0x0E:  # COM_PING
             pkt = build_packet(build_ok_packet(), seq_id=seq)
             writer.write(pkt)
             await writer.drain()
             ctx.bytes_out += len(pkt)
+
         elif cmd == 0x02:  # COM_INIT_DB
-            ctx.database = cmd_payload[1:].decode("utf-8", errors="replace")[:64]
+            db = cmd_payload[1:].decode("utf-8", errors="replace")[:64]
+            ctx.database = db
             pkt = build_packet(build_ok_packet(), seq_id=seq)
             writer.write(pkt)
             await writer.drain()
             ctx.bytes_out += len(pkt)
-        elif cmd == 0x03:  # COM_QUERY — Milestone B placeholder
-            pkt = build_packet(
-                build_err_packet(1064, "You have an error in your SQL syntax", "42000"),
-                seq_id=seq,
-            )
-            writer.write(pkt)
+
+        elif cmd == 0x03:  # COM_QUERY
+            query_bytes = cmd_payload[1:]
+
+            # Item 7: query over 64 KB → ERR 1153 then close
+            if len(query_bytes) > MAX_QUERY_BYTES:
+                pkt = build_packet(
+                    build_err_packet(1153, "Got a packet bigger than 'max_allowed_packet' bytes", "08S01"),
+                    seq_id=seq,
+                )
+                writer.write(pkt)
+                await writer.drain()
+                break  # close connection after oversized query
+
+            raw_query = query_bytes.decode("utf-8", errors="replace")
+            ctx.queries_total += 1
+            clean_query, truncated = sanitize_query_text(raw_query)
+            tag, severity = classify(clean_query)
+
+            # Build and send response
+            response_pkts = dispatch_query(clean_query, ctx, seq, version_string)
+            for pkt in response_pkts:
+                writer.write(pkt)
             await writer.drain()
-            ctx.bytes_out += len(pkt)
+            ctx.bytes_out += sum(len(p) for p in response_pkts)
+
+            # Log db_query event (capped at MAX_QUERY_EVENTS_PER_CONN)
+            if ctx.query_events_logged < MAX_QUERY_EVENTS_PER_CONN:
+                try:
+                    qev = build_query_event(
+                        event_id=uuid.uuid4(),
+                        source_ip=ctx.peer_ip,
+                        source_port=ctx.peer_port,
+                        query_text=clean_query,
+                        query_truncated=truncated,
+                        tag=tag,
+                        severity=severity,
+                        correlation_id=ctx.correlation_id,
+                    )
+                    await sink.persist([qev])
+                    ctx.query_events_logged += 1
+                except Exception as e:
+                    logger.error(f"MySQL decoy: failed to persist query event: {e}")
+
         else:
             pkt = build_packet(
                 build_err_packet(1047, "Unknown command", "HY000"), seq_id=seq
@@ -327,6 +386,7 @@ async def _persist_connection_event(ctx: ConnectionContext, sink):
             bytes_in=ctx.bytes_in,
             bytes_out=ctx.bytes_out,
             correlation_id=ctx.correlation_id,
+            queries_total=getattr(ctx, "queries_total", 0),
         )
         await sink.persist([conn_ev])
     except Exception as e:
