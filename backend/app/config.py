@@ -30,12 +30,21 @@ class Settings(BaseSettings):
     # Ingestion Token for mutual Decoy-to-Backend authentication
     INTERNAL_INGESTION_TOKEN: str = "argus_internal_decoy_token_secret_replace_in_prod"
 
-    # Telegram Alert Notifications (optional)
-    TELEGRAM_BOT_TOKEN: str = ""  # Set via TELEGRAM_BOT_TOKEN env var
-    TELEGRAM_CHAT_ID: str = ""    # Set via TELEGRAM_CHAT_ID env var
-    # Telegram Alert Notifications
+    # Telegram Alert Notifications and Bot Control
     TELEGRAM_BOT_TOKEN: str = ""   # Set via TELEGRAM_BOT_TOKEN env var
-    TELEGRAM_CHAT_ID: str = ""     # Set via TELEGRAM_CHAT_ID env var
+    TELEGRAM_CHAT_ID: str = ""     # Set via TELEGRAM_CHAT_ID env var (fallback / legacy)
+    TELEGRAM_ADMIN_ID: str = ""    # Verified Telegram numeric admin ID (e.g. 6288136999)
+
+    @property
+    def telegram_admin_numeric_id(self) -> str | None:
+        """Return strictly verified numeric administrator Telegram user ID, or None if missing/invalid."""
+        admin_id = (self.TELEGRAM_ADMIN_ID or "").strip()
+        if not admin_id:
+            # Fallback to the first ID in TELEGRAM_CHAT_ID only if purely numeric
+            first_chat = (self.TELEGRAM_CHAT_ID or "").split(",")[0].strip()
+            if first_chat and first_chat.isdigit():
+                admin_id = first_chat
+        return admin_id if (admin_id and admin_id.isdigit()) else None
 
     # Database Settings
     DATABASE_URL: str = "postgresql+asyncpg://argus_user:argus_secure_password@localhost:5432/argus_telemetry"

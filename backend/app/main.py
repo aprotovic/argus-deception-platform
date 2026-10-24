@@ -37,10 +37,15 @@ async def lifespan(app: FastAPI):
     from app.core.init_db import init_default_data
     await init_default_data()
 
+    # 5. Start background Telegram Incident Command Bot with admin lockdown
+    from app.services.telegram_bot import start_telegram_bot_task, stop_telegram_bot_task
+    start_telegram_bot_task()
+
     yield
 
     # Shutdown logic
     logger.info("Shutting down ARGUS Platform...", extra={"event_type": "SYSTEM_SHUTDOWN"})
+    await stop_telegram_bot_task()
     await engine.dispose()
 
 

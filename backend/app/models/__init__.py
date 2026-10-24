@@ -6,6 +6,7 @@ from app.models.security_event import SecurityEvent
 from app.models.login_attempt import LoginAttempt
 from app.models.captured_file import CapturedFile
 from app.models.audit_log import AuditLog
+from app.models.telegram_user import TelegramUser
 
 __all__ = [
     "GUID",
@@ -15,4 +16,5 @@ __all__ = [
     "LoginAttempt",
     "CapturedFile",
     "AuditLog",
+    "TelegramUser",
 ]

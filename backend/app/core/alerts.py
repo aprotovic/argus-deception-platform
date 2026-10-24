@@ -1,10 +1,13 @@
-"""Telegram alert dispatcher for critical, high, and medium-severity security events with multi-recipient broadcast."""
+"""Telegram alert dispatcher with strict database-backed administrator lockdown."""
 
 import asyncio
 import html
 import httpx
 from app.config import settings
+from app.database import AsyncSessionLocal
 from app.logging_config import logger
+from app.models.telegram_user import TelegramUser
+from sqlalchemy import select
 
 _SEVERITY_EMOJI = {
     "critical": "\U0001f534",   # 🔴
@@ -12,6 +15,49 @@ _SEVERITY_EMOJI = {
     "medium":   "\U0001f7e1",   # 🟡
     "low":      "\U0001f7e2",   # 🟢
 }
+
+
+async def get_authorized_recipient_ids() -> list[str]:
+    """
+    Query database for verified recipients authorized to receive live security alerts.
+    Enforces server-side administrator lockdown:
+    - Only users with status == 'approved' AND is_subscribed == True receive alerts.
+    - If TELEGRAM_ADMIN_ID is missing or invalid, fails closed and returns empty list.
+    - Revoked, rejected, or pending users are strictly excluded.
+    """
+    admin_id = settings.telegram_admin_numeric_id
+    if not admin_id:
+        logger.error(
+            "FAIL CLOSED: Telegram alert delivery denied. "
+            "TELEGRAM_ADMIN_ID is missing or invalid in configuration."
+        )
+        return []
+
+    try:
+        async with AsyncSessionLocal() as session:
+            stmt = select(TelegramUser.telegram_id).where(
+                TelegramUser.status == "approved",
+                TelegramUser.is_subscribed == True,
+            )
+            result = await session.execute(stmt)
+            approved_ids = [row[0].strip() for row in result.all() if row[0] and row[0].strip().isdigit()]
+
+            # Always ensure verified admin ID receives alerts if approved
+            if admin_id not in approved_ids:
+                # Check admin record status specifically
+                admin_stmt = select(TelegramUser).where(TelegramUser.telegram_id == admin_id)
+                admin_res = await session.execute(admin_stmt)
+                admin_record = admin_res.scalar_one_or_none()
+                if admin_record is None or (admin_record.status == "approved" and admin_record.is_subscribed):
+                    approved_ids.append(admin_id)
+
+            return list(set(approved_ids))
+    except Exception as exc:
+        logger.warning(
+            f"Failed to query telegram_users database table: {exc}. "
+            f"Failing safe to verified administrator ID only."
+        )
+        return [admin_id]
 
 
 async def _send_to_single_chat(client: httpx.AsyncClient, chat_id: str, message: str, event_id: str) -> None:
@@ -40,14 +86,20 @@ async def send_telegram_alert(
     event_id: str,
 ) -> None:
     """
-    Send a Telegram notification for a security event.
-    Broadcasts to all chat IDs configured in TELEGRAM_CHAT_ID (supports comma-separated IDs).
+    Send an HTML-formatted Telegram notification for a security event.
+    Delivers strictly to verified, approved subscribers in the database.
     """
-    if not settings.TELEGRAM_BOT_TOKEN or not settings.TELEGRAM_CHAT_ID:
+    if not settings.TELEGRAM_BOT_TOKEN:
         return
 
-    chat_ids = [cid.strip() for cid in settings.TELEGRAM_CHAT_ID.split(",") if cid.strip()]
+    admin_id = settings.telegram_admin_numeric_id
+    if not admin_id:
+        logger.error("FAIL CLOSED: send_telegram_alert refused: invalid/missing administrator ID.")
+        return
+
+    chat_ids = await get_authorized_recipient_ids()
     if not chat_ids:
+        logger.info(f"Telegram alert for event {event_id} skipped: no authorized approved recipients.")
         return
 
     emoji = _SEVERITY_EMOJI.get(severity.lower(), "\u26aa")

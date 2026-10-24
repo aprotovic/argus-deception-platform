@@ -32,6 +32,8 @@ htmlcov/
 
 # Environment and Secrets
 .env
+.env.*
+*.backup*
 *.local
 *.pem
 *.key
