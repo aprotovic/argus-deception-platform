@@ -326,3 +326,136 @@ def build_eof_packet(
     payload += struct.pack("<H", warnings)
     payload += struct.pack("<H", status_flags)
     return bytes(payload)
+
+
+# ============================================================================
+# Text result set (Protocol 41, no CLIENT_DEPRECATE_EOF)
+# ============================================================================
+# Column type constants (subset we use)
+FIELD_TYPE_VAR_STRING = 0xFD   # 253 — VARCHAR / text columns
+FIELD_TYPE_LONGLONG   = 0x08   # 8   — BIGINT columns
+
+
+def build_column_definition(
+    name: str,
+    table: str = "",
+    org_name: str = "",
+    col_type: int = FIELD_TYPE_VAR_STRING,
+    col_length: int = 1024,
+    flags: int = 0,
+    decimals: int = 0,
+    charset: int = 45,        # utf8mb4
+) -> bytes:
+    """Build a Protocol 41 column definition packet payload.
+
+    Format:
+      catalog    lenenc "def"
+      schema     lenenc ""
+      table      lenenc <table>
+      org_table  lenenc <table>
+      name       lenenc <name>
+      org_name   lenenc <org_name or name>
+      0x0C       1-byte length of fixed block (always 12)
+      charset    2-byte LE
+      col_length 4-byte LE
+      col_type   1-byte
+      flags      2-byte LE
+      decimals   1-byte
+      filler     2-byte 0x00
+    """
+    payload = bytearray()
+    payload += encode_lenenc_str(b"def")
+    payload += encode_lenenc_str(b"")
+    payload += encode_lenenc_str(table.encode("utf-8"))
+    payload += encode_lenenc_str(table.encode("utf-8"))   # org_table same as table
+    payload += encode_lenenc_str(name.encode("utf-8"))
+    payload += encode_lenenc_str((org_name or name).encode("utf-8"))
+    payload += b"\x0C"                                     # fixed-block length = 12
+    payload += struct.pack("<H", charset)
+    payload += struct.pack("<I", col_length)
+    payload += bytes([col_type])
+    payload += struct.pack("<H", flags)
+    payload += bytes([decimals])
+    payload += b"\x00\x00"                                 # filler
+    return bytes(payload)
+
+
+def build_text_result_row(values: list) -> bytes:
+    """Build one text result-set row payload.
+
+    Each value is encoded as a lenenc string. None → 0xFB (SQL NULL).
+    All non-None values are converted to str then encoded as UTF-8.
+    """
+    payload = bytearray()
+    for v in values:
+        if v is None:
+            payload += b"\xFB"
+        else:
+            s = str(v).encode("utf-8")
+            payload += encode_lenenc_str(s)
+    return bytes(payload)
+
+
+def build_result_set(
+    columns: list,
+    rows: list,
+    seq_start: int = 1,
+    status_flags: int = SERVER_STATUS_AUTOCOMMIT,
+) -> tuple:
+    """Build a complete text result set as a list of (payload, seq_id) pairs.
+
+    Classic EOF format (CLIENT_DEPRECATE_EOF NOT set):
+      1 packet:  column count (lenenc)
+      N packets: column definitions
+      1 packet:  EOF (after column defs)
+      M packets: text rows
+      1 packet:  EOF (final)
+
+    Parameters
+    ----------
+    columns : list of dicts with keys:
+        name (str), table (str, default ""), type (int, default FIELD_TYPE_VAR_STRING),
+        length (int, default 1024), charset (int, default 45)
+    rows : list of lists of values (str | int | None per cell)
+    seq_start : sequence ID for the first packet (usually ctx.seq_id + 1)
+    status_flags : status flags for EOF packets
+
+    Returns
+    -------
+    List of raw packet bytes (already framed with 4-byte header).
+    """
+    packets = []
+    seq = seq_start
+
+    # 1. Column count
+    col_count_payload = encode_lenenc(len(columns))
+    packets.append(build_packet(col_count_payload, seq_id=seq))
+    seq += 1
+
+    # 2. Column definitions
+    for col in columns:
+        col_def = build_column_definition(
+            name=col["name"],
+            table=col.get("table", ""),
+            org_name=col.get("org_name", col["name"]),
+            col_type=col.get("type", FIELD_TYPE_VAR_STRING),
+            col_length=col.get("length", 1024),
+            charset=col.get("charset", 45),
+            flags=col.get("flags", 0),
+        )
+        packets.append(build_packet(col_def, seq_id=seq))
+        seq += 1
+
+    # 3. EOF after column defs
+    packets.append(build_packet(build_eof_packet(status_flags=status_flags), seq_id=seq))
+    seq += 1
+
+    # 4. Rows
+    for row in rows:
+        packets.append(build_packet(build_text_result_row(row), seq_id=seq))
+        seq += 1
+
+    # 5. Final EOF
+    packets.append(build_packet(build_eof_packet(status_flags=status_flags), seq_id=seq))
+
+    return packets
