@@ -57,6 +57,11 @@ MAX_QUERY_BYTES = 65_536
 # Maximum db_query events logged per connection before only counting
 MAX_QUERY_EVENTS_PER_CONN = 200
 
+# Safety cap for commands per connection. Real MySQL has no such limit;
+# this is a runaway-protection ceiling only. Connections close via idle
+# timeout or COM_QUIT, not by hitting this number.
+_SAFETY_MAX_COMMANDS = 100_000
+
 
 # ---------------------------------------------------------------------------
 # Configuration helpers (read from settings or env vars)
@@ -147,7 +152,7 @@ async def handle_connection(
     handshake_timeout: float = 10.0,
     idle_timeout: float = 30.0,
     conn_lifetime: float = 300.0,
-    max_commands: int = 200,
+    max_commands: int = _SAFETY_MAX_COMMANDS,
 ):
     """Handle one MySQL connection end-to-end."""
     ctx = ConnectionContext(writer)
