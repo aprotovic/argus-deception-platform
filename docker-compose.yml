@@ -100,6 +100,51 @@ services:
     ports:
       - "127.0.0.1:8080:8080"
 
+  # MySQL Protocol Decoy — raw TCP honeypot on port 3306
+  argus-mysql-decoy:
+    image: argus-app:latest
+    pull_policy: never
+    container_name: argus-mysql-decoy
+    restart: unless-stopped
+    command: ["python", "-m", "app.decoys.mysql.server"]
+    environment:
+      LOG_LEVEL: INFO
+      BACKEND_INGEST_URL: http://argus-backend:8000
+      INTERNAL_INGESTION_TOKEN: ${INTERNAL_INGESTION_TOKEN:-argus_internal_decoy_token_secret_replace_in_prod}
+      ARGUS_PASSWORD_FINGERPRINT_SECRET: ${ARGUS_PASSWORD_FINGERPRINT_SECRET:-argus_hmac_fingerprint_salt_secret_change_in_prod}
+      MYSQL_DECOY_PORT: "3306"
+      MYSQL_DECOY_SPOOL_DIR: /var/lib/argus/mysql-spool
+      MYSQL_DECOY_BAIT_CREDENTIALS: ${MYSQL_DECOY_BAIT_CREDENTIALS:-[]}
+      # NO DATABASE_URL, no POSTGRES_* — no database access
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import socket; s=socket.create_connection(('localhost',3306),timeout=3); s.close()"]
+      interval: 15s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    volumes:
+      - mysql_decoy_spool:/var/lib/argus/mysql-spool
+    networks:
+      - decoy-net
+      - backend-internal   # can reach backend, NOT db-net
+    depends_on:
+      - argus-backend
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+    ports:
+      - "127.0.0.1:3306:3306"
+
   # SOC Operations Dashboard (React + TypeScript + Nginx)
   argus-dashboard:
     build:
@@ -132,3 +177,4 @@ volumes:
   postgres_data:
   quarantine_data:
   decoy_spool:
+  mysql_decoy_spool:

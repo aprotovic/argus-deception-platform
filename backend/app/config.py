@@ -62,6 +62,15 @@ class Settings(BaseSettings):
     DECOY_SPOOL_MAX_BYTES: int = 100 * 1024 * 1024  # 100 MB
     DEFAULT_DECOY_ID: str = "00000000-0000-0000-0000-000000000001"
 
+    # MySQL Protocol Decoy (db-decoy spec)
+    MYSQL_DECOY_PORT: int = 3306
+    MYSQL_DECOY_VERSION_STRING: str = "8.0.36-0ubuntu0.22.04.1"
+    MYSQL_DECOY_BAIT_CREDENTIALS: str = "[]"   # JSON: [{"username":"root","password":"..."}]
+    MYSQL_DECOY_HANDSHAKE_TIMEOUT: float = 10.0   # seconds: TCP connect → login packet
+    MYSQL_DECOY_IDLE_TIMEOUT: float = 30.0        # seconds: per-command idle after login
+    MYSQL_DECOY_MAX_CONNECTIONS: int = 100         # 201st is closed immediately
+    MYSQL_DECOY_SPOOL_DIR: str = "/tmp/argus_mysql_decoy_spool"
+
     @property
     def quarantine_path(self) -> Path:
         p = Path(self.QUARANTINE_STORAGE_DIR).resolve()
