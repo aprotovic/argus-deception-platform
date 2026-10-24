@@ -220,3 +220,169 @@ async def test_admin_can_approve_and_revoke_user(db_session, monkeypatch):
     mock_client.reset_mock()
     await process_update(mock_client, update_status)
     assert any("Access Denied" in str(c) for c in mock_client.post.call_args_list)
+
+
+@pytest.mark.asyncio
+async def test_user_activity_tracking_and_userinfo(db_session, monkeypatch):
+    """Verify command count, command history tracking, and /userinfo profile display."""
+    admin_id = "6288136999"
+    target_id = "5551234567"
+
+    monkeypatch.setattr(settings, "TELEGRAM_ADMIN_ID", admin_id)
+
+    mock_client = AsyncMock()
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_client.post.return_value = mock_resp
+
+    # Target user joins and executes commands
+    update_start = {
+        "update_id": 401,
+        "message": {
+            "chat": {"id": target_id},
+            "from": {"id": int(target_id), "username": "analyst_john", "first_name": "John", "last_name": "Doe"},
+            "text": "/start",
+        },
+    }
+    await process_update(mock_client, update_start)
+
+    # Approve target user so they can run commands
+    update_approve = {
+        "update_id": 402,
+        "message": {
+            "chat": {"id": admin_id},
+            "from": {"id": int(admin_id)},
+            "text": f"/approve {target_id}",
+        },
+    }
+    await process_update(mock_client, update_approve)
+
+    # Target user executes /status and /stats
+    for u_id, cmd in [(403, "/status"), (404, "/stats")]:
+        update_cmd = {
+            "update_id": u_id,
+            "message": {
+                "chat": {"id": target_id},
+                "from": {"id": int(target_id), "username": "analyst_john"},
+                "text": cmd,
+            },
+        }
+        await process_update(mock_client, update_cmd)
+
+    # Check DB record for activity tracking
+    stmt = select(TelegramUser).where(TelegramUser.telegram_id == target_id)
+    user = (await db_session.execute(stmt)).scalar_one_or_none()
+    assert user is not None
+    assert user.command_count == 3  # /start, /status, /stats
+    assert user.last_command == "/stats"
+    assert user.username == "analyst_john"
+    assert user.first_name == "John"
+    assert user.last_name == "Doe"
+
+    # Admin requests /userinfo
+    mock_client.reset_mock()
+    update_info = {
+        "update_id": 405,
+        "message": {
+            "chat": {"id": admin_id},
+            "from": {"id": int(admin_id)},
+            "text": f"/userinfo {target_id}",
+        },
+    }
+    await process_update(mock_client, update_info)
+
+    # Verify profile output contains username, name, command count, and command history
+    sent_calls = str(mock_client.post.call_args_list)
+    assert "@analyst_john" in sent_calls
+    assert "John Doe" in sent_calls
+    assert "Commands sent:" in sent_calls
+    assert "/stats" in sent_calls
+    assert "/status" in sent_calls
+
+    # Non-admin trying /userinfo must be denied
+    mock_client.reset_mock()
+    update_unauth = {
+        "update_id": 406,
+        "message": {
+            "chat": {"id": target_id},
+            "from": {"id": int(target_id)},
+            "text": f"/userinfo {target_id}",
+        },
+    }
+    await process_update(mock_client, update_unauth)
+    assert any("Unauthorized" in str(c) for c in mock_client.post.call_args_list)
+
+
+@pytest.mark.asyncio
+async def test_admin_delete_user_and_callback(db_session, monkeypatch):
+    """Verify admin can delete a user, cannot delete self, and callback delete works."""
+    admin_id = "6288136999"
+    target_id = "4449876543"
+
+    monkeypatch.setattr(settings, "TELEGRAM_ADMIN_ID", admin_id)
+
+    mock_client = AsyncMock()
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_client.post.return_value = mock_resp
+
+    # Register target user
+    update_start = {
+        "update_id": 501,
+        "message": {
+            "chat": {"id": target_id},
+            "from": {"id": int(target_id), "username": "bad_actor"},
+            "text": "/start",
+        },
+    }
+    await process_update(mock_client, update_start)
+
+    # Admin attempts to delete themselves -> rejected
+    update_del_self = {
+        "update_id": 502,
+        "message": {
+            "chat": {"id": admin_id},
+            "from": {"id": int(admin_id)},
+            "text": f"/delete {admin_id}",
+        },
+    }
+    await process_update(mock_client, update_del_self)
+    assert any("Cannot delete the administrator account" in str(c) for c in mock_client.post.call_args_list)
+
+    # Admin deletes target user via /delete
+    mock_client.reset_mock()
+    update_del = {
+        "update_id": 503,
+        "message": {
+            "chat": {"id": admin_id},
+            "from": {"id": int(admin_id)},
+            "text": f"/delete {target_id}",
+        },
+    }
+    await process_update(mock_client, update_del)
+    assert any("PERMANENTLY DELETED" in str(c) for c in mock_client.post.call_args_list)
+
+    # Verify user record is gone from DB
+    stmt = select(TelegramUser).where(TelegramUser.telegram_id == target_id)
+    user_after = (await db_session.execute(stmt)).scalar_one_or_none()
+    assert user_after is None
+
+    # Re-register user and test inline callback delete
+    await process_update(mock_client, update_start)
+    mock_client.reset_mock()
+
+    cb_update = {
+        "update_id": 504,
+        "callback_query": {
+            "id": "cb_del_1",
+            "from": {"id": int(admin_id)},
+            "message": {"chat": {"id": int(admin_id)}},
+            "data": f"delete:{target_id}",
+        },
+    }
+    await process_update(mock_client, cb_update)
+    assert any("PERMANENTLY DELETED" in str(c) for c in mock_client.post.call_args_list)
+
+    # Verify again gone
+    user_after_cb = (await db_session.execute(stmt)).scalar_one_or_none()
+    assert user_after_cb is None
