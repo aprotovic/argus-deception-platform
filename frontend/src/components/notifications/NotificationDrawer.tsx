@@ -22,7 +22,7 @@ function getBadgeColor(severity: Severity) {
     case 'high':
       return { bg: 'rgba(245, 158, 11, 0.15)', text: '#fbbf24', border: 'rgba(245, 158, 11, 0.3)' };
     default:
-      return { bg: 'rgba(16, 185, 129, 0.15)', text: '#10b981', border: 'rgba(16, 185, 129, 0.3)' };
+      return { bg: 'rgba(0, 180, 216, 0.15)', text: '#38bdf8', border: 'rgba(0, 180, 216, 0.3)' };
   }
 }
 
@@ -43,14 +43,14 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({ isOpen, 
       style={{
         position: 'absolute',
         top: '100%',
-        right: '0px',
+        right: '24px',
         marginTop: '8px',
         width: '420px',
         maxWidth: 'calc(100vw - 32px)',
-        background: 'rgba(6, 8, 6, 0.98)',
+        background: 'rgba(10, 14, 23, 0.98)',
         border: '1px solid var(--border-color)',
         borderRadius: '8px',
-        boxShadow: '0 16px 48px rgba(0, 0, 0, 0.9), 0 0 24px rgba(16, 185, 129, 0.15)',
+        boxShadow: '0 16px 48px rgba(0, 0, 0, 0.9), 0 0 24px rgba(0, 180, 216, 0.15)',
         backdropFilter: 'blur(20px)',
         zIndex: 100,
         overflow: 'hidden',
@@ -69,7 +69,7 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({ isOpen, 
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Bell size={16} color="#10b981" />
+          <Bell size={16} color="#00b4d8" />
           <span
             style={{
               fontFamily: "'Chakra Petch', sans-serif",
@@ -137,7 +137,7 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({ isOpen, 
               gap: '4px',
               fontFamily: 'Inter, sans-serif',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = '#10b981')}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#38bdf8')}
             onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
           >
             <CheckCheck size={13} />
@@ -192,8 +192,8 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({ isOpen, 
                 style={{
                   padding: '12px 18px',
                   borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
-                  background: n.read ? 'transparent' : 'rgba(16, 185, 129, 0.04)',
-                  borderLeft: n.read ? '3px solid transparent' : '3px solid #10b981',
+                  background: n.read ? 'transparent' : 'rgba(0, 180, 216, 0.04)',
+                  borderLeft: n.read ? '3px solid transparent' : '3px solid #00b4d8',
                   transition: 'background 0.15s',
                   display: 'flex',
                   flexDirection: 'column',
@@ -222,7 +222,7 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({ isOpen, 
                     </span>
                   </div>
 
-                  <span style={{ fontSize: '0.72rem', color: '#10b981', fontFamily: "'JetBrains Mono', monospace" }}>
+                  <span style={{ fontSize: '0.72rem', color: '#38bdf8', fontFamily: "'JetBrains Mono', monospace" }}>
                     {n.source_ip}
                   </span>
                 </div>
@@ -242,7 +242,7 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({ isOpen, 
                     style={{
                       background: 'rgba(255, 255, 255, 0.04)',
                       border: '1px solid rgba(255, 255, 255, 0.1)',
-                      color: '#10b981',
+                      color: '#00b4d8',
                       padding: '3px 8px',
                       borderRadius: '4px',
                       fontSize: '0.68rem',
@@ -254,12 +254,12 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({ isOpen, 
                       gap: '4px',
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)';
+                      e.currentTarget.style.background = 'rgba(0, 180, 216, 0.2)';
                       e.currentTarget.style.color = '#ffffff';
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
-                      e.currentTarget.style.color = '#10b981';
+                      e.currentTarget.style.color = '#00b4d8';
                     }}
                   >
                     <span>Inspect Forensics</span>

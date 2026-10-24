@@ -1,21 +1,14 @@
 import React from 'react';
-import { BarChart3, Activity, Lock, FileText, X } from 'lucide-react';
+import { BarChart3, Activity, Lock, FileText } from 'lucide-react';
 
 export type NavTab = 'overview' | 'stream' | 'evidence' | 'audit';
 
 interface SidebarProps {
   activeTab: NavTab;
   onTabChange: (tab: NavTab) => void;
-  isOpen?: boolean;
-  onClose?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({
-  activeTab,
-  onTabChange,
-  isOpen = false,
-  onClose,
-}) => {
+export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
   const navItems: { id: NavTab; label: string; icon: React.ReactNode; badge?: string }[] = [
     { id: 'overview', label: 'SOC Overview', icon: <BarChart3 size={18} /> },
     { id: 'stream', label: 'Live Stream', icon: <Activity size={18} /> },
@@ -24,45 +17,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   return (
-    <aside
-      className={`sidebar-aside ${isOpen ? 'mobile-open' : ''}`}
-      style={{
-        width: '240px',
-        flexShrink: 0,
-        background: 'rgba(4, 6, 5, 0.98)',
-        borderRight: '1px solid var(--border-subtle)',
-        display: 'flex',
-        flexDirection: 'column',
-        padding: '20px 12px',
-        gap: '6px',
-        height: '100%',
-        maxHeight: '100%',
-        overflowY: 'auto',
-      }}
-    >
+    <aside style={{
+      width: '240px',
+      background: 'rgba(10, 14, 23, 0.85)',
+      borderRight: '1px solid var(--border-subtle)',
+      display: 'flex',
+      flexDirection: 'column',
+      padding: '20px 12px',
+      gap: '6px',
+      minHeight: 'calc(100vh - 65px)',
+    }}>
       <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
+        fontSize: '0.68rem',
+        textTransform: 'uppercase',
+        letterSpacing: '0.08em',
+        color: 'var(--text-dim)',
+        fontFamily: "'Chakra Petch', sans-serif",
         padding: '0 12px 10px 12px',
       }}>
-        <div style={{
-          fontSize: '0.68rem',
-          textTransform: 'uppercase',
-          letterSpacing: '0.08em',
-          color: 'var(--text-dim)',
-          fontFamily: "'Chakra Petch', sans-serif",
-        }}>
-          OPERATIONAL NAVIGATION
-        </div>
-        <button
-          onClick={onClose}
-          className="sidebar-close-btn"
-          aria-label="Close navigation"
-          title="Close Navigation"
-        >
-          <X size={14} />
-        </button>
+        OPERATIONAL NAVIGATION
       </div>
 
       {navItems.map((item) => {
@@ -70,10 +43,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         return (
           <button
             key={item.id}
-            onClick={() => {
-              onTabChange(item.id);
-              if (onClose) onClose();
-            }}
+            onClick={() => onTabChange(item.id)}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -83,9 +53,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
               borderRadius: '6px',
               border: isActive ? '1px solid var(--border-accent)' : '1px solid transparent',
               background: isActive
-                ? 'linear-gradient(90deg, rgba(16, 185, 129, 0.16) 0%, rgba(16, 185, 129, 0.04) 100%)'
+                ? 'linear-gradient(90deg, rgba(0, 180, 216, 0.15) 0%, rgba(0, 180, 216, 0.04) 100%)'
                 : 'transparent',
-              color: isActive ? '#10b981' : 'var(--text-muted)',
+              color: isActive ? '#38bdf8' : 'var(--text-muted)',
               cursor: 'pointer',
               fontFamily: "'Chakra Petch', sans-serif",
               fontSize: '0.85rem',
@@ -107,7 +77,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ color: isActive ? '#10b981' : 'var(--text-dim)' }}>
+              <span style={{ color: isActive ? '#38bdf8' : 'var(--text-dim)' }}>
                 {item.icon}
               </span>
               <span>{item.label}</span>
@@ -117,8 +87,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 width: '6px',
                 height: '6px',
                 borderRadius: '50%',
-                background: '#10b981',
-                boxShadow: '0 0 8px #10b981',
+                background: '#38bdf8',
+                boxShadow: '0 0 8px #38bdf8',
               }} />
             )}
           </button>
@@ -127,12 +97,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       <div style={{ marginTop: 'auto', padding: '16px 12px', borderTop: '1px solid var(--border-subtle)' }}>
         <div style={{
-          background: 'rgba(16, 185, 129, 0.06)',
-          border: '1px solid rgba(16, 185, 129, 0.25)',
+          background: 'rgba(0, 180, 216, 0.05)',
+          border: '1px solid rgba(0, 180, 216, 0.2)',
           borderRadius: '6px',
           padding: '12px',
         }}>
-          <div style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 600, marginBottom: '4px' }}>
+          <div style={{ fontSize: '0.72rem', color: '#38bdf8', fontWeight: 600, marginBottom: '4px' }}>
             DECOY ACTIVE
           </div>
           <div style={{ fontSize: '0.68rem', color: 'var(--text-dim)', lineHeight: 1.4 }}>

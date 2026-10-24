@@ -8,7 +8,7 @@ export const LoginView: React.FC = () => {
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [showPresets, setShowPresets] = useState<boolean>(true);
+  const [showPresets, setShowPresets] = useState<boolean>(false);
 
   // Hidden shortcut (Ctrl + Shift + A) to toggle operator presets for demonstrations
   useEffect(() => {
@@ -60,19 +60,19 @@ export const LoginView: React.FC = () => {
         transform: 'translate(-50%, -50%)',
         width: '500px',
         height: '500px',
-        background: 'radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(0, 180, 216, 0.08) 0%, transparent 70%)',
         pointerEvents: 'none',
       }} />
 
       <div style={{
         width: '100%',
         maxWidth: '440px',
-        background: 'rgba(8, 12, 10, 0.95)',
+        background: 'rgba(14, 19, 31, 0.9)',
         border: '1px solid var(--border-accent)',
         borderRadius: '10px',
         padding: '36px 32px',
         backdropFilter: 'blur(16px)',
-        boxShadow: '0 20px 50px rgba(0, 0, 0, 0.9), 0 0 30px rgba(16, 185, 129, 0.15)',
+        boxShadow: '0 20px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(0, 180, 216, 0.1)',
         position: 'relative',
         zIndex: 10,
       }}>
@@ -88,13 +88,13 @@ export const LoginView: React.FC = () => {
               width: '56px',
               height: '56px',
               borderRadius: '12px',
-              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2))',
+              background: 'linear-gradient(135deg, rgba(0, 180, 216, 0.2), rgba(139, 92, 246, 0.2))',
               border: '1px solid var(--border-accent)',
               marginBottom: '16px',
               cursor: 'pointer',
             }}
           >
-            <Shield size={28} color="#10b981" />
+            <Shield size={28} color="#00b4d8" />
           </div>
 
           <h1 style={{
@@ -195,64 +195,48 @@ export const LoginView: React.FC = () => {
           </button>
         </form>
 
-        {/* Operator Quick-Connect Presets */}
+        {/* Optional Evaluator Presets - Only visible via Ctrl+Shift+A or double-clicking shield */}
         {showPresets && (
           <div style={{ marginTop: '24px', paddingTop: '18px', borderTop: '1px solid var(--border-subtle)' }}>
-            <div style={{
-              fontSize: '0.72rem',
-              color: 'var(--text-dim)',
-              marginBottom: '10px',
-              textAlign: 'center',
-              letterSpacing: '0.05em',
-            }}>
-              QUICK-CONNECT CREDENTIALS (CLICK TO AUTOFILL):
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginBottom: '8px', textAlign: 'center' }}>
+              OPERATOR QUICK-CONNECT PRESETS:
             </div>
-            <div style={{ display: 'flex', gap: '10px' }}>
+            <div style={{ display: 'flex', gap: '8px' }}>
               <button
                 type="button"
                 onClick={() => setPresetUser('argus_admin', 'ArgusAdmin2026!ChangeMe')}
                 style={{
                   flex: 1,
-                  background: 'rgba(239, 68, 68, 0.1)',
-                  border: '1px solid rgba(239, 68, 68, 0.35)',
-                  borderRadius: '6px',
-                  padding: '8px 10px',
+                  background: 'rgba(239, 68, 68, 0.08)',
+                  border: '1px solid rgba(239, 68, 68, 0.25)',
+                  borderRadius: '4px',
+                  padding: '6px',
                   color: '#f87171',
-                  fontSize: '0.75rem',
+                  fontSize: '0.72rem',
                   fontFamily: "'Chakra Petch', sans-serif",
                   fontWeight: 600,
                   cursor: 'pointer',
-                  textAlign: 'center',
-                  transition: 'all 0.2s ease',
                 }}
               >
-                <div>ADMINISTRATOR</div>
-                <div style={{ fontSize: '0.68rem', color: 'var(--text-dim)', marginTop: '2px', fontFamily: 'monospace' }}>
-                  argus_admin
-                </div>
+                ADMINISTRATOR
               </button>
               <button
                 type="button"
                 onClick={() => setPresetUser('analyst', 'Analyst2026!SecOps')}
                 style={{
                   flex: 1,
-                  background: 'rgba(16, 185, 129, 0.1)',
-                  border: '1px solid rgba(16, 185, 129, 0.35)',
-                  borderRadius: '6px',
-                  padding: '8px 10px',
-                  color: '#10b981',
-                  fontSize: '0.75rem',
+                  background: 'rgba(0, 180, 216, 0.08)',
+                  border: '1px solid rgba(0, 180, 216, 0.25)',
+                  borderRadius: '4px',
+                  padding: '6px',
+                  color: '#38bdf8',
+                  fontSize: '0.72rem',
                   fontFamily: "'Chakra Petch', sans-serif",
                   fontWeight: 600,
                   cursor: 'pointer',
-                  textAlign: 'center',
-                  transition: 'all 0.2s ease',
                 }}
               >
-                <div>SOC ANALYST</div>
-                <div style={{ fontSize: '0.68rem', color: 'var(--text-dim)', marginTop: '2px', fontFamily: 'monospace' }}>
-                  analyst
-                </div>
+                SOC ANALYST
               </button>
             </div>
           </div>
