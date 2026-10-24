@@ -34,6 +34,10 @@ async def lifespan(app: FastAPI):
         await conn.run_sync(Base.metadata.create_all)
     logger.info("Database schema verification completed.")
 
+    # 4. Ensure default administrator and analyst users exist
+    from app.core.init_db import init_default_data
+    await init_default_data()
+
     yield
 
     # Shutdown logic

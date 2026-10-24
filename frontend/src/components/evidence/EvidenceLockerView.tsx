@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../../services/api';
 import type { CapturedFile } from '../../types';
 import { useAuth } from '../../context/AuthContext';
+import { CyberLoader } from '../common/CyberLoader';
 import {
   Lock,
   Download,
@@ -68,7 +69,7 @@ export const EvidenceLockerView: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Lock size={22} color="#00b4d8" />
+            <Lock size={22} color="#10b981" />
             <h1 style={{
               fontFamily: "'Chakra Petch', sans-serif",
               fontSize: '1.5rem',
@@ -133,8 +134,12 @@ export const EvidenceLockerView: React.FC = () => {
             <tbody>
               {loading && evidenceList.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                    Scanning evidence quarantine vault...
+                  <td colSpan={7} style={{ textAlign: 'center', padding: '36px 12px' }}>
+                    <CyberLoader
+                      mode="inline"
+                      message="SCANNING QUARANTINE VAULT..."
+                      subMessage="VERIFYING SHA-256 INTEGRITY & CHAIN OF CUSTODY"
+                    />
                   </td>
                 </tr>
               ) : evidenceList.length === 0 ? (
@@ -158,7 +163,7 @@ export const EvidenceLockerView: React.FC = () => {
                     {/* Filename */}
                     <td style={{ padding: '12px 16px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <FileCode size={16} color="#00b4d8" />
+                        <FileCode size={16} color="#10b981" />
                         <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, color: '#ffffff' }}>
                           {file.original_filename_sanitized}
                         </span>
@@ -204,7 +209,7 @@ export const EvidenceLockerView: React.FC = () => {
                     </td>
 
                     {/* Detected MIME */}
-                    <td style={{ padding: '12px 16px', fontFamily: "'JetBrains Mono', monospace", color: '#38bdf8' }}>
+                    <td style={{ padding: '12px 16px', fontFamily: "'JetBrains Mono', monospace", color: '#10b981' }}>
                       {file.detected_mime_type}
                     </td>
 

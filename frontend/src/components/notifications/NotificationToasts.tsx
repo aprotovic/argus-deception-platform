@@ -31,11 +31,11 @@ function getSeverityBadge(severity: Severity) {
       };
     default:
       return {
-        bg: 'rgba(0, 180, 216, 0.15)',
-        border: 'rgba(0, 180, 216, 0.4)',
-        text: '#38bdf8',
-        glow: '0 0 10px rgba(0, 180, 216, 0.2)',
-        icon: <ShieldAlert size={15} color="#00b4d8" />,
+        bg: 'rgba(16, 185, 129, 0.15)',
+        border: 'rgba(16, 185, 129, 0.4)',
+        text: '#10b981',
+        glow: '0 0 10px rgba(16, 185, 129, 0.2)',
+        icon: <ShieldAlert size={15} color="#10b981" />,
         label: 'TELEMETRY EVENT',
       };
   }
@@ -176,7 +176,7 @@ export const NotificationToasts: React.FC = () => {
               }}
             >
               <div>
-                IP: <span style={{ color: '#38bdf8', fontWeight: 600 }}>{toast.source_ip}</span>
+                IP: <span style={{ color: '#10b981', fontWeight: 600 }}>{toast.source_ip}</span>
               </div>
 
               <button
@@ -185,9 +185,9 @@ export const NotificationToasts: React.FC = () => {
                   dismissToast(toast.id);
                 }}
                 style={{
-                  background: 'rgba(0, 180, 216, 0.15)',
-                  border: '1px solid rgba(0, 180, 216, 0.4)',
-                  color: '#38bdf8',
+                  background: 'rgba(16, 185, 129, 0.15)',
+                  border: '1px solid rgba(16, 185, 129, 0.4)',
+                  color: '#10b981',
                   padding: '4px 8px',
                   borderRadius: '4px',
                   cursor: 'pointer',
@@ -200,12 +200,12 @@ export const NotificationToasts: React.FC = () => {
                   transition: 'all 0.15s',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(0, 180, 216, 0.3)';
+                  e.currentTarget.style.background = 'rgba(16, 185, 129, 0.3)';
                   e.currentTarget.style.color = '#ffffff';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(0, 180, 216, 0.15)';
-                  e.currentTarget.style.color = '#38bdf8';
+                  e.currentTarget.style.background = 'rgba(16, 185, 129, 0.15)';
+                  e.currentTarget.style.color = '#10b981';
                 }}
               >
                 <span>Inspect Event</span>
