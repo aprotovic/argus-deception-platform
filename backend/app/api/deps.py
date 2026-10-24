@@ -1,5 +1,6 @@
 """FastAPI API dependencies for database, authentication, and RBAC."""
 
+import hmac
 import uuid
 from typing import AsyncGenerator, Callable
 from fastapi import Depends, Header, HTTPException, Query, status
@@ -85,8 +86,20 @@ def require_role(*allowed_roles: str) -> Callable:
 async def verify_internal_ingestion_token(
     x_argus_internal_token: str | None = Header(None),
 ) -> None:
-    """Verifies mutual authentication token between decoy container and backend."""
-    if not x_argus_internal_token or x_argus_internal_token != settings.INTERNAL_INGESTION_TOKEN:
+    """Verifies mutual authentication token between decoy container and backend.
+
+    Uses hmac.compare_digest on encoded bytes to prevent timing side-channels.
+    Missing or wrong token returns 403, never 500.
+    """
+    if not x_argus_internal_token:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid or missing internal ingestion token",
+        )
+    if not hmac.compare_digest(
+        x_argus_internal_token.encode("utf-8"),
+        settings.INTERNAL_INGESTION_TOKEN.encode("utf-8"),
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid or missing internal ingestion token",

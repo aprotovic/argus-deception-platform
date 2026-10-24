@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.venv/
+venv/
+env/
+
+# Node & Frontend build artifacts
+frontend/node_modules/
+frontend/dist/
+node_modules/
+dist/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Data & secrets
+data/quarantine/*
+data/postgres/*
+*.db
+*.sqlite
+*.sqlite3
+.env
+*.pem
+*.key
+
+# IDE & OS
+.git/
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store

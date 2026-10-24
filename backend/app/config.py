@@ -56,6 +56,12 @@ class Settings(BaseSettings):
     ADMIN_EMAIL: str = "admin@argus-defense.local"
     ADMIN_PASSWORD: str = "ArgusAdmin2026!ChangeMe"
 
+    # Decoy Split — Event Forwarding (R3, R4)
+    BACKEND_INGEST_URL: str = "http://argus-backend:8000"
+    DECOY_SPOOL_DIR: str = "/tmp/argus_decoy_spool"
+    DECOY_SPOOL_MAX_BYTES: int = 100 * 1024 * 1024  # 100 MB
+    DEFAULT_DECOY_ID: str = "00000000-0000-0000-0000-000000000001"
+
     @property
     def quarantine_path(self) -> Path:
         p = Path(self.QUARANTINE_STORAGE_DIR).resolve()
