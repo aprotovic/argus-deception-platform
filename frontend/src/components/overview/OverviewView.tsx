@@ -1,22 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../../services/api';
-import type { OverviewMetrics, SecurityEvent, Severity } from '../../types';
+import type { OverviewMetrics, SecurityEvent } from '../../types';
 import { useWebSocket } from '../../context/WebSocketContext';
 import { TelemetrySpikeGraph } from './TelemetrySpikeGraph';
+import { ThreatSeveritySpectrum } from './ThreatSeveritySpectrum';
+import { CyberLoader } from '../common/CyberLoader';
 import {
   Users,
   KeyRound,
   FileArchive,
   Activity,
-  AlertTriangle,
-  Flame,
   Radio,
   Play,
   Download,
-  RefreshCw,
   Shield,
-  ShieldAlert,
-  ShieldCheck,
   Terminal,
   Crosshair,
   Radar,
@@ -31,7 +28,6 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
   const [loading, setLoading] = useState<boolean>(true);
   const [simulating, setSimulating] = useState<boolean>(false);
   const [simMessage, setSimMessage] = useState<string | null>(null);
-  const [hoveredSeverity, setHoveredSeverity] = useState<Severity | null>(null);
   const { lastEvent } = useWebSocket();
 
   const fetchMetrics = async () => {
@@ -90,14 +86,15 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
 
   if (loading && !metrics) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
-        <RefreshCw size={24} className="animate-spin" color="#10b981" />
-        <span style={{ marginLeft: '12px', color: 'var(--text-muted)' }}>Retrieving operational telemetry...</span>
-      </div>
+      <CyberLoader
+        mode="inline"
+        message="DECRYPTING LIVE SOC TELEMETRY..."
+        subMessage="SYNCHRONIZING ATTACK EVENT DISTRIBUTION & METRICS"
+      />
     );
   }
 
-  // Calculate Threat Severity metrics for the Circular Gauge
+  // Calculate Threat Index (0-100)
   const criticalCount = metrics?.events_by_severity.critical ?? 0;
   const highCount = metrics?.events_by_severity.high ?? 0;
   const mediumCount = metrics?.events_by_severity.medium ?? 0;
@@ -105,73 +102,6 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
   const totalEvents = metrics?.total_events || 0;
   const safeTotal = totalEvents || 1;
 
-  // Arc math for the circular gauge (circumference of r=50 is ~314.16)
-  const radius = 50;
-  const circumference = 2 * Math.PI * radius;
-  
-  const severitiesList: Array<{
-    key: Severity;
-    label: string;
-    count: number;
-    color: string;
-    glow: string;
-    action: string;
-    icon: React.ReactNode;
-  }> = [
-    {
-      key: 'critical',
-      label: 'CRITICAL',
-      count: criticalCount,
-      color: '#ef4444',
-      glow: 'rgba(239, 68, 68, 0.45)',
-      action: 'ISOLATION ENFORCED',
-      icon: <Flame size={14} color="#ef4444" />,
-    },
-    {
-      key: 'high',
-      label: 'HIGH',
-      count: highCount,
-      color: '#f97316',
-      glow: 'rgba(249, 115, 22, 0.45)',
-      action: 'AUTOMATED BLOCK',
-      icon: <AlertTriangle size={14} color="#f97316" />,
-    },
-    {
-      key: 'medium',
-      label: 'MEDIUM',
-      count: mediumCount,
-      color: '#f59e0b',
-      glow: 'rgba(245, 158, 11, 0.45)',
-      action: 'DECOY ENGAGED',
-      icon: <ShieldAlert size={14} color="#f59e0b" />,
-    },
-    {
-      key: 'low',
-      label: 'LOW',
-      count: lowCount,
-      color: '#10b981',
-      glow: 'rgba(16, 185, 129, 0.45)',
-      action: 'PASSIVE AUDIT',
-      icon: <ShieldCheck size={14} color="#10b981" />,
-    },
-  ];
-
-  // Calculate cumulative arc offsets
-  let cumulativeLength = 0;
-  const severityArcs = severitiesList.map((sev) => {
-    const fraction = totalEvents > 0 ? sev.count / totalEvents : 0;
-    const arcLength = fraction * circumference;
-    const offset = -cumulativeLength;
-    cumulativeLength += arcLength;
-    return {
-      ...sev,
-      fraction,
-      arcLength,
-      offset,
-    };
-  });
-
-  // Calculate Threat Index (0-100)
   const threatIndex = Math.min(100, Math.round(
     ((criticalCount * 4 + highCount * 3 + mediumCount * 1.5 + lowCount * 0.5) / Math.max(1, totalEvents)) * 25
   ));
@@ -717,258 +647,8 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
       {/* ========================================================= */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(440px, 1fr))', gap: '22px' }}>
         
-        {/* LEFT: THREAT SEVERITY SPECTRUM (Interactive Radar Donut & Segmented LED Bars) */}
-        <div style={{
-          background: 'linear-gradient(180deg, rgba(8, 14, 10, 0.95) 0%, rgba(3, 6, 4, 0.98) 100%)',
-          border: '1px solid rgba(16, 185, 129, 0.22)',
-          borderRadius: '10px',
-          padding: '24px',
-          display: 'flex',
-          flexDirection: 'column',
-          position: 'relative',
-          boxShadow: '0 12px 32px rgba(0, 0, 0, 0.75)',
-        }}>
-          {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{
-                background: 'rgba(239, 68, 68, 0.12)',
-                border: '1px solid rgba(239, 68, 68, 0.35)',
-                borderRadius: '6px',
-                padding: '6px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                <Flame size={18} color="#ef4444" />
-              </div>
-              <div>
-                <h2 style={{
-                  fontFamily: "'Chakra Petch', sans-serif",
-                  fontSize: '1rem',
-                  fontWeight: 700,
-                  color: '#ffffff',
-                  letterSpacing: '0.04em',
-                  textTransform: 'uppercase',
-                  margin: 0,
-                }}>
-                  THREAT SEVERITY SPECTRUM
-                </h2>
-                <span style={{ fontSize: '0.72rem', color: '#64748b', fontFamily: "'JetBrains Mono', monospace" }}>
-                  TELEMETRY ENGINE // SEVERITY PROFILE
-                </span>
-              </div>
-            </div>
-
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '3px 8px',
-              borderRadius: '4px',
-              background: criticalCount > 0 ? 'rgba(239, 68, 68, 0.12)' : 'rgba(16, 185, 129, 0.12)',
-              border: `1px solid ${criticalCount > 0 ? 'rgba(239, 68, 68, 0.4)' : 'rgba(16, 185, 129, 0.4)'}`,
-              fontSize: '0.7rem',
-              fontFamily: "'JetBrains Mono', monospace",
-              color: criticalCount > 0 ? '#f87171' : '#10b981',
-              fontWeight: 600,
-            }}>
-              <span className="radar-dot" style={{
-                width: '6px',
-                height: '6px',
-                background: criticalCount > 0 ? '#ef4444' : '#10b981'
-              }} />
-              {criticalCount > 0 ? 'CRITICAL RISK' : 'CONTAINED'}
-            </div>
-          </div>
-
-          {/* Visual Breakdown: Circular Arc Radar + Segmented Level Meters */}
-          <div style={{ display: 'flex', gap: '24px', alignItems: 'center', flexWrap: 'wrap' }}>
-            
-            {/* Circular Polar Threat Arc Gauge */}
-            <div style={{ position: 'relative', width: '140px', height: '140px', flexShrink: 0, margin: '0 auto' }}>
-              <svg viewBox="0 0 140 140" style={{ width: '140px', height: '140px', transform: 'rotate(-90deg)' }}>
-                {/* Background Tech Ring */}
-                <circle
-                  cx="70"
-                  cy="70"
-                  r={radius}
-                  fill="none"
-                  stroke="rgba(255, 255, 255, 0.04)"
-                  strokeWidth="10"
-                />
-                <circle
-                  cx="70"
-                  cy="70"
-                  r={radius + 8}
-                  fill="none"
-                  stroke="rgba(16, 185, 129, 0.1)"
-                  strokeWidth="1"
-                  strokeDasharray="2 4"
-                />
-
-                {/* Severity Colored Arcs */}
-                {totalEvents === 0 ? (
-                  <circle
-                    cx="70"
-                    cy="70"
-                    r={radius}
-                    fill="none"
-                    stroke="#10b981"
-                    strokeWidth="10"
-                    strokeDasharray="6 8"
-                    opacity="0.3"
-                  />
-                ) : (
-                  severityArcs.map((sev) => {
-                    if (sev.count === 0) return null;
-                    const isHovered = hoveredSeverity === sev.key;
-                    return (
-                      <circle
-                        key={sev.key}
-                        cx="70"
-                        cy="70"
-                        r={radius}
-                        fill="none"
-                        stroke={sev.color}
-                        strokeWidth={isHovered ? 13 : 10}
-                        strokeDasharray={`${Math.max(0, sev.arcLength - 3)} ${circumference}`}
-                        strokeDashoffset={sev.offset}
-                        style={{
-                          transition: 'all 0.3s ease',
-                          cursor: 'pointer',
-                          filter: isHovered ? `drop-shadow(0 0 8px ${sev.color})` : 'none',
-                        }}
-                        onMouseEnter={() => setHoveredSeverity(sev.key)}
-                        onMouseLeave={() => setHoveredSeverity(null)}
-                      />
-                    );
-                  })
-                )}
-              </svg>
-
-              {/* Center HUD Readout */}
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                pointerEvents: 'none',
-              }}>
-                <span style={{
-                  fontSize: '1.45rem',
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontWeight: 700,
-                  color: '#ffffff',
-                  lineHeight: 1,
-                  textShadow: '0 0 12px rgba(16, 185, 129, 0.4)',
-                }}>
-                  {hoveredSeverity
-                    ? metrics?.events_by_severity[hoveredSeverity] ?? 0
-                    : totalEvents}
-                </span>
-                <span style={{
-                  fontSize: '0.62rem',
-                  fontFamily: "'Chakra Petch', sans-serif",
-                  fontWeight: 600,
-                  color: '#64748b',
-                  letterSpacing: '0.08em',
-                  marginTop: '2px',
-                  textTransform: 'uppercase',
-                }}>
-                  {hoveredSeverity ? hoveredSeverity : 'THREATS'}
-                </span>
-                <span style={{
-                  fontSize: '0.6rem',
-                  fontFamily: "'JetBrains Mono', monospace",
-                  color: '#10b981',
-                  marginTop: '1px',
-                }}>
-                  SCORE: {threatIndex}
-                </span>
-              </div>
-            </div>
-
-            {/* Segmented LED Level Meters */}
-            <div style={{ flex: 1, minWidth: '220px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {severitiesList.map((sev) => {
-                const pct = Math.round((sev.count / safeTotal) * 100);
-                const isHovered = hoveredSeverity === sev.key;
-                const totalBlocks = 14;
-                const filledBlocks = totalEvents > 0 ? Math.round((sev.count / totalEvents) * totalBlocks) : 0;
-
-                return (
-                  <div
-                    key={sev.key}
-                    onMouseEnter={() => setHoveredSeverity(sev.key)}
-                    onMouseLeave={() => setHoveredSeverity(null)}
-                    style={{
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      background: isHovered ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.015)',
-                      border: `1px solid ${isHovered ? sev.color : 'rgba(255, 255, 255, 0.05)'}`,
-                      transition: 'all 0.2s ease',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        {sev.icon}
-                        <span style={{
-                          fontFamily: "'Chakra Petch', sans-serif",
-                          fontSize: '0.78rem',
-                          fontWeight: 700,
-                          color: sev.color,
-                          letterSpacing: '0.04em',
-                        }}>
-                          {sev.label}
-                        </span>
-                        <span style={{
-                          fontSize: '0.62rem',
-                          fontFamily: "'JetBrains Mono', monospace",
-                          color: '#475569',
-                          padding: '1px 5px',
-                          borderRadius: '3px',
-                          background: 'rgba(255, 255, 255, 0.03)',
-                        }}>
-                          {sev.action}
-                        </span>
-                      </div>
-                      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '0.8rem', fontWeight: 600, color: '#f1f5f9' }}>
-                        {sev.count} <span style={{ color: '#64748b', fontSize: '0.72rem', fontWeight: 400 }}>({pct}%)</span>
-                      </div>
-                    </div>
-
-                    {/* 14 Discrete LED Segmented Blocks */}
-                    <div style={{ display: 'flex', gap: '3px', marginTop: '4px' }}>
-                      {Array.from({ length: totalBlocks }).map((_, blockIdx) => {
-                        const isFilled = blockIdx < filledBlocks;
-                        return (
-                          <div
-                            key={blockIdx}
-                            style={{
-                              flex: 1,
-                              height: '6px',
-                              borderRadius: '1px',
-                              background: isFilled ? sev.color : 'rgba(255, 255, 255, 0.05)',
-                              boxShadow: isFilled ? `0 0 6px ${sev.glow}` : 'none',
-                              transition: 'all 0.3s ease',
-                            }}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+        {/* LEFT: ADVANCED CYBER THREAT SEVERITY SPECTRUM */}
+        <ThreatSeveritySpectrum metrics={metrics} />
 
         {/* RIGHT: DECEPTION VECTOR INVENTORY (Honeytrap Vector Hub) */}
         <div style={{

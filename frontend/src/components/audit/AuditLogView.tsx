@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../../services/api';
 import type { AuditLog } from '../../types';
 import { FileText, RefreshCw, Shield } from 'lucide-react';
+import { CyberLoader } from '../common/CyberLoader';
 
 export const AuditLogView: React.FC = () => {
   const [logs, setLogs] = useState<AuditLog[]>([]);
@@ -94,8 +95,12 @@ export const AuditLogView: React.FC = () => {
             <tbody>
               {loading && logs.length === 0 ? (
                 <tr>
-                  <td colSpan={5} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                    Loading compliance audit trail...
+                  <td colSpan={5} style={{ textAlign: 'center', padding: '36px 12px' }}>
+                    <CyberLoader
+                      mode="inline"
+                      message="AUDITING OPERATOR ACCESS LOGS..."
+                      subMessage="DECRYPTING COMPLIANCE INTEGRITY TRAIL"
+                    />
                   </td>
                 </tr>
               ) : logs.length === 0 ? (

@@ -11,7 +11,7 @@ import { LiveStreamView } from './components/stream/LiveStreamView';
 import { EvidenceLockerView } from './components/evidence/EvidenceLockerView';
 import { AuditLogView } from './components/audit/AuditLogView';
 import { LoginView } from './components/auth/LoginView';
-import { RefreshCw } from 'lucide-react';
+import { CyberLoader } from './components/common/CyberLoader';
 
 const DashboardLayout: React.FC = () => {
   const [activeTab, setActiveTab] = useState<NavTab>('overview');
@@ -55,12 +55,14 @@ const DashboardLayout: React.FC = () => {
           />
         )}
         <main style={{ flex: 1, minWidth: 0, height: '100%', overflowY: 'auto', background: 'var(--bg-primary)' }}>
-          {activeTab === 'overview' && (
-            <OverviewView onNavigateToStream={() => setActiveTab('stream')} />
-          )}
-          {activeTab === 'stream' && <LiveStreamView />}
-          {activeTab === 'evidence' && <EvidenceLockerView />}
-          {activeTab === 'audit' && <AuditLogView />}
+          <div key={activeTab} className="cyber-tab-pane">
+            {activeTab === 'overview' && (
+              <OverviewView onNavigateToStream={() => setActiveTab('stream')} />
+            )}
+            {activeTab === 'stream' && <LiveStreamView />}
+            {activeTab === 'evidence' && <EvidenceLockerView />}
+            {activeTab === 'audit' && <AuditLogView />}
+          </div>
         </main>
       </div>
 
@@ -80,18 +82,11 @@ const DashboardContent: React.FC = () => {
 
   if (loading) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'var(--bg-primary)',
-        color: '#10b981',
-        fontFamily: "'Chakra Petch', sans-serif",
-      }}>
-        <RefreshCw size={24} className="animate-spin" />
-        <span style={{ marginLeft: '12px' }}>INITIALIZING ARGUS ENCLAVE...</span>
-      </div>
+      <CyberLoader
+        mode="fullscreen"
+        message="INITIALIZING ARGUS ENCLAVE..."
+        subMessage="CALIBRATING ZERO-TRUST DECEPTION SENSORS"
+      />
     );
   }
 

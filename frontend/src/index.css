@@ -287,6 +287,79 @@ body {
 }
 
 /* ==========================================================================
+   Cyber Holographic & Tab Entrance Transitions
+   ========================================================= */
+
+@keyframes radarSweep {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulseRingGlow {
+  0%, 100% {
+    box-shadow: 0 0 16px rgba(16, 185, 129, 0.4), inset 0 0 8px rgba(16, 185, 129, 0.2);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 28px rgba(16, 185, 129, 0.75), inset 0 0 14px rgba(16, 185, 129, 0.45);
+    transform: scale(1.03);
+  }
+}
+
+@keyframes cyberTabEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(1px);
+  }
+  60% {
+    filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cyberScanlineWipe {
+  0% {
+    top: 0%;
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+.cyber-tab-pane {
+  position: relative;
+  width: 100%;
+  animation: cyberTabEntrance 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.cyber-tab-pane::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, rgba(16, 185, 129, 0.7) 50%, transparent 100%);
+  box-shadow: 0 0 12px #10b981;
+  pointer-events: none;
+  z-index: 20;
+  animation: cyberScanlineWipe 0.65s ease-out forwards;
+}
+
+/* ==========================================================================
    Responsive Small Screen / Mobile Layout & Navigation
    ========================================================= */
 

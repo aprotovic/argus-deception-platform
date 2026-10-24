@@ -3,6 +3,7 @@ import { api } from '../../services/api';
 import type { SecurityEvent } from '../../types';
 import { useWebSocket } from '../../context/WebSocketContext';
 import { EventInvestigationModal } from '../investigation/EventInvestigationModal';
+import { CyberLoader } from '../common/CyberLoader';
 import {
   Activity,
   Search,
@@ -1001,8 +1002,12 @@ export const LiveStreamView: React.FC = () => {
             <tbody>
               {loading && events.length === 0 ? (
                 <tr>
-                  <td colSpan={10} style={{ textAlign: 'center', padding: '48px', color: '#8b949e', fontSize: '0.85rem' }}>
-                    Loading telemetry stream...
+                  <td colSpan={10} style={{ textAlign: 'center', padding: '36px 12px' }}>
+                    <CyberLoader
+                      mode="inline"
+                      message="INTERCEPTING AIR-GAPPED TELEMETRY..."
+                      subMessage="AWAITING ATTACK SIGNALS ON WEBSOCKET EVENT BUS"
+                    />
                   </td>
                 </tr>
               ) : sortedEvents.length === 0 ? (

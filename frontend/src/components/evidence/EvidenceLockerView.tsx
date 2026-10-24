@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../../services/api';
 import type { CapturedFile } from '../../types';
 import { useAuth } from '../../context/AuthContext';
+import { CyberLoader } from '../common/CyberLoader';
 import {
   Lock,
   Download,
@@ -133,8 +134,12 @@ export const EvidenceLockerView: React.FC = () => {
             <tbody>
               {loading && evidenceList.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                    Scanning evidence quarantine vault...
+                  <td colSpan={7} style={{ textAlign: 'center', padding: '36px 12px' }}>
+                    <CyberLoader
+                      mode="inline"
+                      message="SCANNING QUARANTINE VAULT..."
+                      subMessage="VERIFYING SHA-256 INTEGRITY & CHAIN OF CUSTODY"
+                    />
                   </td>
                 </tr>
               ) : evidenceList.length === 0 ? (
