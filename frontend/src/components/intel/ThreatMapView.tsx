@@ -120,7 +120,24 @@ export const ThreatMapView: React.FC = () => {
     if (!mapInstanceRef.current || !markersLayerRef.current) return;
     markersLayerRef.current.clearLayers();
 
-    const validGeo = geoData.filter(g => g.lat !== 0 || g.lon !== 0);
+    // Disperse overlapping points (e.g. laptop & phone on same local network) so each has its own distinct dot & tag
+    const coordCounts: Record<string, number> = {};
+    const validGeo = (geoData || [])
+      .filter(g => g.lat !== 0 || g.lon !== 0)
+      .map(g => {
+        const key = `${g.lat.toFixed(2)},${g.lon.toFixed(2)}`;
+        const idx = coordCounts[key] || 0;
+        coordCounts[key] = idx + 1;
+        if (idx > 0) {
+          const angle = (idx * 2 * Math.PI) / 4;
+          return {
+            ...g,
+            lat: g.lat + Math.sin(angle) * 0.04,
+            lon: g.lon + Math.cos(angle) * 0.04,
+          };
+        }
+        return g;
+      });
 
     validGeo.forEach((g) => {
       const col = SEV_COLOR[g.max_severity] || '#22c55e';
@@ -141,6 +158,24 @@ export const ThreatMapView: React.FC = () => {
       });
 
       const marker = L.marker([g.lat, g.lon], { icon: customIcon });
+
+      // Permanent City & IP callout tag visible at all zoom levels
+      const cityName = g.city || g.country || 'Target Area';
+      marker.bindTooltip(
+        `
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:${col}; box-shadow:0 0 6px ${col};"></span>
+          <span style="color:#ffffff; font-weight:700;">${cityName}</span>
+          <span style="color:#94a3b8; font-family:monospace; font-size:0.68rem;">(${g.ip})</span>
+        </div>
+        `,
+        {
+          permanent: true,
+          direction: 'top',
+          offset: [0, -r - 4],
+          className: 'argus-permanent-tag',
+        }
+      );
 
       const popupHtml = `
         <div style="font-family:'Chakra Petch',sans-serif; background:#070d19; color:#e2e8f0; padding:12px 14px; border-radius:8px; border:1px solid ${col}; min-width:220px; box-shadow:0 0 16px rgba(0,0,0,0.8);">
@@ -248,6 +283,20 @@ export const ThreatMapView: React.FC = () => {
           background: rgba(13, 18, 30, 0.9) !important;
           color: #10b981 !important;
           border-color: rgba(16, 185, 129, 0.3) !important;
+        }
+        .argus-permanent-tag {
+          background: rgba(4, 8, 18, 0.95) !important;
+          border: 1px solid rgba(16, 185, 129, 0.45) !important;
+          color: #e2e8f0 !important;
+          font-family: 'Chakra Petch', sans-serif !important;
+          font-size: 0.72rem !important;
+          padding: 3px 8px !important;
+          border-radius: 4px !important;
+          box-shadow: 0 0 12px rgba(0,0,0,0.85) !important;
+          white-space: nowrap !important;
+        }
+        .argus-permanent-tag::before {
+          border-top-color: rgba(16, 185, 129, 0.45) !important;
         }
       `}</style>
 
@@ -401,6 +450,48 @@ export const ThreatMapView: React.FC = () => {
             </div>
             <div style={{ fontSize: '0.72rem', color: selectedIP ? '#10b981' : 'var(--text-dim)', fontStyle: 'italic' }}>
               {selectedIP ? `Target Inspected: ${selectedIP}` : 'Click any marker to inspect attacker forensics or zoom in'}
+            </div>
+          </div>
+
+          {/* Quick Hostile Locator Pills */}
+          <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <div style={{ fontSize: '0.68rem', color: 'var(--text-dim)', marginBottom: '8px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+              Identified Threat Origin Nodes ({geoData.length}):
+            </div>
+            <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px' }}>
+              {geoData.map((g) => {
+                const col = SEV_COLOR[g.max_severity] || '#22c55e';
+                const isSelected = selectedIP === g.ip;
+                return (
+                  <button
+                    key={g.ip}
+                    type="button"
+                    onClick={() => {
+                      setSelectedIP(g.ip);
+                      mapInstanceRef.current?.flyTo([g.lat, g.lon], 5, { duration: 1.2 });
+                    }}
+                    style={{
+                      background: isSelected ? 'rgba(16, 185, 129, 0.18)' : 'rgba(13, 18, 30, 0.85)',
+                      border: `1px solid ${isSelected ? col : 'rgba(255,255,255,0.1)'}`,
+                      borderRadius: '6px',
+                      padding: '6px 10px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: col, boxShadow: `0 0 6px ${col}` }} />
+                    <span style={{ fontSize: '0.74rem', fontFamily: 'monospace', color: '#ffffff', fontWeight: 600 }}>{g.ip}</span>
+                    <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>📍 {g.city || g.country}</span>
+                    <span style={{ fontSize: '0.65rem', background: `${col}22`, color: col, padding: '1px 5px', borderRadius: '3px', fontWeight: 700 }}>
+                      {g.event_count} ev
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
