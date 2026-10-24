@@ -123,7 +123,7 @@ export const LiveStreamView: React.FC = () => {
         {
           path: '/api/v1/decoy/auth/login?test=1',
           method: 'POST',
-          body: { username: "admin' OR 1=1--", password: 'InjectedPayload!' },
+          body: { username: "admin' OR 1=1--", password: '[INJECT_TEST]' },
         },
         {
           path: '/wp-login.php?test=1',
@@ -153,7 +153,7 @@ export const LiveStreamView: React.FC = () => {
         {
           path: '/api/v1/decoy/auth/login?test=1',
           method: 'POST',
-          body: { username: 'contractor_eval_' + Math.floor(Math.random() * 900 + 100), password: 'TestCredential99!' },
+          body: { username: 'contractor_eval_' + Math.floor(Math.random() * 900 + 100), password: '[CRED_TEST]' },
         },
       ];
       const pick = samples[Math.floor(Math.random() * samples.length)];

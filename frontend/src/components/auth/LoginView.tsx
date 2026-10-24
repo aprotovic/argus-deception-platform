@@ -8,7 +8,7 @@ export const LoginView: React.FC = () => {
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [showPresets, setShowPresets] = useState<boolean>(true);
+  const [showPresets, setShowPresets] = useState<boolean>(false);
 
   // Hidden shortcut (Ctrl + Shift + A) to toggle operator presets for demonstrations
   useEffect(() => {
@@ -36,9 +36,9 @@ export const LoginView: React.FC = () => {
     }
   };
 
-  const setPresetUser = (u: string, p: string) => {
+  const setPresetUser = (u: string) => {
     setUsername(u);
-    setPassword(p);
+    setPassword('');
     setError(null);
   };
 
@@ -210,7 +210,7 @@ export const LoginView: React.FC = () => {
             <div style={{ display: 'flex', gap: '10px' }}>
               <button
                 type="button"
-                onClick={() => setPresetUser('argus_admin', 'ArgusAdmin2026!ChangeMe')}
+                onClick={() => setPresetUser('argus_admin')}
                 style={{
                   flex: 1,
                   background: 'rgba(239, 68, 68, 0.1)',
@@ -233,7 +233,7 @@ export const LoginView: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => setPresetUser('analyst', 'Analyst2026!SecOps')}
+                onClick={() => setPresetUser('analyst')}
                 style={{
                   flex: 1,
                   background: 'rgba(16, 185, 129, 0.1)',

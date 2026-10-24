@@ -67,7 +67,7 @@ export const OverviewView: React.FC<{ onNavigateToStream: () => void }> = ({ onN
       // Simulate safe controlled login attempt
       const formData = new FormData();
       formData.append('username', 'root');
-      formData.append('password', 'SimulatedTestCredential2026!');
+      formData.append('password', '[SIMULATED]');
       await fetch('/api/v1/decoy/auth/login?test=1', {
         method: 'POST',
         body: formData,
