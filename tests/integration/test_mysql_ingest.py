@@ -53,10 +53,11 @@ async def isolated_backend(tmp_path):
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as ac:
-        yield ac, SessionLocal
-
-    app.dependency_overrides.pop(get_db, None)
-    await engine.dispose()
+        try:
+            yield ac, SessionLocal
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+            await engine.dispose()
 
 
 # ---------------------------------------------------------------------------
