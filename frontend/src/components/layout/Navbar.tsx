@@ -13,19 +13,9 @@ import {
   Bell,
   Volume2,
   VolumeX,
-  X,
-  Activity,
 } from 'lucide-react';
 
-interface NavbarProps {
-  isMobileNavOpen?: boolean;
-  onToggleMobileNav?: () => void;
-}
-
-export const Navbar: React.FC<NavbarProps> = ({
-  isMobileNavOpen = false,
-  onToggleMobileNav,
-}) => {
+export const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
   const { isConnected, liveEventCount } = useWebSocket();
   const { soundEnabled, toggleSound, unreadCount } = useNotifications();
@@ -43,24 +33,18 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, []);
 
   return (
-    <header
-      className="nav-header"
-      style={{
-        background: 'rgba(4, 6, 5, 0.98)',
-        borderBottom: '1px solid var(--border-subtle)',
-        padding: '12px 24px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        backdropFilter: 'blur(16px)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
-        minHeight: 'var(--navbar-height)',
-        maxHeight: 'var(--navbar-height)',
-        boxSizing: 'border-box',
-      }}
-    >
+    <header style={{
+      background: 'rgba(10, 14, 23, 0.95)',
+      borderBottom: '1px solid var(--border-subtle)',
+      padding: '12px 24px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backdropFilter: 'blur(16px)',
+      position: 'sticky',
+      top: 0,
+      zIndex: 50,
+    }}>
       {/* Brand & System Status */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
         <div style={{
@@ -68,23 +52,17 @@ export const Navbar: React.FC<NavbarProps> = ({
           alignItems: 'center',
           gap: '10px',
         }}>
-          <button
-            onClick={onToggleMobileNav}
-            aria-label={isMobileNavOpen ? 'Close navigation drawer' : 'Open navigation drawer'}
-            className="mobile-nav-toggle"
-            style={{
-              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2))',
-              border: '1px solid var(--border-accent)',
-              boxShadow: isMobileNavOpen ? '0 0 10px rgba(16, 185, 129, 0.35)' : 'none',
-              outline: 'none',
-            }}
-          >
-            {isMobileNavOpen ? (
-              <X size={20} color="#10b981" />
-            ) : (
-              <Shield size={20} color="#10b981" />
-            )}
-          </button>
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(0, 180, 216, 0.2), rgba(139, 92, 246, 0.2))',
+            border: '1px solid var(--border-accent)',
+            borderRadius: '6px',
+            padding: '6px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <Shield size={20} color="#00b4d8" />
+          </div>
           <div>
             <div style={{
               fontFamily: "'Chakra Petch', sans-serif",
@@ -94,30 +72,30 @@ export const Navbar: React.FC<NavbarProps> = ({
               color: '#ffffff',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
+              gap: '8px'
             }}>
               ARGUS
-              <span className="nav-version-badge" style={{
+              <span style={{
                 fontSize: '0.65rem',
                 fontFamily: "'JetBrains Mono', monospace",
                 fontWeight: 500,
-                background: 'rgba(16, 185, 129, 0.15)',
-                color: '#10b981',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
+                background: 'rgba(0, 180, 216, 0.15)',
+                color: '#00b4d8',
+                border: '1px solid rgba(0, 180, 216, 0.3)',
                 padding: '2px 6px',
                 borderRadius: '4px',
               }}>
                 v1.0-DEFENSE
               </span>
             </div>
-            <div className="nav-brand-subtitle" style={{ fontSize: '0.72rem', color: 'var(--text-dim)', letterSpacing: '0.02em' }}>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', letterSpacing: '0.02em' }}>
               Cyber Deception & Telemetry Monitor
             </div>
           </div>
         </div>
 
         {/* Live Stream Status Indicator */}
-        <div className="nav-live-pill" style={{
+        <div style={{
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
@@ -126,17 +104,16 @@ export const Navbar: React.FC<NavbarProps> = ({
           padding: '4px 10px',
           borderRadius: '9999px',
           fontSize: '0.75rem',
-          marginLeft: '4px',
+          marginLeft: '8px',
         }}>
           <span className={`radar-dot ${!isConnected ? 'offline' : ''}`} />
-          <Activity size={13} color={isConnected ? '#34d399' : '#f87171'} />
-          <span className="nav-live-text" style={{ color: isConnected ? '#34d399' : '#f87171', fontWeight: 600 }}>
+          <span style={{ color: isConnected ? '#34d399' : '#f87171', fontWeight: 600 }}>
             {isConnected ? 'LIVE FEED ACTIVE' : 'RECONNECTING'}
           </span>
           {liveEventCount > 0 && (
-            <span className="nav-live-count" style={{
-              background: 'rgba(16, 185, 129, 0.2)',
-              color: '#10b981',
+            <span style={{
+              background: 'rgba(0, 180, 216, 0.2)',
+              color: '#00b4d8',
               fontSize: '0.68rem',
               padding: '1px 6px',
               borderRadius: '8px',
@@ -150,7 +127,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       {/* Center Clock */}
-      <div className="nav-clock" style={{
+      <div style={{
         display: 'flex',
         alignItems: 'center',
         gap: '6px',
@@ -167,15 +144,14 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       {/* Operator & Quick Action Links */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         {/* Sound Chime Toggle */}
         <button
           onClick={toggleSound}
           title={soundEnabled ? 'Alert Audio: ON (Click to Mute)' : 'Alert Audio: MUTED (Click to Enable)'}
-          className="nav-audio-btn"
           style={{
-            background: soundEnabled ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255, 255, 255, 0.03)',
-            border: `1px solid ${soundEnabled ? 'rgba(16, 185, 129, 0.35)' : 'var(--border-subtle)'}`,
+            background: soundEnabled ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255, 255, 255, 0.03)',
+            border: `1px solid ${soundEnabled ? 'rgba(16, 185, 129, 0.3)' : 'var(--border-subtle)'}`,
             borderRadius: '4px',
             padding: '6px 9px',
             color: soundEnabled ? '#34d399' : 'var(--text-dim)',
@@ -189,7 +165,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           }}
         >
           {soundEnabled ? <Volume2 size={15} color="#34d399" /> : <VolumeX size={15} color="#64748b" />}
-          <span className="nav-audio-text">{soundEnabled ? 'AUDIO' : 'MUTED'}</span>
+          <span style={{ display: 'inline-block' }}>{soundEnabled ? 'AUDIO' : 'MUTED'}</span>
         </button>
 
         {/* Real-Time Notification Bell & Dropdown */}
@@ -245,16 +221,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           href="/decoy"
           target="_blank"
           rel="noopener noreferrer"
-          className="nav-decoy-link"
-          title="Decoy Trap Portal"
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
             fontSize: '0.75rem',
-            color: '#10b981',
-            background: 'rgba(16, 185, 129, 0.1)',
-            border: '1px solid rgba(16, 185, 129, 0.3)',
+            color: '#38bdf8',
+            background: 'rgba(56, 189, 248, 0.08)',
+            border: '1px solid rgba(56, 189, 248, 0.25)',
             padding: '6px 12px',
             borderRadius: '4px',
             textDecoration: 'none',
@@ -263,37 +237,36 @@ export const Navbar: React.FC<NavbarProps> = ({
             letterSpacing: '0.04em',
             transition: 'all 0.2s',
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)')}
+          onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(56, 189, 248, 0.16)')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(56, 189, 248, 0.08)')}
         >
           <Radio size={14} />
-          <span className="nav-decoy-text">DECOY PORTAL</span>
-          <ExternalLink size={12} className="nav-decoy-arrow" />
+          <span>DECOY PORTAL</span>
+          <ExternalLink size={12} />
         </a>
 
         {/* User Badge */}
-        <div
-          className="nav-user-badge"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '4px 8px',
-            borderRadius: '4px',
-            background: user?.role === 'admin' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)',
-            border: `1px solid ${user?.role === 'admin' ? 'rgba(239, 68, 68, 0.45)' : 'rgba(16, 185, 129, 0.45)'}`,
-          }}
-        >
-          <UserIcon size={14} color={user?.role === 'admin' ? '#f87171' : '#10b981'} />
-          <span className="nav-username" style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-main)' }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '4px 8px',
+          borderRadius: '4px',
+          background: 'rgba(255, 255, 255, 0.03)',
+        }}>
+          <UserIcon size={14} color="#94a3b8" />
+          <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-main)' }}>
             {user?.username}
           </span>
           <span style={{
             fontSize: '0.65rem',
             textTransform: 'uppercase',
+            padding: '1px 6px',
+            borderRadius: '3px',
             fontWeight: 700,
-            color: user?.role === 'admin' ? '#f87171' : '#10b981',
-            letterSpacing: '0.04em',
+            background: user?.role === 'admin' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(0, 180, 216, 0.2)',
+            color: user?.role === 'admin' ? '#f87171' : '#38bdf8',
+            border: `1px solid ${user?.role === 'admin' ? 'rgba(239, 68, 68, 0.4)' : 'rgba(0, 180, 216, 0.4)'}`,
           }}>
             {user?.role}
           </span>
@@ -329,4 +302,3 @@ export const Navbar: React.FC<NavbarProps> = ({
     </header>
   );
 };
-

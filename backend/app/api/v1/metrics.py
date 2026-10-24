@@ -83,24 +83,20 @@ async def get_overview_metrics(
         if t_name in events_by_type:
             events_by_type[t_name] = t_count
 
-    # 8. Activity trend over last 36 hours (1-hour resolution)
-    trend_cutoff = now - timedelta(hours=36)
-    timestamps_res = await db.execute(
-        select(SecurityEvent.timestamp).where(SecurityEvent.timestamp >= trend_cutoff)
-    )
-    event_times = [row[0] for row in timestamps_res.all()]
+    # 8. Activity trend over last 6 intervals (4 hours each or 1 hour each)
     recent_activity: List[HourlyActivity] = []
-    for i in range(35, -1, -1):
-        window_start = now - timedelta(hours=i + 1)
-        window_end = now - timedelta(hours=i)
-        count = sum(
-            1 for ts in event_times
-            if (ts.replace(tzinfo=timezone.utc) if ts.tzinfo is None else ts) >= window_start
-            and (ts.replace(tzinfo=timezone.utc) if ts.tzinfo is None else ts) < window_end
+    for i in range(5, -1, -1):
+        window_start = now - timedelta(hours=(i + 1) * 4)
+        window_end = now - timedelta(hours=i * 4)
+        count_res = await db.execute(
+            select(func.count(SecurityEvent.id))
+            .where(SecurityEvent.timestamp >= window_start)
+            .where(SecurityEvent.timestamp < window_end)
         )
+        count = count_res.scalar_one()
         recent_activity.append(
             HourlyActivity(
-                hour=f"-{i}h" if i > 0 else "Now",
+                hour=f"-{i*4}h" if i > 0 else "Now",
                 count=count,
             )
         )
