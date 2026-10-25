@@ -259,7 +259,7 @@ async def send_telegram_verification_code(code: str, username: str, email: str) 
         f"<b>Registered Email:</b> <code>{html.escape(email)}</code>\n\n"
         f"Your 6-digit verification code is:\n"
         f"👉 <b><code>{code}</code></b> 👈\n\n"
-        f"<i>Valid for 30 seconds. Enter this code in the operator login portal to authorize your new security passcode.</i>"
+        f"<i>Valid for 2 minutes. Enter this code in the operator login portal to authorize your new security passcode.</i>"
     )
 
     sent_any = False

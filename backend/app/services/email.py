@@ -67,7 +67,7 @@ Your 6-digit verification code is:
 
     {code}
 
-This code expires in 30 seconds.
+This code expires in 2 minutes.
 Enter this code in the ARGUS Operator Portal to set your new security passcode.
 
 If you did not request this recovery code, someone may be attempting to access
@@ -106,7 +106,7 @@ Security Level: DISA STIG / FOUO
       <div class="code">{code}</div>
     </div>
     
-    <p>This verification code is valid for <strong>30 seconds</strong>. If you did not initiate this request, notify your SOC Super Administrator immediately.</p>
+    <p>This verification code is valid for <strong>2 minutes</strong>. If you did not initiate this request, notify your SOC Super Administrator immediately.</p>
     
     <div class="notice">
       <strong>SECURITY NOTICE:</strong> Never share this verification code with anyone. ARGUS security staff will never request your code.
