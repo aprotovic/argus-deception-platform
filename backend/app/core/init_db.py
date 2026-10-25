@@ -1,6 +1,6 @@
 """Database initialization and default seeding logic."""
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from app.config import settings
 from app.core.security import hash_password
 from app.database import AsyncSessionLocal
@@ -13,6 +13,20 @@ async def init_default_data() -> None:
     """Ensure default administrator, analyst, and decoy services exist in the database."""
     try:
         async with AsyncSessionLocal() as session:
+            # 0. Safe schema update for user lockout and reset token columns
+            for col, col_def in [
+                ("failed_login_attempts", "INTEGER DEFAULT 0"),
+                ("locked_until", "DATETIME"),
+                ("reset_token", "VARCHAR(128)"),
+                ("reset_token_expires_at", "DATETIME"),
+            ]:
+                try:
+                    await session.execute(text(f"ALTER TABLE users ADD COLUMN {col} {col_def}"))
+                    await session.commit()
+                except Exception:
+                    # Column already exists or table freshly created
+                    await session.rollback()
+
             # 1. Administrator user
             stmt = select(User).where(User.username == settings.ADMIN_USERNAME)
             res = await session.execute(stmt)

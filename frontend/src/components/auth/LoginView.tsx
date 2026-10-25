@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { api } from '../../services/api';
 import {
   Shield,
   Eye,
@@ -8,15 +9,31 @@ import {
   X,
   AlertTriangle,
   ArrowRight,
+  CheckCircle,
+  Mail,
+  RotateCcw,
 } from 'lucide-react';
 
 export const LoginView: React.FC = () => {
   const { login } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
+  const [modalView, setModalView] = useState<'login' | 'forgot' | 'reset'>('login');
+
+  // Login form state
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
+
+  // Recovery form state
+  const [recoveryEmail, setRecoveryEmail] = useState<string>('');
+  const [recoveryCode, setRecoveryCode] = useState<string>('');
+  const [newPassword, setNewPassword] = useState<string>('');
+  const [confirmPassword, setConfirmPassword] = useState<string>('');
+  const [showNewPassword, setShowNewPassword] = useState<boolean>(false);
+
+  // Status feedback
   const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
   // Close modal on Escape key
@@ -30,15 +47,86 @@ export const LoginView: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showLoginModal]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const resetModalState = () => {
+    setError(null);
+    setSuccessMsg(null);
+    setLoading(false);
+    setModalView('login');
+  };
+
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccessMsg(null);
     setLoading(true);
 
     try {
       await login(username, password);
     } catch (err: any) {
       setError(err.message || 'Authentication rejected. Verify authorization credentials.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!recoveryEmail.trim()) {
+      setError('Please enter your registered email address.');
+      return;
+    }
+    setError(null);
+    setSuccessMsg(null);
+    setLoading(true);
+
+    try {
+      const res = await api.forgotPassword(recoveryEmail.trim());
+      setSuccessMsg(res.detail || 'Recovery code generated.');
+      if (res.dev_code) {
+        setRecoveryCode(res.dev_code);
+      }
+      setModalView('reset');
+    } catch (err: any) {
+      setError(err.message || 'Failed to dispatch recovery code.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!recoveryCode.trim()) {
+      setError('Please enter the 6-digit recovery code.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError('New passwords do not match.');
+      return;
+    }
+    if (newPassword.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
+
+    setError(null);
+    setSuccessMsg(null);
+    setLoading(true);
+
+    try {
+      const res = await api.resetPassword({
+        email: recoveryEmail.trim(),
+        token: recoveryCode.trim(),
+        new_password: newPassword,
+        confirm_password: confirmPassword,
+      });
+      setSuccessMsg(res.detail || 'Passcode successfully reset. You may now sign in.');
+      setPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setRecoveryCode('');
+      setModalView('login');
+    } catch (err: any) {
+      setError(err.message || 'Failed to reset password. Verify code and try again.');
     } finally {
       setLoading(false);
     }
@@ -114,7 +202,7 @@ export const LoginView: React.FC = () => {
         <div>
           <button
             onClick={() => {
-              setError(null);
+              resetModalState();
               setShowLoginModal(true);
             }}
             style={{
@@ -194,7 +282,7 @@ export const LoginView: React.FC = () => {
             <div>
               <button
                 onClick={() => {
-                  setError(null);
+                  resetModalState();
                   setShowLoginModal(true);
                 }}
                 style={{
@@ -222,7 +310,7 @@ export const LoginView: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Column: Clean Photographic Showcase (No messy text pills) ── */}
+          {/* Right Column: Clean Photographic Showcase ── */}
           <div style={{ position: 'relative' }}>
             <div style={{
               borderRadius: '12px',
@@ -400,7 +488,7 @@ export const LoginView: React.FC = () => {
         <div>AUTHORIZED ACCESS ONLY &copy; 2026</div>
       </footer>
 
-      {/* ── Separate Dedicated Login Modal / Overlay ── */}
+      {/* ── Separate Dedicated Login & Recovery Modal ── */}
       {showLoginModal && (
         <div
           onClick={() => setShowLoginModal(false)}
@@ -417,12 +505,12 @@ export const LoginView: React.FC = () => {
             animation: 'fadeIn 0.2s ease',
           }}
         >
-          {/* Modal Container: Clean, Unified Login (No admin/soc split, no pre-filled credentials) */}
+          {/* Modal Container */}
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
               width: '100%',
-              maxWidth: '420px',
+              maxWidth: '430px',
               background: '#070c09',
               border: '1px solid rgba(16, 185, 129, 0.35)',
               borderRadius: '12px',
@@ -463,176 +551,618 @@ export const LoginView: React.FC = () => {
               <X size={15} />
             </button>
 
-            {/* Header */}
-            <div style={{ marginBottom: '26px' }}>
-              <div style={{
-                fontSize: '0.65rem',
-                fontFamily: "'JetBrains Mono', monospace",
-                color: '#10b981',
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                marginBottom: '6px',
-              }}>
-                // SECURE OPERATOR CLEARANCE //
-              </div>
-              <h2 style={{
-                margin: 0,
-                fontFamily: "'Chakra Petch', sans-serif",
-                fontSize: '1.35rem',
-                fontWeight: 700,
-                color: '#ffffff',
-                letterSpacing: '0.04em',
-                textTransform: 'uppercase',
-              }}>
-                Operator Sign In
-              </h2>
-            </div>
+            {/* Modal View 1: Unified Sign In */}
+            {modalView === 'login' && (
+              <div>
+                <div style={{ marginBottom: '24px' }}>
+                  <div style={{
+                    fontSize: '0.65rem',
+                    fontFamily: "'JetBrains Mono', monospace",
+                    color: '#10b981',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    marginBottom: '6px',
+                  }}>
+                    // SECURE OPERATOR CLEARANCE //
+                  </div>
+                  <h2 style={{
+                    margin: 0,
+                    fontFamily: "'Chakra Petch', sans-serif",
+                    fontSize: '1.35rem',
+                    fontWeight: 700,
+                    color: '#ffffff',
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                  }}>
+                    Operator Sign In
+                  </h2>
+                </div>
 
-            {error && (
-              <div style={{
-                background: 'rgba(239, 68, 68, 0.12)',
-                border: '1px solid rgba(239, 68, 68, 0.4)',
-                borderRadius: '6px',
-                padding: '10px 14px',
-                fontSize: '0.8rem',
-                color: '#fca5a5',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                marginBottom: '20px',
-              }}>
-                <AlertTriangle size={15} />
-                <span>{error}</span>
+                {successMsg && (
+                  <div style={{
+                    background: 'rgba(16, 185, 129, 0.12)',
+                    border: '1px solid rgba(16, 185, 129, 0.4)',
+                    borderRadius: '6px',
+                    padding: '10px 14px',
+                    fontSize: '0.8rem',
+                    color: '#34d399',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '18px',
+                  }}>
+                    <CheckCircle size={15} />
+                    <span>{successMsg}</span>
+                  </div>
+                )}
+
+                {error && (
+                  <div style={{
+                    background: 'rgba(239, 68, 68, 0.12)',
+                    border: '1px solid rgba(239, 68, 68, 0.4)',
+                    borderRadius: '6px',
+                    padding: '10px 14px',
+                    fontSize: '0.8rem',
+                    color: '#fca5a5',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '8px',
+                    marginBottom: '18px',
+                    lineHeight: 1.45,
+                  }}>
+                    <AlertTriangle size={15} style={{ flexShrink: 0, marginTop: '2px' }} />
+                    <span>{error}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '0.72rem',
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                      color: 'var(--text-muted)',
+                      marginBottom: '8px',
+                      fontFamily: "'Chakra Petch', sans-serif",
+                    }}>
+                      Username / Call-Sign
+                    </label>
+                    <input
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="Enter operator username"
+                      required
+                      autoFocus
+                      autoComplete="username"
+                      style={{
+                        width: '100%',
+                        padding: '11px 14px',
+                        background: 'rgba(3, 7, 5, 0.9)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '6px',
+                        color: '#ffffff',
+                        fontFamily: "'JetBrains Mono', monospace",
+                        fontSize: '0.88rem',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        transition: 'border-color 0.15s ease',
+                      }}
+                      onFocus={(e) => (e.currentTarget.style.borderColor = '#10b981')}
+                      onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)')}
+                    />
+                  </div>
+
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <label style={{
+                        fontSize: '0.72rem',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.06em',
+                        color: 'var(--text-muted)',
+                        fontFamily: "'Chakra Petch', sans-serif",
+                      }}>
+                        Password / Passcode
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setError(null);
+                          setSuccessMsg(null);
+                          setModalView('forgot');
+                        }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#10b981',
+                          fontSize: '0.7rem',
+                          fontFamily: "'Chakra Petch', sans-serif",
+                          letterSpacing: '0.04em',
+                          cursor: 'pointer',
+                          padding: 0,
+                          transition: 'opacity 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
+                        onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
+                      >
+                        Forgot passcode?
+                      </button>
+                    </div>
+
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••••••••••"
+                        required
+                        autoComplete="current-password"
+                        style={{
+                          width: '100%',
+                          padding: '11px 40px 11px 14px',
+                          background: 'rgba(3, 7, 5, 0.9)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          borderRadius: '6px',
+                          color: '#ffffff',
+                          fontFamily: "'JetBrains Mono', monospace",
+                          fontSize: '0.88rem',
+                          outline: 'none',
+                          boxSizing: 'border-box',
+                          transition: 'border-color 0.15s ease',
+                        }}
+                        onFocus={(e) => (e.currentTarget.style.borderColor = '#10b981')}
+                        onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)')}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        style={{
+                          position: 'absolute',
+                          right: '10px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--text-dim)',
+                          cursor: 'pointer',
+                          padding: '4px',
+                        }}
+                      >
+                        {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Submit CTA */}
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      padding: '13px',
+                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                      border: 'none',
+                      borderRadius: '6px',
+                      color: '#040706',
+                      fontFamily: "'Chakra Petch', sans-serif",
+                      fontSize: '0.88rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.06em',
+                      textTransform: 'uppercase',
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      boxShadow: '0 0 16px rgba(16, 185, 129, 0.35)',
+                      transition: 'all 0.15s ease',
+                      marginTop: '6px',
+                    }}
+                  >
+                    <KeyRound size={15} />
+                    <span>{loading ? 'AUTHENTICATING ENCLAVE...' : 'AUTHENTICATE & ENTER'}</span>
+                  </button>
+                </form>
               </div>
             )}
 
-            {/* Pure Unified Login Form: No role tabs, no written credentials */}
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+            {/* Modal View 2: Forgot Password Request */}
+            {modalView === 'forgot' && (
               <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '0.72rem',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  color: 'var(--text-muted)',
-                  marginBottom: '8px',
-                  fontFamily: "'Chakra Petch', sans-serif",
-                }}>
-                  Username / Call-Sign
-                </label>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Enter operator username"
-                  required
-                  autoFocus
-                  autoComplete="username"
-                  style={{
-                    width: '100%',
-                    padding: '11px 14px',
-                    background: 'rgba(3, 7, 5, 0.9)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '6px',
-                    color: '#ffffff',
+                <div style={{ marginBottom: '22px' }}>
+                  <div style={{
+                    fontSize: '0.65rem',
                     fontFamily: "'JetBrains Mono', monospace",
-                    fontSize: '0.88rem',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                    transition: 'border-color 0.15s ease',
-                  }}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = '#10b981')}
-                  onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)')}
-                />
-              </div>
+                    color: '#10b981',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    marginBottom: '6px',
+                  }}>
+                    // PASSCODE RECOVERY //
+                  </div>
+                  <h2 style={{
+                    margin: 0,
+                    fontFamily: "'Chakra Petch', sans-serif",
+                    fontSize: '1.25rem',
+                    fontWeight: 700,
+                    color: '#ffffff',
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                  }}>
+                    Recover Operator Passcode
+                  </h2>
+                  <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '6px', lineHeight: 1.5 }}>
+                    Enter your registered email address to receive a secure 6-digit recovery code.
+                  </p>
+                </div>
 
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '0.72rem',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  color: 'var(--text-muted)',
-                  marginBottom: '8px',
-                  fontFamily: "'Chakra Petch', sans-serif",
-                }}>
-                  Password / Passcode
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter security passcode"
-                    required
-                    autoComplete="current-password"
-                    style={{
-                      width: '100%',
-                      padding: '11px 40px 11px 14px',
-                      background: 'rgba(3, 7, 5, 0.9)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                      borderRadius: '6px',
-                      color: '#ffffff',
-                      fontFamily: "'JetBrains Mono', monospace",
-                      fontSize: '0.88rem',
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                      transition: 'border-color 0.15s ease',
-                    }}
-                    onFocus={(e) => (e.currentTarget.style.borderColor = '#10b981')}
-                    onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)')}
-                  />
+                {error && (
+                  <div style={{
+                    background: 'rgba(239, 68, 68, 0.12)',
+                    border: '1px solid rgba(239, 68, 68, 0.4)',
+                    borderRadius: '6px',
+                    padding: '10px 14px',
+                    fontSize: '0.8rem',
+                    color: '#fca5a5',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '18px',
+                  }}>
+                    <AlertTriangle size={15} />
+                    <span>{error}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleForgotSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '0.72rem',
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                      color: 'var(--text-muted)',
+                      marginBottom: '8px',
+                      fontFamily: "'Chakra Petch', sans-serif",
+                    }}>
+                      Registered Email Address
+                    </label>
+                    <input
+                      type="email"
+                      value={recoveryEmail}
+                      onChange={(e) => setRecoveryEmail(e.target.value)}
+                      placeholder="operator@argus-defense.local"
+                      required
+                      autoFocus
+                      style={{
+                        width: '100%',
+                        padding: '11px 14px',
+                        background: 'rgba(3, 7, 5, 0.9)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '6px',
+                        color: '#ffffff',
+                        fontFamily: "'JetBrains Mono', monospace",
+                        fontSize: '0.88rem',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        transition: 'border-color 0.15s ease',
+                      }}
+                      onFocus={(e) => (e.currentTarget.style.borderColor = '#10b981')}
+                      onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)')}
+                    />
+                  </div>
+
                   <button
-                    type="button"
-                    onClick={() => setShowPassword((prev) => !prev)}
+                    type="submit"
+                    disabled={loading}
                     style={{
-                      position: 'absolute',
-                      right: '10px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      padding: '12px',
+                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                       border: 'none',
-                      color: 'var(--text-dim)',
-                      cursor: 'pointer',
-                      padding: '4px',
+                      borderRadius: '6px',
+                      color: '#040706',
+                      fontFamily: "'Chakra Petch', sans-serif",
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.06em',
+                      textTransform: 'uppercase',
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      boxShadow: '0 0 16px rgba(16, 185, 129, 0.35)',
+                      transition: 'all 0.15s ease',
+                      marginTop: '6px',
                     }}
                   >
-                    {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                    <Mail size={15} />
+                    <span>{loading ? 'DISPATCHING CODE...' : 'DISPATCH RECOVERY CODE'}</span>
                   </button>
-                </div>
-              </div>
 
-              {/* Submit CTA */}
-              <button
-                type="submit"
-                disabled={loading}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  padding: '13px',
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  border: 'none',
-                  borderRadius: '6px',
-                  color: '#040706',
-                  fontFamily: "'Chakra Petch', sans-serif",
-                  fontSize: '0.88rem',
-                  fontWeight: 700,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  boxShadow: '0 0 16px rgba(16, 185, 129, 0.35)',
-                  transition: 'all 0.15s ease',
-                  marginTop: '8px',
-                }}
-              >
-                <KeyRound size={15} />
-                <span>{loading ? 'AUTHENTICATING ENCLAVE...' : 'AUTHENTICATE & ENTER'}</span>
-              </button>
-            </form>
+                  <div style={{ textAlign: 'center', marginTop: '4px' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setError(null);
+                        setModalView('login');
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--text-dim)',
+                        fontSize: '0.75rem',
+                        fontFamily: "'Chakra Petch', sans-serif",
+                        cursor: 'pointer',
+                        padding: '4px',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = '#ffffff')}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-dim)')}
+                    >
+                      &larr; Back to Sign In
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* Modal View 3: Reset Password with Code */}
+            {modalView === 'reset' && (
+              <div>
+                <div style={{ marginBottom: '20px' }}>
+                  <div style={{
+                    fontSize: '0.65rem',
+                    fontFamily: "'JetBrains Mono', monospace",
+                    color: '#10b981',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    marginBottom: '6px',
+                  }}>
+                    // VERIFY &amp; RESET //
+                  </div>
+                  <h2 style={{
+                    margin: 0,
+                    fontFamily: "'Chakra Petch', sans-serif",
+                    fontSize: '1.25rem',
+                    fontWeight: 700,
+                    color: '#ffffff',
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                  }}>
+                    Set New Passcode
+                  </h2>
+                  <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '6px', lineHeight: 1.4 }}>
+                    Enter the code dispatched to <strong style={{ color: '#fff' }}>{recoveryEmail}</strong>.
+                  </p>
+                </div>
+
+                {successMsg && (
+                  <div style={{
+                    background: 'rgba(16, 185, 129, 0.12)',
+                    border: '1px solid rgba(16, 185, 129, 0.4)',
+                    borderRadius: '6px',
+                    padding: '8px 12px',
+                    fontSize: '0.75rem',
+                    color: '#34d399',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '16px',
+                  }}>
+                    <CheckCircle size={14} />
+                    <span>{successMsg}</span>
+                  </div>
+                )}
+
+                {error && (
+                  <div style={{
+                    background: 'rgba(239, 68, 68, 0.12)',
+                    border: '1px solid rgba(239, 68, 68, 0.4)',
+                    borderRadius: '6px',
+                    padding: '8px 12px',
+                    fontSize: '0.78rem',
+                    color: '#fca5a5',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '16px',
+                  }}>
+                    <AlertTriangle size={14} />
+                    <span>{error}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleResetSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                      color: 'var(--text-muted)',
+                      marginBottom: '6px',
+                      fontFamily: "'Chakra Petch', sans-serif",
+                    }}>
+                      6-Digit Recovery Code
+                    </label>
+                    <input
+                      type="text"
+                      value={recoveryCode}
+                      onChange={(e) => setRecoveryCode(e.target.value)}
+                      placeholder="e.g. 549210"
+                      required
+                      autoFocus
+                      maxLength={12}
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        background: 'rgba(3, 7, 5, 0.9)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '6px',
+                        color: '#10b981',
+                        fontFamily: "'JetBrains Mono', monospace",
+                        fontSize: '0.95rem',
+                        letterSpacing: '0.15em',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        transition: 'border-color 0.15s ease',
+                      }}
+                      onFocus={(e) => (e.currentTarget.style.borderColor = '#10b981')}
+                      onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)')}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                      color: 'var(--text-muted)',
+                      marginBottom: '6px',
+                      fontFamily: "'Chakra Petch', sans-serif",
+                    }}>
+                      New Passcode (Min 8 characters)
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showNewPassword ? 'text' : 'password'}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="••••••••••••••••"
+                        required
+                        style={{
+                          width: '100%',
+                          padding: '10px 38px 10px 14px',
+                          background: 'rgba(3, 7, 5, 0.9)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          borderRadius: '6px',
+                          color: '#ffffff',
+                          fontFamily: "'JetBrains Mono', monospace",
+                          fontSize: '0.85rem',
+                          outline: 'none',
+                          boxSizing: 'border-box',
+                          transition: 'border-color 0.15s ease',
+                        }}
+                        onFocus={(e) => (e.currentTarget.style.borderColor = '#10b981')}
+                        onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)')}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword((prev) => !prev)}
+                        style={{
+                          position: 'absolute',
+                          right: '10px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--text-dim)',
+                          cursor: 'pointer',
+                          padding: '4px',
+                        }}
+                      >
+                        {showNewPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                      color: 'var(--text-muted)',
+                      marginBottom: '6px',
+                      fontFamily: "'Chakra Petch', sans-serif",
+                    }}>
+                      Confirm New Passcode
+                    </label>
+                    <input
+                      type={showNewPassword ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="••••••••••••••••"
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        background: 'rgba(3, 7, 5, 0.9)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '6px',
+                        color: '#ffffff',
+                        fontFamily: "'JetBrains Mono', monospace",
+                        fontSize: '0.85rem',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        transition: 'border-color 0.15s ease',
+                      }}
+                      onFocus={(e) => (e.currentTarget.style.borderColor = '#10b981')}
+                      onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)')}
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      padding: '12px',
+                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                      border: 'none',
+                      borderRadius: '6px',
+                      color: '#040706',
+                      fontFamily: "'Chakra Petch', sans-serif",
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.06em',
+                      textTransform: 'uppercase',
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      boxShadow: '0 0 16px rgba(16, 185, 129, 0.35)',
+                      transition: 'all 0.15s ease',
+                      marginTop: '4px',
+                    }}
+                  >
+                    <RotateCcw size={15} />
+                    <span>{loading ? 'RESETTING PASSCODE...' : 'RESET PASSCODE & SIGN IN'}</span>
+                  </button>
+
+                  <div style={{ textAlign: 'center', marginTop: '2px' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setError(null);
+                        setSuccessMsg(null);
+                        setModalView('login');
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--text-dim)',
+                        fontSize: '0.75rem',
+                        fontFamily: "'Chakra Petch', sans-serif",
+                        cursor: 'pointer',
+                        padding: '4px',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = '#ffffff')}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-dim)')}
+                    >
+                      &larr; Back to Sign In
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
           </div>
         </div>
       )}

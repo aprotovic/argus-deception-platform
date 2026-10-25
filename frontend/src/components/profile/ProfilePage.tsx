@@ -70,9 +70,10 @@ const Field: React.FC<{
   disabled?: boolean;
   readOnly?: boolean;
   suffix?: React.ReactNode;
-}> = ({ label, value, onChange, type = 'text', placeholder, disabled, readOnly, suffix }) => (
+  error?: string | null;
+}> = ({ label, value, onChange, type = 'text', placeholder, disabled, readOnly, suffix, error }) => (
   <div style={{ marginBottom: '16px' }}>
-    <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-dim)', fontFamily: "'Chakra Petch', sans-serif", textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>
+    <label style={{ display: 'block', fontSize: '0.72rem', color: error ? '#f87171' : 'var(--text-dim)', fontFamily: "'Chakra Petch', sans-serif", textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>
       {label}
     </label>
     <div style={{ position: 'relative' }}>
@@ -86,8 +87,9 @@ const Field: React.FC<{
         style={{
           width: '100%',
           padding: '10px 14px',
-          background: readOnly || disabled ? 'rgba(16, 185, 129, 0.04)' : 'rgba(4, 10, 7, 0.8)',
-          border: '1px solid ' + (readOnly ? 'rgba(16, 185, 129, 0.15)' : 'var(--border-subtle)'),
+          background: error ? 'rgba(239, 68, 68, 0.08)' : (readOnly || disabled ? 'rgba(16, 185, 129, 0.04)' : 'rgba(4, 10, 7, 0.8)'),
+          border: error ? '1px solid #ef4444' : ('1px solid ' + (readOnly ? 'rgba(16, 185, 129, 0.15)' : 'var(--border-subtle)')),
+          boxShadow: error ? '0 0 10px rgba(239, 68, 68, 0.25)' : 'none',
           borderRadius: '6px',
           color: readOnly ? 'var(--text-muted)' : '#fff',
           fontFamily: "'JetBrains Mono', monospace",
@@ -95,10 +97,25 @@ const Field: React.FC<{
           boxSizing: 'border-box',
           outline: 'none',
           cursor: readOnly ? 'default' : 'text',
+          transition: 'all 0.15s ease',
         }}
       />
       {suffix && <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)' }}>{suffix}</div>}
     </div>
+    {error && (
+      <div style={{
+        color: '#f87171',
+        fontSize: '0.72rem',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '5px',
+        marginTop: '6px',
+        fontFamily: "'Chakra Petch', sans-serif",
+      }}>
+        <AlertTriangle size={13} />
+        <span>{error}</span>
+      </div>
+    )}
   </div>
 );
 
@@ -108,7 +125,8 @@ const PasswordField: React.FC<{
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
-}> = ({ label, value, onChange, placeholder }) => {
+  error?: string | null;
+}> = ({ label, value, onChange, placeholder, error }) => {
   const [show, setShow] = useState(false);
   return (
     <Field
@@ -117,6 +135,7 @@ const PasswordField: React.FC<{
       onChange={onChange}
       type={show ? 'text' : 'password'}
       placeholder={placeholder}
+      error={error}
       suffix={
         <button
           type="button"
@@ -225,6 +244,7 @@ export const ProfilePage: React.FC = () => {
   const [newPw, setNewPw] = useState('');
   const [confirmPw, setConfirmPw] = useState('');
   const [savingPw, setSavingPw] = useState(false);
+  const [currentPwError, setCurrentPwError] = useState<string | null>(null);
 
   // Team management state
   const [teamUsers, setTeamUsers] = useState<UserType[]>([]);
@@ -277,13 +297,22 @@ export const ProfilePage: React.FC = () => {
       push('error', 'New passwords do not match');
       return;
     }
+    if (newPw.length < 8) {
+      push('error', 'New password must be at least 8 characters');
+      return;
+    }
+    setCurrentPwError(null);
     setSavingPw(true);
     try {
       await api.changePassword({ current_password: currentPw, new_password: newPw, confirm_password: confirmPw });
       push('success', 'Password changed successfully');
       setCurrentPw(''); setNewPw(''); setConfirmPw('');
     } catch (e: any) {
-      push('error', e.message || 'Password change failed');
+      const msg = e.message || 'Password change failed';
+      if (msg.toLowerCase().includes('current password')) {
+        setCurrentPwError('Current password is not correct. Verify your active passcode.');
+      }
+      push('error', msg);
     } finally {
       setSavingPw(false);
     }
@@ -407,7 +436,16 @@ export const ProfilePage: React.FC = () => {
       {/* ── Section 2: Change Password ── */}
       <SectionCard title="Change Password" icon={<Lock size={18} />}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
-          <PasswordField label="Current Password" value={currentPw} onChange={setCurrentPw} placeholder="••••••••" />
+          <PasswordField
+            label="Current Password"
+            value={currentPw}
+            onChange={(v) => {
+              setCurrentPw(v);
+              if (currentPwError) setCurrentPwError(null);
+            }}
+            placeholder="••••••••"
+            error={currentPwError}
+          />
           <PasswordField label="New Password" value={newPw} onChange={setNewPw} placeholder="••••••••" />
           <PasswordField label="Confirm New Password" value={confirmPw} onChange={setConfirmPw} placeholder="••••••••" />
         </div>

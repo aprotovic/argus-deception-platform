@@ -66,6 +66,20 @@ export const api = {
     });
   },
 
+  async forgotPassword(email: string): Promise<{ detail: string; dev_code?: string }> {
+    return request('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  },
+
+  async resetPassword(data: { email: string; token: string; new_password: string; confirm_password: string }): Promise<{ detail: string }> {
+    return request('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
   async getMe(): Promise<User> {
     return request('/auth/me');
   },

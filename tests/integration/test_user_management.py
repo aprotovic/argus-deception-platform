@@ -2,6 +2,7 @@
 
 import pytest
 from httpx import AsyncClient
+from app.api.v1.auth import clear_ip_lockouts
 
 
 @pytest.mark.asyncio
@@ -26,13 +27,14 @@ async def test_user_profile_update_and_password_change(client: AsyncClient):
     assert updated_data["username"] == "analyst_updated"
     assert updated_data["email"] == "analyst_updated@argus.local"
 
-    # 2. Change password with incorrect current password -> fails
+    # 2. Change password with incorrect current password -> fails with graceful error
     bad_pw = await client.put(
         "/api/v1/users/me/password",
         json={"current_password": "WrongPassword", "new_password": "NewSecret123!", "confirm_password": "NewSecret123!"},
         headers=headers,
     )
     assert bad_pw.status_code == 400
+    assert "current password" in bad_pw.json()["detail"].lower()
 
     # 3. Change password with mismatched confirmation -> fails
     mismatch_pw = await client.put(
@@ -137,3 +139,126 @@ async def test_admin_user_crud_and_rbac(client: AsyncClient):
     # 6. Admin deletes user
     del_res = await client.delete(f"/api/v1/users/{new_user_id}", headers=admin_headers)
     assert del_res.status_code == 204
+
+
+@pytest.mark.asyncio
+async def test_login_rate_limiting_and_lockout(client: AsyncClient):
+    """Verify that repeated failed login attempts return attempt count and trigger lockout."""
+    clear_ip_lockouts()
+    target_user = "brute_force_target"
+
+    # Create target user using admin
+    admin_login = await client.post(
+        "/api/v1/auth/login",
+        json={"username": "test_admin", "password": "AdminPass123!"},
+    )
+    admin_token = admin_login.json()["access_token"]
+    await client.post(
+        "/api/v1/users",
+        json={"username": target_user, "email": "target@argus.local", "password": "ValidPassword123!", "role": "analyst"},
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+
+    # 1st to 4th failed attempts: return 401 with remaining attempts count
+    for i in range(1, 5):
+        fail_res = await client.post(
+            "/api/v1/auth/login",
+            json={"username": target_user, "password": "WrongPassword!"},
+        )
+        assert fail_res.status_code == 401
+        assert "attempt(s) remaining" in fail_res.json()["detail"]
+
+    # 5th failed attempt: triggers lockout (HTTP 429)
+    lock_res = await client.post(
+        "/api/v1/auth/login",
+        json={"username": target_user, "password": "WrongPassword!"},
+    )
+    assert lock_res.status_code == 429
+    assert "lock" in lock_res.json()["detail"].lower()
+
+    # Subsequent attempt while locked out: immediately rejected (HTTP 429)
+    subsequent_res = await client.post(
+        "/api/v1/auth/login",
+        json={"username": target_user, "password": "ValidPassword123!"},
+    )
+    assert subsequent_res.status_code == 429
+    assert "lock" in subsequent_res.json()["detail"].lower()
+    clear_ip_lockouts()
+
+
+@pytest.mark.asyncio
+async def test_forgot_and_reset_password_flow(client: AsyncClient):
+    """Verify forgot password via email and password reset flow."""
+    clear_ip_lockouts()
+    user_email = "recovery_test@argus.local"
+    user_name = "recovery_user"
+    init_pass = "InitialPass123!"
+
+    # Create user
+    admin_login = await client.post(
+        "/api/v1/auth/login",
+        json={"username": "test_admin", "password": "AdminPass123!"},
+    )
+    admin_token = admin_login.json()["access_token"]
+    await client.post(
+        "/api/v1/users",
+        json={"username": user_name, "email": user_email, "password": init_pass, "role": "analyst"},
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+
+    # 1. Request recovery code
+    forgot_res = await client.post(
+        "/api/v1/auth/forgot-password",
+        json={"email": user_email},
+    )
+    assert forgot_res.status_code == 200
+    forgot_data = forgot_res.json()
+    assert "code dispatched" in forgot_data["detail"].lower()
+    code = forgot_data.get("dev_code")
+    assert code is not None
+
+    # 2. Reset with mismatched passwords -> 400
+    mismatch_res = await client.post(
+        "/api/v1/auth/reset-password",
+        json={
+            "email": user_email,
+            "token": code,
+            "new_password": "NewSecretPass123!",
+            "confirm_password": "DifferentPass!",
+        },
+    )
+    assert mismatch_res.status_code == 400
+
+    # 3. Reset with wrong recovery code -> 400
+    wrong_code_res = await client.post(
+        "/api/v1/auth/reset-password",
+        json={
+            "email": user_email,
+            "token": "000000",
+            "new_password": "NewSecretPass123!",
+            "confirm_password": "NewSecretPass123!",
+        },
+    )
+    assert wrong_code_res.status_code == 400
+    assert "incorrect recovery code" in wrong_code_res.json()["detail"].lower()
+
+    # 4. Valid reset
+    good_reset = await client.post(
+        "/api/v1/auth/reset-password",
+        json={
+            "email": user_email,
+            "token": code,
+            "new_password": "NewSecretPass123!",
+            "confirm_password": "NewSecretPass123!",
+        },
+    )
+    assert good_reset.status_code == 200
+    assert "successfully reset" in good_reset.json()["detail"].lower()
+
+    # 5. Log in with new passcode -> 200
+    login_new = await client.post(
+        "/api/v1/auth/login",
+        json={"username": user_name, "password": "NewSecretPass123!"},
+    )
+    assert login_new.status_code == 200
+    assert "access_token" in login_new.json()
