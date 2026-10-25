@@ -201,15 +201,23 @@ async def forgot_password(
     db: AsyncSession = Depends(get_db),
 ):
     """Requests a password recovery code sent to the operator's registered email."""
-    clean_email = body.email.strip().lower()
+    clean_identifier = body.email.strip().lower()
     client_ip = extract_client_ip(request)
     now = datetime.now(timezone.utc)
 
-    stmt = select(User).where(func.lower(User.email) == clean_email)
+    # Allow recovery by either real registered email OR real username / call-sign
+    stmt = select(User).where(
+        (func.lower(User.email) == clean_identifier) |
+        (func.lower(User.username) == clean_identifier)
+    )
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
 
     if user:
+        # Real registered operator identity
+        real_email = user.email or clean_identifier
+        real_callsign = user.username
+
         # Generate 6-digit cryptographic security code
         code = f"{secrets.randbelow(900000) + 100000}"
         user.reset_token = code
@@ -222,30 +230,30 @@ async def forgot_password(
             target_id=str(user.id),
             ip_address=client_ip,
             user_agent=request.headers.get("user-agent", ""),
-            details={"email": clean_email},
+            details={"email": real_email, "username": real_callsign},
         )
         db.add(audit)
         await db.commit()
-        logger.info(f"Password reset code for {user.username} ({clean_email}): {code}")
+        logger.info(f"Password reset code for {real_callsign} ({real_email}): {code}")
 
-        # Attempt dispatch via Telegram Bot and SMTP (Gmail)
-        sent_via_tg = await send_telegram_verification_code(code, user.username, clean_email)
-        sent_via_smtp = await send_password_reset_email(clean_email, code, user.username)
+        sent_via_tg = await send_telegram_verification_code(code, real_callsign, real_email)
+        sent_via_smtp = await send_password_reset_email(real_email, code, real_callsign)
 
         channels = []
         if sent_via_tg:
             channels.append("Telegram Security Channel (@Deception_argusBot)")
         if sent_via_smtp:
-            channels.append(f"Email ({clean_email})")
+            channels.append(f"Email ({real_email})")
 
         if channels:
             detail_msg = f"6-digit verification code dispatched to: {' and '.join(channels)}."
         else:
-            detail_msg = f"6-digit verification code generated for {clean_email}."
+            detail_msg = f"6-digit verification code generated for {real_callsign} ({real_email})."
 
         return {
             "detail": detail_msg,
-            "email": clean_email,
+            "email": real_email,
+            "username": real_callsign,
             "code": code,
             "dev_code": code,
             "sent_via_telegram": sent_via_tg,
@@ -254,8 +262,8 @@ async def forgot_password(
 
     # Standard security practice: generic message to prevent email enumeration
     return {
-        "detail": f"If an account exists for {clean_email}, a recovery code has been dispatched.",
-        "email": clean_email,
+        "detail": f"If an account exists for {clean_identifier}, a recovery code has been dispatched.",
+        "email": clean_identifier,
     }
 
 
@@ -272,8 +280,11 @@ async def reset_password(
     if len(body.new_password) < 8:
         raise HTTPException(status_code=400, detail="Password must be at least 8 characters long")
 
-    clean_email = body.email.strip().lower()
-    stmt = select(User).where(func.lower(User.email) == clean_email)
+    clean_identifier = body.email.strip().lower()
+    stmt = select(User).where(
+        (func.lower(User.email) == clean_identifier) |
+        (func.lower(User.username) == clean_identifier)
+    )
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
 
@@ -316,7 +327,7 @@ async def reset_password(
         target_id=str(user.id),
         ip_address=extract_client_ip(request),
         user_agent=request.headers.get("user-agent", ""),
-        details={"email": clean_email, "username": user.username},
+        details={"email": user.email or clean_identifier, "username": user.username},
     )
     db.add(audit)
     await db.commit()

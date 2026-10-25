@@ -39,6 +39,8 @@ export const LoginView: React.FC = () => {
   const [recoveryCode, setRecoveryCode] = useState<string>('');
   const [devCodeHint, setDevCodeHint] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<number>(30);
+  const [operatorCallSign, setOperatorCallSign] = useState<string>('');
+  const [operatorEmail, setOperatorEmail] = useState<string>('');
   const [newPassword, setNewPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
   const [showNewPassword, setShowNewPassword] = useState<boolean>(false);
@@ -128,6 +130,8 @@ export const LoginView: React.FC = () => {
       const res = await api.forgotPassword(recoveryEmail.trim());
       setSuccessMsg(res.detail || 'Verification code dispatched to your verified security channel.');
       setRecoveryCode(''); // Ready for manual entry or instant autofill
+      if (res.username) setOperatorCallSign(res.username);
+      if (res.email) setOperatorEmail(res.email);
       const code = res.code || res.dev_code;
       if (code) {
         setDevCodeHint(code);
@@ -2414,13 +2418,13 @@ export const LoginView: React.FC = () => {
                       marginBottom: '8px',
                       fontFamily: "'Chakra Petch', sans-serif",
                     }}>
-                      Registered Email Address
+                      Operator Call-Sign (Username) or Registered Email
                     </label>
                     <input
-                      type="email"
+                      type="text"
                       value={recoveryEmail}
                       onChange={(e) => setRecoveryEmail(e.target.value)}
-                      placeholder="operator@argus-defense.local"
+                      placeholder="e.g. argus_admin or operator@gmail.com"
                       required
                       autoFocus
                       style={{
@@ -2521,8 +2525,34 @@ export const LoginView: React.FC = () => {
                     Set New Passcode
                   </h2>
                   <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '6px', lineHeight: 1.4 }}>
-                    Enter the code dispatched to <strong style={{ color: '#fff' }}>{recoveryEmail}</strong>.
+                    Verify credentials for the registered operator enclave account below:
                   </p>
+                </div>
+
+                {/* Real Registered Operator Identity Badge */}
+                <div style={{
+                  background: 'rgba(7, 16, 26, 0.85)',
+                  border: '1px solid rgba(56, 189, 248, 0.25)',
+                  borderRadius: '6px',
+                  padding: '10px 14px',
+                  marginBottom: '14px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '5px',
+                  fontSize: '0.76rem',
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: '#94a3b8', fontFamily: "'Chakra Petch', sans-serif", textTransform: 'uppercase' }}>Operator Call-Sign:</span>
+                    <strong style={{ color: '#ffffff', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.04em' }}>
+                      {operatorCallSign || username || 'argus_admin'}
+                    </strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: '#94a3b8', fontFamily: "'Chakra Petch', sans-serif", textTransform: 'uppercase' }}>Registered Email:</span>
+                    <strong style={{ color: '#38bdf8', fontFamily: "'JetBrains Mono', monospace" }}>
+                      {operatorEmail || recoveryEmail}
+                    </strong>
+                  </div>
                 </div>
 
                 {successMsg && (
