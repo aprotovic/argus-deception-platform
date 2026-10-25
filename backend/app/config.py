@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     # Telegram Alert Notifications and Bot Control
     TELEGRAM_BOT_TOKEN: str = ""   # Set via TELEGRAM_BOT_TOKEN env var
     TELEGRAM_CHAT_ID: str = ""     # Set via TELEGRAM_CHAT_ID env var (fallback / legacy)
-    TELEGRAM_ADMIN_ID: str = ""    # Verified Telegram numeric admin ID (e.g. 6288136999)
+    TELEGRAM_ADMIN_ID: str = ""    # Verified Telegram numeric admin ID (e.g. 123456789)
 
     @property
     def telegram_admin_numeric_id(self) -> str | None:
