@@ -28,6 +28,7 @@ from app.schemas.auth import (
     Token,
     UserResponse,
 )
+from app.services.email import send_password_reset_email
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -226,9 +227,23 @@ async def forgot_password(
         await db.commit()
         logger.info(f"Password reset code for {user.username} ({clean_email}): {code}")
 
+        # Attempt real email dispatch via configured SMTP (e.g. Gmail)
+        sent_via_smtp = await send_password_reset_email(clean_email, code, user.username)
+
+        if sent_via_smtp:
+            detail_msg = f"6-digit verification code dispatched to {clean_email}. Please check your email inbox."
+        elif settings.SMTP_USER and settings.SMTP_PASSWORD:
+            detail_msg = f"Verification code generated for {clean_email}, but SMTP delivery encountered a network issue. Please check logs."
+        else:
+            detail_msg = (
+                f"Verification code generated for {clean_email}. "
+                f"(To enable direct Gmail delivery, configure SMTP_USER and SMTP_PASSWORD in .env)"
+            )
+
         return {
-            "detail": f"Recovery code dispatched to {clean_email}.",
+            "detail": detail_msg,
             "email": clean_email,
+            "sent_via_smtp": sent_via_smtp,
             "dev_code": code if settings.ENVIRONMENT == "development" else None,
         }
 
@@ -287,6 +302,7 @@ async def reset_password(
     user.failed_login_attempts = 0
     user.locked_until = None
     user.updated_at = now
+    clear_ip_lockouts()
 
     audit = AuditLog(
         user_id=user.id,

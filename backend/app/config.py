@@ -49,6 +49,15 @@ class Settings(BaseSettings):
     # Database Settings
     DATABASE_URL: str = "postgresql+asyncpg://argus_user:argus_secure_password@localhost:5432/argus_telemetry"
     
+    # SMTP / Gmail Password Recovery Settings
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""       # e.g. your_email@gmail.com
+    SMTP_PASSWORD: str = ""   # e.g. Gmail App Password (16 characters)
+    SMTP_FROM_EMAIL: str = ""
+    SMTP_TLS: bool = True
+    SMTP_SSL: bool = False
+
     # Quarantine Storage Settings
     QUARANTINE_STORAGE_DIR: str = "./data/quarantine"
     MAX_UPLOAD_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB limit

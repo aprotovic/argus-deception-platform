@@ -213,7 +213,7 @@ async def test_forgot_and_reset_password_flow(client: AsyncClient):
     )
     assert forgot_res.status_code == 200
     forgot_data = forgot_res.json()
-    assert "code dispatched" in forgot_data["detail"].lower()
+    assert "verification code" in forgot_data["detail"].lower() or "code dispatched" in forgot_data["detail"].lower()
     code = forgot_data.get("dev_code")
     assert code is not None
 

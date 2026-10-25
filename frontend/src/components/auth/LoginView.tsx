@@ -36,6 +36,7 @@ export const LoginView: React.FC = () => {
   // Recovery form state
   const [recoveryEmail, setRecoveryEmail] = useState<string>('');
   const [recoveryCode, setRecoveryCode] = useState<string>('');
+  const [devCodeHint, setDevCodeHint] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
   const [showNewPassword, setShowNewPassword] = useState<boolean>(false);
@@ -72,6 +73,7 @@ export const LoginView: React.FC = () => {
     setError(null);
     setSuccessMsg(null);
     setLoading(false);
+    setDevCodeHint(null);
     setModalView('login');
   };
 
@@ -83,8 +85,11 @@ export const LoginView: React.FC = () => {
 
     try {
       await login(username, password);
+      setShowLoginModal(false);
     } catch (err: any) {
       setError(err.message || 'Authentication rejected. Verify authorization credentials.');
+      setShowLoginModal(true);
+      setPassword(''); // Clear invalid passcode so operator can immediately re-enter
     } finally {
       setLoading(false);
     }
@@ -98,17 +103,19 @@ export const LoginView: React.FC = () => {
     }
     setError(null);
     setSuccessMsg(null);
+    setDevCodeHint(null);
     setLoading(true);
 
     try {
       const res = await api.forgotPassword(recoveryEmail.trim());
-      setSuccessMsg(res.detail || 'Recovery code generated.');
+      setSuccessMsg(res.detail || 'Verification code dispatched to your email address.');
+      setRecoveryCode(''); // Do not prefill: user must enter the real code received
       if (res.dev_code) {
-        setRecoveryCode(res.dev_code);
+        setDevCodeHint(res.dev_code);
       }
       setModalView('reset');
     } catch (err: any) {
-      setError(err.message || 'Failed to dispatch recovery code.');
+      setError(err.message || 'Failed to dispatch verification code.');
     } finally {
       setLoading(false);
     }
@@ -117,7 +124,7 @@ export const LoginView: React.FC = () => {
   const handleResetSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!recoveryCode.trim()) {
-      setError('Please enter the 6-digit recovery code.');
+      setError('Please enter the 6-digit verification code.');
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -140,11 +147,12 @@ export const LoginView: React.FC = () => {
         new_password: newPassword,
         confirm_password: confirmPassword,
       });
-      setSuccessMsg(res.detail || 'Passcode successfully reset. You may now sign in.');
+      setSuccessMsg(res.detail || 'Passcode successfully reset! You may now sign in.');
       setPassword('');
       setNewPassword('');
       setConfirmPassword('');
       setRecoveryCode('');
+      setDevCodeHint(null);
       setModalView('login');
     } catch (err: any) {
       setError(err.message || 'Failed to reset password. Verify code and try again.');
@@ -2531,6 +2539,39 @@ export const LoginView: React.FC = () => {
                   }}>
                     <AlertTriangle size={14} />
                     <span>{error}</span>
+                  </div>
+                )}
+
+                {devCodeHint && (
+                  <div style={{
+                    background: 'rgba(56, 189, 248, 0.1)',
+                    border: '1px dashed rgba(56, 189, 248, 0.35)',
+                    borderRadius: '6px',
+                    padding: '8px 12px',
+                    fontSize: '0.72rem',
+                    color: '#38bdf8',
+                    fontFamily: "'JetBrains Mono', monospace",
+                    marginBottom: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}>
+                    <span>[DEV TEST HINT]: <strong>{devCodeHint}</strong></span>
+                    <button
+                      type="button"
+                      onClick={() => setRecoveryCode(devCodeHint)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#10b981',
+                        fontSize: '0.7rem',
+                        cursor: 'pointer',
+                        padding: 0,
+                        textDecoration: 'underline',
+                      }}
+                    >
+                      Use Hint
+                    </button>
                   </div>
                 )}
 
