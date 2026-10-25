@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: argus-platform
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    plan: free
+    region: oregon
+    healthCheckPath: /health/live
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: DATABASE_URL
+        value: sqlite+aiosqlite:///./data/argus_telemetry.db
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ARGUS_PASSWORD_FINGERPRINT_SECRET
+        generateValue: true
+      - key: INTERNAL_INGESTION_TOKEN
+        generateValue: true
+      - key: ADMIN_USERNAME
+        value: argus_admin
+      - key: ADMIN_EMAIL
+        value: admin@argus-defense.local
+      - key: ADMIN_PASSWORD
+        generateValue: true

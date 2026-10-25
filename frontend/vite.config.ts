@@ -30,6 +30,7 @@ customLogger.error = (msg, options) => {
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: './',
   customLogger,
   plugins: [react()],
   server: {

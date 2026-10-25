@@ -64,6 +64,7 @@ app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
+    allow_origin_regex=r"^https://.*\.onrender\.com$",
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
@@ -98,6 +99,14 @@ app.include_router(bank_router.router)
 
 # Core API v1 (admin + decoy endpoints)
 app.include_router(api_v1_router)
+
+# Mount built SOC Dashboard if present
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
+
+frontend_dist = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+if frontend_dist.exists() and (frontend_dist / "index.html").exists():
+    app.mount("/dashboard", StaticFiles(directory=str(frontend_dist), html=True), name="dashboard")
 
 
 # Global Exception Handler
