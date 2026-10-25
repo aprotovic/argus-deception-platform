@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="View your Gebrew Bank accounts, transactions, and more.">
+  <title>My Accounts — Gebrew Bank | ገብረው ባንክ</title>
+  <link rel="stylesheet" href="/bank/static/bank.css">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="nav" role="navigation" aria-label="Main navigation">
+    <a href="/bank" class="nav-brand" aria-label="Gebrew Bank home">
+      <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="5" y="5" width="26" height="26" rx="4" transform="rotate(45 18 18)" fill="#1a4731"/>
+        <path d="M18 9 L18 27 M9 18 L27 18" stroke="#c8860a" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="18" cy="18" r="3" fill="#c8860a"/>
+      </svg>
+      Gebrew Bank
+    </a>
+
+    <button class="nav-hamburger" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-links" id="nav-hamburger">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <ul class="nav-links" id="nav-links" role="list">
+      <li><a href="/bank" class="nav-link">Personal</a></li>
+      <li><a href="/bank" class="nav-link">Business</a></li>
+      <li><a href="/bank" class="nav-link">Mortgages</a></li>
+      <li><a href="/bank/support" class="nav-link">Support</a></li>
+      <li><a href="/bank/login" class="nav-link">Sign In</a></li>
+    </ul>
+  </nav>
+
+  <div class="nav-spacer" aria-hidden="true"></div>
+
+  <!-- Dashboard Header -->
+  <div class="dashboard-header">
+    <div class="page-wrap" style="padding-top:var(--s3);padding-bottom:var(--s3);">
+      <p class="dashboard-welcome">Good morning, <span id="dash-username">valued customer</span></p>
+      <p class="dashboard-date" id="dash-date"></p>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main id="main-content">
+    <div class="page-wrap">
+
+      <!-- Account Cards -->
+      <section aria-labelledby="accounts-heading" style="margin-bottom:var(--s4);">
+        <h2 id="accounts-heading" class="section-title" style="font-size:1.125rem;margin-bottom:var(--s3);">Your Accounts</h2>
+        <div class="grid-2">
+
+          <!-- Checking Account -->
+          <div class="account-card" role="region" aria-label="Checking account ending in 7823">
+            <div class="account-card-info">
+              <span class="account-card-label">CHECKING ACCOUNT</span>
+              <span class="account-card-number">••••7823</span>
+              <span class="text-sm text-muted" style="margin-top:4px;">Primary Checking</span>
+            </div>
+            <div class="account-balance" aria-label="Balance: Br 12,450.50">Br 12,450.50</div>
+          </div>
+
+          <!-- Savings Account -->
+          <div class="account-card" role="region" aria-label="Savings account ending in 3341">
+            <div class="account-card-info">
+              <span class="account-card-label">SAVINGS ACCOUNT</span>
+              <span class="account-card-number">••••3341</span>
+              <span class="text-sm text-muted" style="margin-top:4px;">High-Yield Savings</span>
+            </div>
+            <div class="account-balance" aria-label="Balance: Br 34,009.00">Br 34,009.00</div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Quick Actions -->
+      <section aria-labelledby="actions-heading" style="margin-bottom:var(--s4);">
+        <h2 id="actions-heading" class="section-title" style="font-size:1.125rem;margin-bottom:var(--s3);">Quick Actions</h2>
+        <div class="quick-actions">
+
+          <!-- Transfer Funds -->
+          <button type="button" class="quick-action-btn" data-action="transfer" aria-label="Transfer funds">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+            Transfer Funds
+          </button>
+
+          <!-- Pay Bills -->
+          <button type="button" class="quick-action-btn" data-action="pay-bills" aria-label="Pay bills">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
+            </svg>
+            Pay Bills
+          </button>
+
+          <!-- Download Statement -->
+          <button type="button" class="quick-action-btn" data-action="statement" aria-label="Download statement">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Download Statement
+          </button>
+
+          <!-- Request Card -->
+          <button type="button" class="quick-action-btn" data-action="request-card" aria-label="Request a new card">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+              <line x1="1" y1="10" x2="23" y2="10"/>
+            </svg>
+            Request Card
+          </button>
+
+        </div>
+        <p id="quick-notice" class="inline-notice hidden" style="margin-top:var(--s2);text-align:center;"></p>
+      </section>
+
+      <!-- Recent Transactions -->
+      <section aria-labelledby="transactions-heading" style="margin-bottom:var(--s4);">
+        <h2 id="transactions-heading" class="section-title" style="font-size:1.125rem;margin-bottom:var(--s3);">Recent Transactions</h2>
+        <div class="table-wrap">
+          <table class="table" aria-label="Recent transactions">
+            <thead>
+              <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Description</th>
+                <th scope="col">Amount</th>
+                <th scope="col">Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Nov 14, 2024</td>
+                <td>Salary Deposit — Addis Ababa City Admin</td>
+                <td><span class="tx-amount credit" aria-label="Credit: plus Br 15,200.00">+Br 15,200.00</span></td>
+                <td>Br 12,450.50</td>
+              </tr>
+              <tr>
+                <td>Nov 12, 2024</td>
+                <td>Shoa Supermarket — Bole</td>
+                <td><span class="tx-amount debit" aria-label="Debit: Br 875.30">-Br 875.30</span></td>
+                <td>Br 9,250.50</td>
+              </tr>
+              <tr>
+                <td>Nov 11, 2024</td>
+                <td>Ethio Telecom — Airtime Recharge</td>
+                <td><span class="tx-amount debit" aria-label="Debit: Br 100.00">-Br 100.00</span></td>
+                <td>Br 10,125.80</td>
+              </tr>
+              <tr>
+                <td>Nov 09, 2024</td>
+                <td>Ethiopian Electric Utility — Power Bill</td>
+                <td><span class="tx-amount debit" aria-label="Debit: Br 420.00">-Br 420.00</span></td>
+                <td>Br 10,225.80</td>
+              </tr>
+              <tr>
+                <td>Nov 07, 2024</td>
+                <td>Anbessa City Bus — Transport Card</td>
+                <td><span class="tx-amount debit" aria-label="Debit: Br 200.00">-Br 200.00</span></td>
+                <td>Br 10,645.80</td>
+              </tr>
+              <tr>
+                <td>Nov 05, 2024</td>
+                <td>Online Transfer — Savings</td>
+                <td><span class="tx-amount debit" aria-label="Debit: Br 2,000.00">-Br 2,000.00</span></td>
+                <td>Br 10,845.80</td>
+              </tr>
+              <tr>
+                <td>Nov 01, 2024</td>
+                <td>Salary Deposit — Addis Ababa City Admin</td>
+                <td><span class="tx-amount credit" aria-label="Credit: plus Br 15,200.00">+Br 15,200.00</span></td>
+                <td>Br 12,845.80</td>
+              </tr>
+              <tr>
+                <td>Oct 29, 2024</td>
+                <td>Kaldi's Coffee — Kazanchis</td>
+                <td><span class="tx-amount debit" aria-label="Debit: Br 95.00">-Br 95.00</span></td>
+                <td>Br 9,645.80</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Two-column: Spending Summary + Linked Cards -->
+      <div class="grid-2" style="margin-bottom:var(--s5);">
+
+        <!-- Spending Summary with SVG Donut Chart -->
+        <section class="card" aria-labelledby="spending-heading">
+          <h2 id="spending-heading" class="card-title">Spending Summary</h2>
+          <p class="card-subtitle">November 2024</p>
+
+          <div class="donut-chart-wrap">
+            <!--
+              Donut chart — pure inline SVG, no library.
+              Circle: r=70, cx=cy=90, stroke-width=44, circumference=439.82
+              Segment lengths (pct * 439.82):
+                Dining    32% → 140.74  offset: 439.82 - 0       = 439.82
+                Shopping  27% → 118.75  offset: 439.82 - 140.74  = 299.08
+                Utilities 18% →  79.17  offset: 439.82 - 259.49  = 180.33
+                Transport 12% →  52.78  offset: 439.82 - 338.66  = 101.16
+                Other     11% →  48.38  offset: 439.82 - 391.44  =  48.38
+            -->
+            <svg viewBox="0 0 180 180" width="180" height="180" role="img" aria-label="Spending breakdown donut chart" style="flex-shrink:0;">
+              <title>Spending breakdown by category</title>
+              <!-- Base ring (background track) -->
+              <circle cx="90" cy="90" r="70" fill="none" stroke="#e2e8f0" stroke-width="44"/>
+
+              <!-- Dining 32% — teal #0d9488 -->
+              <circle
+                cx="90" cy="90" r="70"
+                fill="none"
+                stroke="#0d9488"
+                stroke-width="44"
+                stroke-dasharray="140.74 299.08"
+                stroke-dashoffset="439.82"
+                transform="rotate(-90 90 90)"
+              />
+              <!-- Shopping 27% — navy #0f2044 -->
+              <circle
+                cx="90" cy="90" r="70"
+                fill="none"
+                stroke="#0f2044"
+                stroke-width="44"
+                stroke-dasharray="118.75 321.07"
+                stroke-dashoffset="299.08"
+                transform="rotate(-90 90 90)"
+              />
+              <!-- Utilities 18% — blue #3b82f6 -->
+              <circle
+                cx="90" cy="90" r="70"
+                fill="none"
+                stroke="#3b82f6"
+                stroke-width="44"
+                stroke-dasharray="79.17 360.65"
+                stroke-dashoffset="180.33"
+                transform="rotate(-90 90 90)"
+              />
+              <!-- Transport 12% — amber #f59e0b -->
+              <circle
+                cx="90" cy="90" r="70"
+                fill="none"
+                stroke="#f59e0b"
+                stroke-width="44"
+                stroke-dasharray="52.78 387.04"
+                stroke-dashoffset="101.16"
+                transform="rotate(-90 90 90)"
+              />
+              <!-- Other 11% — gray #94a3b8 -->
+              <circle
+                cx="90" cy="90" r="70"
+                fill="none"
+                stroke="#94a3b8"
+                stroke-width="44"
+                stroke-dasharray="48.38 391.44"
+                stroke-dashoffset="48.38"
+                transform="rotate(-90 90 90)"
+              />
+
+              <!-- Center label -->
+              <text x="90" y="86" text-anchor="middle" font-family="'Playfair Display', serif" font-size="11" font-weight="600" fill="#0f2044">This</text>
+              <text x="90" y="100" text-anchor="middle" font-family="'Playfair Display', serif" font-size="11" font-weight="600" fill="#0f2044">Month</text>
+            </svg>
+
+            <!-- Legend -->
+            <div class="donut-legend" aria-label="Chart legend">
+              <div class="donut-legend-item">
+                <span class="donut-legend-swatch" style="background:#0d9488;" aria-hidden="true"></span>
+                <span>Dining <span class="text-muted text-sm">(32%)</span></span>
+              </div>
+              <div class="donut-legend-item">
+                <span class="donut-legend-swatch" style="background:#0f2044;" aria-hidden="true"></span>
+                <span>Shopping <span class="text-muted text-sm">(27%)</span></span>
+              </div>
+              <div class="donut-legend-item">
+                <span class="donut-legend-swatch" style="background:#3b82f6;" aria-hidden="true"></span>
+                <span>Utilities <span class="text-muted text-sm">(18%)</span></span>
+              </div>
+              <div class="donut-legend-item">
+                <span class="donut-legend-swatch" style="background:#f59e0b;" aria-hidden="true"></span>
+                <span>Transport <span class="text-muted text-sm">(12%)</span></span>
+              </div>
+              <div class="donut-legend-item">
+                <span class="donut-legend-swatch" style="background:#94a3b8;" aria-hidden="true"></span>
+                <span>Other <span class="text-muted text-sm">(11%)</span></span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Linked Cards -->
+        <section class="card" aria-labelledby="cards-heading">
+          <h2 id="cards-heading" class="card-title">Linked Cards</h2>
+          <p class="card-subtitle">Your active payment cards</p>
+
+          <!-- Debit Card -->
+          <p class="text-sm" style="font-weight:600;color:var(--text-muted);margin-bottom:var(--s1);">Debit Card</p>
+          <div class="card-chip" role="region" aria-label="Debit card ending in 7823" style="margin-bottom:var(--s3);">
+            <p style="font-size:0.6875rem;font-weight:600;letter-spacing:0.08em;opacity:0.7;margin-bottom:var(--s1);">GEBREW VISA DEBIT</p>
+            <p class="card-chip-number">•••• •••• •••• 7823</p>
+            <div class="card-chip-meta">
+              <span>EXP 12/27</span>
+              <span>A. HAILE</span>
+            </div>
+          </div>
+
+          <!-- Credit Card -->
+          <p class="text-sm" style="font-weight:600;color:var(--text-muted);margin-bottom:var(--s1);">Credit Card</p>
+          <div class="card-chip" role="region" aria-label="Credit card ending in 4491" style="background:var(--teal);">
+            <p style="font-size:0.6875rem;font-weight:600;letter-spacing:0.08em;opacity:0.7;margin-bottom:var(--s1);">GEBREW PLATINUM CARD</p>
+            <p class="card-chip-number">•••• •••• •••• 4491</p>
+            <div class="card-chip-meta">
+              <span>EXP 08/26</span>
+              <span>A. HAILE</span>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer" role="contentinfo">
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div>
+          <div class="footer-brand">
+            <svg width="20" height="20" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="5" y="5" width="26" height="26" rx="4" transform="rotate(45 18 18)" fill="#1a4731"/>
+              <path d="M18 9 L18 27 M9 18 L27 18" stroke="#c8860a" stroke-width="2.5" stroke-linecap="round"/>
+              <circle cx="18" cy="18" r="3" fill="#c8860a"/>
+            </svg>
+            Gebrew Bank | ገብረው ባንክ
+          </div>
+          <p class="footer-tagline">
+            Your trusted financial partner. Secure, reliable, and always available when you need us.
+          </p>
+          <div class="badge-row" style="margin-top:16px;flex-wrap:wrap;">
+            <span class="badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+              SSL Secured
+            </span>
+            <span class="badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              NBE Regulated
+            </span>
+            <span class="badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2L3 7l9 5 9-5-9-5z"/><path d="M3 17l9 5 9-5M3 12l9 5 9-5"/></svg>
+              256-bit Encryption
+            </span>
+            <span class="badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              24/7 Fraud Monitoring
+            </span>
+          </div>
+        </div>
+
+        <div>
+          <p class="footer-col-title">Personal Banking</p>
+          <ul class="footer-links">
+            <li><a href="/bank" class="footer-link">Checking Accounts</a></li>
+            <li><a href="/bank" class="footer-link">Savings Accounts</a></li>
+            <li><a href="/bank" class="footer-link">Credit Cards</a></li>
+            <li><a href="/bank" class="footer-link">Personal Loans</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <p class="footer-col-title">Services</p>
+          <ul class="footer-links">
+            <li><a href="/bank/login" class="footer-link">Online Banking</a></li>
+            <li><a href="/bank" class="footer-link">Mobile App</a></li>
+            <li><a href="/bank" class="footer-link">Wire Transfers</a></li>
+            <li><a href="/bank" class="footer-link">Investments</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <p class="footer-col-title">Help</p>
+          <ul class="footer-links">
+            <li><a href="/bank/support" class="footer-link">Contact Us</a></li>
+            <li><a href="/bank/support" class="footer-link">FAQs</a></li>
+            <li><a href="/bank/recover" class="footer-link">Forgot Password</a></li>
+            <li><a href="/bank/accessibility" class="footer-link">Accessibility</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <hr class="footer-divider">
+
+      <div class="footer-bottom">
+        <p class="footer-legal">
+          Gebrew Bank S.C. — Licensed and regulated by the National Bank of Ethiopia. Reg. No. GB-2019-ET.<br>
+          &copy; 2024 Gebrew Bank S.C. All rights reserved.
+        </p>
+        <div class="footer-badges">
+          <span class="footer-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            NBE Regulated
+          </span>
+          <span class="footer-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+            NBE Supervised
+          </span>
+        </div>
+      </div>
+
+      <p style="font-size:0.75rem;color:rgba(255,255,255,0.4);margin-top:16px;line-height:1.5;">
+        <a href="/bank/privacy" class="footer-link" style="font-size:0.75rem;">Privacy Policy</a>
+        &nbsp;&middot;&nbsp;
+        <a href="/bank/terms" class="footer-link" style="font-size:0.75rem;">Terms of Service</a>
+        &nbsp;&middot;&nbsp;
+        <a href="/bank/accessibility" class="footer-link" style="font-size:0.75rem;">Accessibility</a>
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    // Auth guard — redirect if no session
+    if (!sessionStorage.getItem('mtb_session')) {
+      window.location.replace('/bank/login');
+    }
+    // Populate username from session
+    const u = sessionStorage.getItem('mtb_session');
+    if (u) document.getElementById('dash-username').textContent = u;
+
+    // Date
+    const d = new Date();
+    document.getElementById('dash-date').textContent = d.toLocaleDateString('en-US', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+    // Quick actions — show inline notice
+    document.querySelectorAll('.quick-action-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        const notice = document.getElementById('quick-notice');
+        if (notice) {
+          notice.textContent = 'This feature is temporarily unavailable. Please call Gebrew Bank at +251 116 39 5000 for assistance.';
+          notice.classList.remove('hidden');
+        }
+      });
+    });
+
+    // Hamburger
+    (function() {
+      var btn = document.getElementById('nav-hamburger');
+      var links = document.getElementById('nav-links');
+      if (btn && links) {
+        btn.addEventListener('click', function() {
+          var open = links.classList.toggle('open');
+          btn.setAttribute('aria-expanded', String(open));
+        });
+      }
+    })();
+  </script>
+
+</body>
+</html>

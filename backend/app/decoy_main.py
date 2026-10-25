@@ -20,6 +20,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.api.root_traps import router as root_traps_router, DECOY_404_HTML
 from app.api.v1.decoy import router as decoy_router
 from app.api.v1.decoy_personnel import router as decoy_personnel_router
+from app.api.v1 import bank_router
 from app.config import settings
 from app.core.event_sink import (
     EventForwarderSession,
@@ -94,6 +95,7 @@ _decoy_v1 = APIRouter(prefix="/api/v1")
 _decoy_v1.include_router(decoy_router)
 _decoy_v1.include_router(decoy_personnel_router)
 app.include_router(_decoy_v1)
+app.include_router(bank_router.router)
 
 # Unified 404/405 handler — every unmatched path returns the same Apache-style
 # HTML 404 body, regardless of whether it's an admin path, /docs, /openapi.json,
