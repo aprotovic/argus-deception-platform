@@ -193,7 +193,7 @@ export const LoginView: React.FC = () => {
         inset: 0,
         backgroundImage: `
           linear-gradient(180deg, rgba(4, 9, 15, 0.45) 0%, rgba(4, 9, 15, 0.7) 60%, rgba(4, 8, 14, 0.95) 100%),
-          url('/images/giant_soc_bg.jpg')
+          url('./images/giant_soc_bg.jpg')
         `,
         backgroundSize: 'cover',
         backgroundPosition: 'center center',
@@ -455,7 +455,7 @@ export const LoginView: React.FC = () => {
                 position: 'relative',
               }}>
                 <img
-                  src="/images/cyber_grid.jpg"
+                  src="./images/cyber_grid.jpg"
                   alt="ARGUS Panoptes Command Console"
                   style={{
                     width: '100%',
@@ -894,7 +894,7 @@ export const LoginView: React.FC = () => {
               boxShadow: '0 18px 45px rgba(0, 0, 0, 0.8)',
             }}>
               <img
-                src="/images/cyber_grid.jpg"
+                src="./images/cyber_grid.jpg"
                 alt="Early Reconnaissance Interception"
                 style={{
                   width: '100%',
@@ -1000,7 +1000,7 @@ export const LoginView: React.FC = () => {
               boxShadow: '0 18px 45px rgba(0, 0, 0, 0.8)',
             }}>
               <img
-                src="/images/defense_terminal.jpg"
+                src="./images/defense_terminal.jpg"
                 alt="Lateral Movement Detection"
                 style={{
                   width: '100%',
@@ -1028,7 +1028,7 @@ export const LoginView: React.FC = () => {
               boxShadow: '0 18px 45px rgba(0, 0, 0, 0.8)',
             }}>
               <img
-                src="/images/giant_cyber_ops.jpg"
+                src="./images/giant_cyber_ops.jpg"
                 alt="Disrupt AI-Driven Attack Chains"
                 style={{
                   width: '100%',
@@ -1133,7 +1133,7 @@ export const LoginView: React.FC = () => {
               boxShadow: '0 18px 45px rgba(0, 0, 0, 0.8)',
             }}>
               <img
-                src="/images/soc_analyst.jpg"
+                src="./images/soc_analyst.jpg"
                 alt="MITRE ATT&CK Threat Mapping"
                 style={{
                   width: '100%',
@@ -1818,7 +1818,7 @@ export const LoginView: React.FC = () => {
             }}>
               <div style={{ width: '120px', minWidth: '120px', background: '#0a1a2e' }}>
                 <img
-                  src="/images/cyber_grid.jpg"
+                  src="./images/cyber_grid.jpg"
                   alt="Case Study 1"
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
@@ -1845,7 +1845,7 @@ export const LoginView: React.FC = () => {
             }}>
               <div style={{ width: '120px', minWidth: '120px', background: '#0a1a2e' }}>
                 <img
-                  src="/images/defense_terminal.jpg"
+                  src="./images/defense_terminal.jpg"
                   alt="Case Study 2"
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />

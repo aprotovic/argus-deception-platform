@@ -25,4 +25,4 @@ services:
       - key: ADMIN_EMAIL
         value: admin@argus-defense.local
       - key: ADMIN_PASSWORD
-        generateValue: true
+        value: ArgusAdmin2026!ChangeMe

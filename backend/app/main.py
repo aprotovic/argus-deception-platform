@@ -107,6 +107,9 @@ from fastapi.staticfiles import StaticFiles
 frontend_dist = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
 if frontend_dist.exists() and (frontend_dist / "index.html").exists():
     app.mount("/dashboard", StaticFiles(directory=str(frontend_dist), html=True), name="dashboard")
+    images_dir = frontend_dist / "images"
+    if images_dir.exists():
+        app.mount("/images", StaticFiles(directory=str(images_dir)), name="images")
 
 
 # Global Exception Handler
