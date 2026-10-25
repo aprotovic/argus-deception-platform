@@ -89,7 +89,18 @@ async def record_root_trap(
 @router.get("/", tags=["Decoy Interface"])
 @router.get("/decoy", tags=["Decoy Interface"])
 async def serve_decoy_portal(request: Request):
-    """Serves the authentic-looking Gebrew Bank decoy portal (Muaz's decoy)."""
+    """Serves the authentic-looking Geberew Bank React decoy portal (Muaz's decoy)."""
+    react_bank_landing = (
+        Path(__file__).resolve().parent.parent.parent.parent
+        / "decoy"
+        / "static"
+        / "bank-app"
+        / "index.html"
+    )
+    if react_bank_landing.exists():
+        await record_root_trap(request, request.url.path, severity="low", summary="Geberew Bank decoy portal visit")
+        return HTMLResponse(content=react_bank_landing.read_text(encoding="utf-8"))
+
     bank_landing = (
         Path(__file__).resolve().parent.parent.parent.parent
         / "decoy"
@@ -98,7 +109,7 @@ async def serve_decoy_portal(request: Request):
         / "landing.html"
     )
     if bank_landing.exists():
-        await record_root_trap(request, request.url.path, severity="low", summary="Gebrew Bank decoy portal visit")
+        await record_root_trap(request, request.url.path, severity="low", summary="Geberew Bank decoy portal visit")
         return HTMLResponse(content=bank_landing.read_text(encoding="utf-8"))
 
     fallback_path = (
