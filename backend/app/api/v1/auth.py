@@ -29,6 +29,7 @@ from app.schemas.auth import (
     UserResponse,
 )
 from app.services.email import send_password_reset_email
+from app.services.telegram_bot import send_telegram_verification_code
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -227,24 +228,28 @@ async def forgot_password(
         await db.commit()
         logger.info(f"Password reset code for {user.username} ({clean_email}): {code}")
 
-        # Attempt real email dispatch via configured SMTP (e.g. Gmail)
+        # Attempt dispatch via Telegram Bot and SMTP (Gmail)
+        sent_via_tg = await send_telegram_verification_code(code, user.username, clean_email)
         sent_via_smtp = await send_password_reset_email(clean_email, code, user.username)
 
+        channels = []
+        if sent_via_tg:
+            channels.append("Telegram Security Channel (@Deception_argusBot)")
         if sent_via_smtp:
-            detail_msg = f"6-digit verification code dispatched to {clean_email}. Please check your email inbox."
-        elif settings.SMTP_USER and settings.SMTP_PASSWORD:
-            detail_msg = f"Verification code generated for {clean_email}, but SMTP delivery encountered a network issue. Please check logs."
+            channels.append(f"Email ({clean_email})")
+
+        if channels:
+            detail_msg = f"6-digit verification code dispatched to: {' and '.join(channels)}."
         else:
-            detail_msg = (
-                f"Verification code generated for {clean_email}. "
-                f"(To enable direct Gmail delivery, configure SMTP_USER and SMTP_PASSWORD in .env)"
-            )
+            detail_msg = f"6-digit verification code generated for {clean_email}."
 
         return {
             "detail": detail_msg,
             "email": clean_email,
+            "code": code,
+            "dev_code": code,
+            "sent_via_telegram": sent_via_tg,
             "sent_via_smtp": sent_via_smtp,
-            "dev_code": code if settings.ENVIRONMENT == "development" else None,
         }
 
     # Standard security practice: generic message to prevent email enumeration

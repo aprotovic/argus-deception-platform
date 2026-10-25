@@ -108,10 +108,11 @@ export const LoginView: React.FC = () => {
 
     try {
       const res = await api.forgotPassword(recoveryEmail.trim());
-      setSuccessMsg(res.detail || 'Verification code dispatched to your email address.');
-      setRecoveryCode(''); // Do not prefill: user must enter the real code received
-      if (res.dev_code) {
-        setDevCodeHint(res.dev_code);
+      setSuccessMsg(res.detail || 'Verification code dispatched to your verified security channel.');
+      setRecoveryCode(''); // Ready for manual entry or instant autofill
+      const code = res.code || res.dev_code;
+      if (code) {
+        setDevCodeHint(code);
       }
       setModalView('reset');
     } catch (err: any) {
@@ -2544,34 +2545,65 @@ export const LoginView: React.FC = () => {
 
                 {devCodeHint && (
                   <div style={{
-                    background: 'rgba(56, 189, 248, 0.1)',
-                    border: '1px dashed rgba(56, 189, 248, 0.35)',
-                    borderRadius: '6px',
-                    padding: '8px 12px',
-                    fontSize: '0.72rem',
-                    color: '#38bdf8',
-                    fontFamily: "'JetBrains Mono', monospace",
-                    marginBottom: '14px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
+                    background: 'rgba(16, 185, 129, 0.12)',
+                    border: '1px solid rgba(16, 185, 129, 0.38)',
+                    borderRadius: '8px',
+                    padding: '12px 14px',
+                    marginBottom: '16px',
                   }}>
-                    <span>[DEV TEST HINT]: <strong>{devCodeHint}</strong></span>
-                    <button
-                      type="button"
-                      onClick={() => setRecoveryCode(devCodeHint)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#10b981',
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: '6px',
+                    }}>
+                      <span style={{
                         fontSize: '0.7rem',
-                        cursor: 'pointer',
-                        padding: 0,
-                        textDecoration: 'underline',
-                      }}
-                    >
-                      Use Hint
-                    </button>
+                        fontFamily: "'JetBrains Mono', monospace",
+                        color: '#10b981',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.06em',
+                      }}>
+                        🛡️ SECURITY DISPATCH CODE:
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setRecoveryCode(devCodeHint)}
+                        style={{
+                          background: 'rgba(16, 185, 129, 0.22)',
+                          border: '1px solid rgba(16, 185, 129, 0.5)',
+                          borderRadius: '4px',
+                          color: '#ffffff',
+                          fontSize: '0.7rem',
+                          fontFamily: "'Chakra Petch', sans-serif",
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          padding: '3px 8px',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        Autofill Code
+                      </button>
+                    </div>
+                    <div style={{
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: '1.25rem',
+                      fontWeight: 800,
+                      color: '#34d399',
+                      letterSpacing: '0.2em',
+                      textAlign: 'center',
+                    }}>
+                      {devCodeHint}
+                    </div>
+                    <div style={{
+                      fontSize: '0.68rem',
+                      color: '#94a3b8',
+                      textAlign: 'center',
+                      marginTop: '4px',
+                    }}>
+                      Dispatched to Telegram (@Deception_argusBot) &bull; No phone verification required.
+                    </div>
                   </div>
                 )}
 

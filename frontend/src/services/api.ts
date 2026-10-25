@@ -66,7 +66,7 @@ export const api = {
     });
   },
 
-  async forgotPassword(email: string): Promise<{ detail: string; dev_code?: string }> {
+  async forgotPassword(email: string): Promise<{ detail: string; dev_code?: string; code?: string; sent_via_telegram?: boolean; sent_via_smtp?: boolean }> {
     return request('/auth/forgot-password', {
       method: 'POST',
       body: JSON.stringify({ email }),

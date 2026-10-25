@@ -236,6 +236,45 @@ async def _answer_callback(
         logger.warning(f"Failed to answer callback query {callback_query_id}: {e}")
 
 
+async def send_telegram_verification_code(code: str, username: str, email: str) -> bool:
+    """Dispatches a password verification code to configured Telegram security channels."""
+    if not settings.TELEGRAM_BOT_TOKEN:
+        return False
+
+    recipients = [settings.TELEGRAM_ADMIN_ID, settings.TELEGRAM_CHAT_ID]
+    valid_recipients = set()
+    for r in recipients:
+        for p in (r or "").split(","):
+            cleaned = p.strip()
+            if cleaned and cleaned.isdigit():
+                valid_recipients.add(cleaned)
+
+    if not valid_recipients:
+        return False
+
+    msg = (
+        f"🔐 <b>[ARGUS SECURITY] PASSCODE RECOVERY REQUEST</b>\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"<b>Operator Call-Sign:</b> <code>{html.escape(username)}</code>\n"
+        f"<b>Registered Email:</b> <code>{html.escape(email)}</code>\n\n"
+        f"Your 6-digit verification code is:\n"
+        f"👉 <b><code>{code}</code></b> 👈\n\n"
+        f"<i>Valid for 15 minutes. Enter this code in the operator login portal to authorize your new security passcode.</i>"
+    )
+
+    sent_any = False
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            for cid in valid_recipients:
+                ok = await _send_msg(client, cid, msg)
+                if ok:
+                    sent_any = True
+    except Exception as e:
+        logger.warning(f"Failed to send Telegram recovery code: {e}")
+
+    return sent_any
+
+
 async def _log_audit_event(
     action: str, target_id: str, user_id: str, details: Dict[str, Any]
 ) -> None:
