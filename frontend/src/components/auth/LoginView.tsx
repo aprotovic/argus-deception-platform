@@ -8,7 +8,6 @@ import {
   KeyRound,
   X,
   AlertTriangle,
-  ArrowRight,
   CheckCircle,
   Mail,
   RotateCcw,
@@ -135,19 +134,19 @@ export const LoginView: React.FC = () => {
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#040706',
+      background: '#030708',
       color: '#f1f5f9',
       fontFamily: "'Inter', sans-serif",
       position: 'relative',
       overflowX: 'hidden',
     }}>
-      {/* ── Giant Transparent Static Background Image (Does not move when page scrolls) ── */}
+      {/* ── Giant Static Transparent Photographic Background (Does not move on scroll) ── */}
       <div style={{
         position: 'fixed',
         inset: 0,
         backgroundImage: `
-          linear-gradient(180deg, rgba(3, 6, 5, 0.84) 0%, rgba(3, 6, 5, 0.94) 100%),
-          url('/images/soc_command.jpg')
+          linear-gradient(180deg, rgba(3, 7, 12, 0.38) 0%, rgba(3, 7, 12, 0.62) 65%, rgba(2, 5, 8, 0.88) 100%),
+          url('/images/giant_soc_bg.jpg')
         `,
         backgroundSize: 'cover',
         backgroundPosition: 'center center',
@@ -155,32 +154,31 @@ export const LoginView: React.FC = () => {
         backgroundAttachment: 'fixed',
         pointerEvents: 'none',
         zIndex: 0,
-        opacity: 0.38,
-        filter: 'contrast(1.2) brightness(0.85)',
+        filter: 'contrast(1.08) brightness(0.95)',
       }} />
 
-      {/* ── Minimalist Luxury Header ── */}
+      {/* ── Minimalist Luxury Transparent Header ── */}
       <header style={{
         position: 'sticky',
         top: 0,
         zIndex: 40,
-        background: 'rgba(4, 7, 6, 0.85)',
-        backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+        background: 'rgba(3, 7, 10, 0.45)',
+        backdropFilter: 'blur(16px)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
         padding: '16px 40px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         transition: 'all 0.2s ease',
       }}>
-        {/* Brand Emblem & Clean Title */}
+        {/* Brand Emblem & Title */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{
             width: '34px',
             height: '34px',
             borderRadius: '6px',
-            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.16) 0%, rgba(5, 150, 105, 0.08) 100%)',
-            border: '1px solid rgba(16, 185, 129, 0.35)',
+            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.1) 100%)',
+            border: '1px solid rgba(16, 185, 129, 0.4)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -193,12 +191,13 @@ export const LoginView: React.FC = () => {
             fontWeight: 700,
             letterSpacing: '0.08em',
             color: '#ffffff',
+            textShadow: '0 2px 10px rgba(0, 0, 0, 0.8)',
           }}>
             ARGUS PANOPTES
           </div>
         </div>
 
-        {/* Right Header Navigation: Single Clean Luxury Operator Login Button */}
+        {/* Right Header: Single Clean Luxury Operator Login Button */}
         <div>
           <button
             onClick={() => {
@@ -217,19 +216,19 @@ export const LoginView: React.FC = () => {
               color: '#040706',
               background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
               border: 'none',
-              padding: '8px 20px',
+              padding: '9px 22px',
               borderRadius: '5px',
               cursor: 'pointer',
-              boxShadow: '0 2px 14px rgba(16, 185, 129, 0.3)',
+              boxShadow: '0 2px 16px rgba(16, 185, 129, 0.4)',
               transition: 'all 0.15s ease',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.filter = 'brightness(1.1)';
-              e.currentTarget.style.boxShadow = '0 4px 20px rgba(16, 185, 129, 0.45)';
+              e.currentTarget.style.filter = 'brightness(1.12)';
+              e.currentTarget.style.boxShadow = '0 4px 22px rgba(16, 185, 129, 0.6)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.filter = 'brightness(1)';
-              e.currentTarget.style.boxShadow = '0 2px 14px rgba(16, 185, 129, 0.3)';
+              e.currentTarget.style.boxShadow = '0 2px 16px rgba(16, 185, 129, 0.4)';
             }}
           >
             <KeyRound size={13} />
@@ -238,133 +237,216 @@ export const LoginView: React.FC = () => {
         </div>
       </header>
 
-      {/* ── Main Hero Section ── */}
-      <main style={{
+      {/* ── Main Hero Section (Centered Luxury Layout Matching Reference Image) ── */}
+      <section style={{
         position: 'relative',
         zIndex: 10,
-        maxWidth: '1240px',
-        margin: '0 auto',
-        padding: '72px 32px 56px 32px',
+        minHeight: '80vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '60px 24px',
+        textAlign: 'center',
       }}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))',
-          gap: '56px',
-          alignItems: 'center',
-          marginBottom: '80px',
-        }}>
-          {/* Left Column: Clean, Elegant, Confidential Hero */}
-          <div>
-            <h1 style={{
-              fontFamily: "'Chakra Petch', sans-serif",
-              fontSize: 'clamp(2.3rem, 4.2vw, 3.4rem)',
-              fontWeight: 700,
-              lineHeight: 1.15,
-              letterSpacing: '0.02em',
+        <div style={{ maxWidth: '840px', margin: '0 auto' }}>
+          {/* Top Hairline Rule */}
+          <div style={{
+            width: '100%',
+            maxWidth: '480px',
+            height: '1px',
+            background: 'rgba(255, 255, 255, 0.35)',
+            margin: '0 auto 28px auto',
+          }} />
+
+          {/* Big Center Display Title */}
+          <h1 style={{
+            fontFamily: "'Chakra Petch', 'Inter', sans-serif",
+            fontStyle: 'italic',
+            fontSize: 'clamp(3.4rem, 7.5vw, 5.8rem)',
+            fontWeight: 800,
+            lineHeight: 1.02,
+            letterSpacing: '0.03em',
+            color: '#ffffff',
+            textTransform: 'uppercase',
+            margin: '0 0 16px 0',
+            textShadow: '0 4px 28px rgba(0, 0, 0, 0.9), 0 2px 10px rgba(0, 0, 0, 0.95)',
+          }}>
+            ARGUS<br />PANOPTES
+          </h1>
+
+          {/* Centered Italic Subtitle */}
+          <p style={{
+            fontFamily: "'Inter', sans-serif",
+            fontStyle: 'italic',
+            fontSize: 'clamp(1rem, 2vw, 1.3rem)',
+            fontWeight: 400,
+            color: '#e2e8f0',
+            margin: '0 0 26px 0',
+            letterSpacing: '0.02em',
+            textShadow: '0 2px 12px rgba(0, 0, 0, 0.9)',
+          }}>
+            Autonomous cyber deception &amp; sovereign threat neutralization
+          </p>
+
+          {/* Bottom Hairline Rule */}
+          <div style={{
+            width: '100%',
+            maxWidth: '480px',
+            height: '1px',
+            background: 'rgba(255, 255, 255, 0.35)',
+            margin: '0 auto 24px auto',
+          }} />
+
+          {/* Centered Navigation Menu */}
+          <nav style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+            gap: '16px',
+            fontSize: '0.85rem',
+            fontFamily: "'Chakra Petch', sans-serif",
+            fontWeight: 700,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: '#ffffff',
+            textShadow: '0 2px 10px rgba(0, 0, 0, 0.85)',
+            marginBottom: '36px',
+          }}>
+            <a
+              href="#overview"
+              style={{ color: '#ffffff', textDecoration: 'none', transition: 'color 0.15s ease' }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#10b981')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#ffffff')}
+            >
+              HOME
+            </a>
+            <span style={{ opacity: 0.4 }}>|</span>
+            <a
+              href="#capabilities"
+              style={{ color: '#ffffff', textDecoration: 'none', transition: 'color 0.15s ease' }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#10b981')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#ffffff')}
+            >
+              MISSION
+            </a>
+            <span style={{ opacity: 0.4 }}>|</span>
+            <a
+              href="#capabilities"
+              style={{ color: '#ffffff', textDecoration: 'none', transition: 'color 0.15s ease' }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#10b981')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#ffffff')}
+            >
+              CAPABILITIES
+            </a>
+            <span style={{ opacity: 0.4 }}>|</span>
+            <a
+              href="#capabilities"
+              style={{ color: '#ffffff', textDecoration: 'none', transition: 'color 0.15s ease' }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#10b981')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#ffffff')}
+            >
+              COMPLIANCE
+            </a>
+            <span style={{ opacity: 0.4 }}>|</span>
+            <button
+              onClick={() => {
+                resetModalState();
+                setShowLoginModal(true);
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#34d399',
+                fontFamily: 'inherit',
+                fontSize: 'inherit',
+                fontWeight: 'inherit',
+                letterSpacing: 'inherit',
+                cursor: 'pointer',
+                padding: 0,
+                textTransform: 'uppercase',
+                textShadow: '0 0 12px rgba(16, 185, 129, 0.5)',
+                transition: 'color 0.15s ease',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#10b981')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#34d399')}
+            >
+              OPERATOR ACCESS
+            </button>
+          </nav>
+
+          {/* Downward Caret Arrow */}
+          <a
+            href="#capabilities"
+            aria-label="Scroll to capabilities"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '34px',
+              height: '34px',
+              borderRadius: '50%',
+              border: '1px solid rgba(255, 255, 255, 0.35)',
+              background: 'rgba(0, 0, 0, 0.4)',
+              backdropFilter: 'blur(8px)',
               color: '#ffffff',
-              marginBottom: '22px',
-              textTransform: 'uppercase',
-            }}>
-              Autonomous Threat Deception &amp; Sovereign Defense
-            </h1>
-
-            <p style={{
-              fontSize: '0.96rem',
-              lineHeight: 1.75,
-              color: '#94a3b8',
-              marginBottom: '36px',
-              maxWidth: '520px',
-            }}>
-              Active multi-layered deception surfaces engineered to entrap hostile incursions, quarantine payloads, and deliver decisive incident intelligence without exposing core operational infrastructure.
-            </p>
-
-            {/* Single Clean Primary Action Button */}
-            <div>
-              <button
-                onClick={() => {
-                  resetModalState();
-                  setShowLoginModal(true);
-                }}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  padding: '13px 28px',
-                  borderRadius: '6px',
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  border: 'none',
-                  color: '#040706',
-                  fontFamily: "'Chakra Petch', sans-serif",
-                  fontSize: '0.88rem',
-                  fontWeight: 700,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 20px rgba(16, 185, 129, 0.35)',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <span>ENTER COMMAND CONSOLE</span>
-                <ArrowRight size={15} />
-              </button>
-            </div>
-          </div>
-
-          {/* Right Column: Clean Photographic Showcase ── */}
-          <div style={{ position: 'relative' }}>
-            <div style={{
-              borderRadius: '12px',
-              overflow: 'hidden',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              boxShadow: '0 24px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(16, 185, 129, 0.08)',
-              background: '#070b09',
-            }}>
-              <img
-                src="/images/soc_command.jpg"
-                alt="Security Operations Center"
-                style={{
-                  width: '100%',
-                  height: '420px',
-                  objectFit: 'cover',
-                  display: 'block',
-                  filter: 'contrast(1.08) brightness(0.9)',
-                }}
-              />
-            </div>
-          </div>
+              textDecoration: 'none',
+              fontSize: '0.8rem',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = '#10b981';
+              e.currentTarget.style.color = '#10b981';
+              e.currentTarget.style.transform = 'translateY(3px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.35)';
+              e.currentTarget.style.color = '#ffffff';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+          >
+            ▼
+          </a>
         </div>
+      </section>
 
-        {/* ── Section 2: Three Quiet, Discreet Capability Blocks ── */}
-        <section style={{
-          borderTop: '1px solid rgba(255, 255, 255, 0.06)',
-          paddingTop: '64px',
-          marginBottom: '64px',
-        }}>
+      {/* ── Capabilities Section (Scrolls smoothly over the static background) ── */}
+      <section id="capabilities" style={{
+        position: 'relative',
+        zIndex: 10,
+        background: 'rgba(4, 8, 11, 0.92)',
+        backdropFilter: 'blur(20px)',
+        borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+        padding: '72px 32px 80px 32px',
+      }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
             gap: '28px',
           }}>
-            {/* Pillar 1 */}
+            {/* Capability 1 */}
             <div style={{
-              background: 'rgba(8, 12, 10, 0.75)',
+              background: 'rgba(8, 14, 18, 0.7)',
               border: '1px solid rgba(255, 255, 255, 0.06)',
               borderRadius: '8px',
               overflow: 'hidden',
-              transition: 'border-color 0.2s ease',
+              transition: 'all 0.2s ease',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.35)')}
+            onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.4)')}
             onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.06)')}
             >
               <img
                 src="/images/cyber_grid.jpg"
-                alt="Cyber defense infrastructure"
+                alt="Active surface deception grid"
                 style={{
                   width: '100%',
-                  height: '160px',
+                  height: '180px',
                   objectFit: 'cover',
                   display: 'block',
-                  filter: 'brightness(0.75) contrast(1.1)',
+                  filter: 'brightness(0.8) contrast(1.1)',
                 }}
               />
               <div style={{ padding: '24px' }}>
@@ -374,37 +456,37 @@ export const LoginView: React.FC = () => {
                   fontWeight: 700,
                   color: '#ffffff',
                   marginBottom: '8px',
-                  letterSpacing: '0.03em',
+                  letterSpacing: '0.04em',
                   textTransform: 'uppercase',
                 }}>
                   Active Surface Deception
                 </h3>
-                <p style={{ fontSize: '0.82rem', color: '#94a3b8', lineHeight: 1.6, margin: 0 }}>
+                <p style={{ fontSize: '0.84rem', color: '#94a3b8', lineHeight: 1.6, margin: 0 }}>
                   High-interaction honey-grids intercept reconnaissance and credential attacks before production boundaries can be engaged.
                 </p>
               </div>
             </div>
 
-            {/* Pillar 2 */}
+            {/* Capability 2 */}
             <div style={{
-              background: 'rgba(8, 12, 10, 0.75)',
+              background: 'rgba(8, 14, 18, 0.7)',
               border: '1px solid rgba(255, 255, 255, 0.06)',
               borderRadius: '8px',
               overflow: 'hidden',
-              transition: 'border-color 0.2s ease',
+              transition: 'all 0.2s ease',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.35)')}
+            onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.4)')}
             onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.06)')}
             >
               <img
                 src="/images/soc_analyst.jpg"
-                alt="Security analyst operations"
+                alt="Air-gapped forensic custody operations"
                 style={{
                   width: '100%',
-                  height: '160px',
+                  height: '180px',
                   objectFit: 'cover',
                   display: 'block',
-                  filter: 'brightness(0.75) contrast(1.1)',
+                  filter: 'brightness(0.8) contrast(1.1)',
                 }}
               />
               <div style={{ padding: '24px' }}>
@@ -414,37 +496,37 @@ export const LoginView: React.FC = () => {
                   fontWeight: 700,
                   color: '#ffffff',
                   marginBottom: '8px',
-                  letterSpacing: '0.03em',
+                  letterSpacing: '0.04em',
                   textTransform: 'uppercase',
                 }}>
                   Air-Gapped Forensic Custody
                 </h3>
-                <p style={{ fontSize: '0.82rem', color: '#94a3b8', lineHeight: 1.6, margin: 0 }}>
-                  Hostile artifacts are trapped into isolated quarantine vaults with cryptographic SHA-256 custody tracking.
+                <p style={{ fontSize: '0.84rem', color: '#94a3b8', lineHeight: 1.6, margin: 0 }}>
+                  Hostile artifacts are trapped into isolated quarantine vaults with cryptographic SHA-256 chain-of-custody tracking.
                 </p>
               </div>
             </div>
 
-            {/* Pillar 3 */}
+            {/* Capability 3 */}
             <div style={{
-              background: 'rgba(8, 12, 10, 0.75)',
+              background: 'rgba(8, 14, 18, 0.7)',
               border: '1px solid rgba(255, 255, 255, 0.06)',
               borderRadius: '8px',
               overflow: 'hidden',
-              transition: 'border-color 0.2s ease',
+              transition: 'all 0.2s ease',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.35)')}
+            onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.4)')}
             onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.06)')}
             >
               <img
                 src="/images/defense_terminal.jpg"
-                alt="Defense terminal command"
+                alt="Incident command and telemetric synthesis"
                 style={{
                   width: '100%',
-                  height: '160px',
+                  height: '180px',
                   objectFit: 'cover',
                   display: 'block',
-                  filter: 'brightness(0.75) contrast(1.1)',
+                  filter: 'brightness(0.8) contrast(1.1)',
                 }}
               />
               <div style={{ padding: '24px' }}>
@@ -454,19 +536,19 @@ export const LoginView: React.FC = () => {
                   fontWeight: 700,
                   color: '#ffffff',
                   marginBottom: '8px',
-                  letterSpacing: '0.03em',
+                  letterSpacing: '0.04em',
                   textTransform: 'uppercase',
                 }}>
                   Incident Containment
                 </h3>
-                <p style={{ fontSize: '0.82rem', color: '#94a3b8', lineHeight: 1.6, margin: 0 }}>
+                <p style={{ fontSize: '0.84rem', color: '#94a3b8', lineHeight: 1.6, margin: 0 }}>
                   Immediate telemetric synthesis, root authority control, and single-tap emergency lockdown response.
                 </p>
               </div>
             </div>
           </div>
-        </section>
-      </main>
+        </div>
+      </section>
 
       {/* ── Minimalist Clean Footer ── */}
       <footer style={{
