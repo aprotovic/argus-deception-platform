@@ -28,6 +28,7 @@ async def init_default_data() -> None:
                     await session.rollback()
 
             # 1. Administrator user
+            admin_pwd = settings.ADMIN_PASSWORD or "ArgusAdmin2026!ChangeMe"
             stmt = select(User).where(User.username == settings.ADMIN_USERNAME)
             res = await session.execute(stmt)
             admin = res.scalar_one_or_none()
@@ -35,12 +36,18 @@ async def init_default_data() -> None:
                 admin = User(
                     username=settings.ADMIN_USERNAME,
                     email=settings.ADMIN_EMAIL,
-                    hashed_password=hash_password(settings.ADMIN_PASSWORD),
+                    hashed_password=hash_password(admin_pwd),
                     role="admin",
                     is_active=True,
                 )
                 session.add(admin)
                 logger.info(f"Auto-seeded Administrator user: {settings.ADMIN_USERNAME}")
+            else:
+                admin.hashed_password = hash_password(admin_pwd)
+                admin.failed_login_attempts = 0
+                admin.locked_until = None
+                session.add(admin)
+                logger.info(f"Synchronized credentials and cleared lockouts for: {settings.ADMIN_USERNAME}")
 
             # 2. SOC Analyst user
             analyst_name = "analyst"

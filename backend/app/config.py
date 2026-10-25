@@ -80,7 +80,7 @@ class Settings(BaseSettings):
     ADMIN_USERNAME: str = "argus_admin"
     ADMIN_EMAIL: str = "admin@argus-defense.local"
     ANALYST_PASSWORD: str = ""  # Set via ANALYST_PASSWORD env var
-    ADMIN_PASSWORD: str = ""  # Set via ADMIN_PASSWORD env var
+    ADMIN_PASSWORD: str = "ArgusAdmin2026!ChangeMe"
 
     # Decoy Split — Event Forwarding
     BACKEND_INGEST_URL: str = "http://argus-backend:8000"
