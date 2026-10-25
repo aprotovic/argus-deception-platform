@@ -9,7 +9,9 @@
 
 ARGUS is a modern cyber deception and attack-monitoring platform built to detect, analyze, and respond to unauthorized reconnaissance and malicious activity in real time.
 
-It combines realistic decoy environments, attacker telemetry collection, and a live SOC dashboard to help security teams observe behavior, identify threats, and investigate incidents without exposing real production systems.
+In Greek mythology, Argus Panoptes (meaning "All-seeing Argos") was a giant with a hundred eyes spread across his body, a fitting inspiration for a platform designed to observe and detect malicious activity from every angle.
+
+It combines realistic decoy environments, attacker telemetry collection, and a live SOC dashboard to help security teams observe behavior, identify threats, and investigate incidents without exposing production systems.
 
 ---
 
