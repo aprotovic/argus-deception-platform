@@ -175,7 +175,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               flexShrink: 0,
               boxShadow: '0 0 10px rgba(16, 185, 129, 0.25)',
             }}>
-              <Eye size={16} color="#10b981" />
+              <Eye size={16} color="#00ff9d" className="argus-eye-blink" style={{ transformOrigin: 'center center' }} />
             </div>
             <div>
               <div style={{
@@ -189,25 +189,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 ARGUS PANOPTES
               </div>
               <div style={{
-                fontSize: '0.62rem',
-                color: '#10b981',
+                fontSize: '0.58rem',
+                color: '#00ff9d',
                 fontFamily: "'JetBrains Mono', monospace",
                 fontWeight: 600,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
               }}>
-                Ἄργος Πανόπτης
+                All-Seeing Sentinel
               </div>
             </div>
           </div>
 
-          {/* Meaning / Origin Explanation */}
+          {/* Minimized English Description */}
           <div style={{
             fontSize: '0.67rem',
             color: 'var(--text-dim)',
-            lineHeight: 1.48,
+            lineHeight: 1.45,
             marginBottom: '10px',
             fontFamily: "'Chakra Petch', sans-serif",
           }}>
-            Named after the mythological all-seeing guardian with 100 watchful eyes who never slept. In this platform, every decoy trap acts as an unblinking eye detecting hostile incursions with zero blind spots.
+            Autonomous decoys monitor all network perimeters with zero blind spots.
           </div>
 
           {/* Surveillance Grid Status Badge */}
@@ -226,15 +228,38 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 width: 6,
                 height: 6,
                 borderRadius: '50%',
-                background: '#10b981',
-                boxShadow: '0 0 8px #10b981',
+                background: '#00ff9d',
+                boxShadow: '0 0 8px #00ff9d',
                 display: 'inline-block',
               }} />
               ALL-SEEING SENSORS
             </span>
-            <span style={{ color: 'var(--text-dim)', letterSpacing: '0.04em' }}>ACTIVE</span>
+            <span style={{ color: '#00ff9d', letterSpacing: '0.04em', fontWeight: 600 }}>ACTIVE</span>
           </div>
         </div>
+
+        {/* 4-second Eye Blink Animation Helper */}
+        <style>{`
+          @keyframes argusEyeBlink4s {
+            0%, 93%, 100% {
+              transform: scaleY(1);
+              opacity: 1;
+            }
+            95.5% {
+              transform: scaleY(0.08);
+              opacity: 0.35;
+            }
+            97.5% {
+              transform: scaleY(1.05);
+              opacity: 1;
+            }
+          }
+          .argus-eye-blink {
+            display: inline-block;
+            transform-origin: center center;
+            animation: argusEyeBlink4s 4s infinite ease-in-out;
+          }
+        `}</style>
       </div>
     </aside>
   );

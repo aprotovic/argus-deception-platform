@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
+import { sendBriefingEmail } from '../../services/emailService';
 import {
   Shield,
-  Clock,
   Eye,
   EyeOff,
   KeyRound,
@@ -37,9 +37,6 @@ export const LoginView: React.FC = () => {
   // Recovery form state
   const [recoveryEmail, setRecoveryEmail] = useState<string>('');
   const [recoveryCode, setRecoveryCode] = useState<string>('');
-  const [countdown, setCountdown] = useState<number>(120);
-  const [operatorCallSign, setOperatorCallSign] = useState<string>('');
-  const [operatorEmail, setOperatorEmail] = useState<string>('');
   const [newPassword, setNewPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
   const [showNewPassword, setShowNewPassword] = useState<boolean>(false);
@@ -60,22 +57,6 @@ export const LoginView: React.FC = () => {
   // Newsletter state
   const [newsletterEmail, setNewsletterEmail] = useState<string>('');
   const [newsletterSubmitted, setNewsletterSubmitted] = useState<boolean>(false);
-
-  // Decreasing 30-second countdown timer for passcode recovery code
-  useEffect(() => {
-    if (modalView !== 'reset') return;
-    setCountdown(120);
-    const interval = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [modalView]);
 
   // Close modal on Escape key
   useEffect(() => {
@@ -103,11 +84,8 @@ export const LoginView: React.FC = () => {
 
     try {
       await login(username, password);
-      setShowLoginModal(false);
     } catch (err: any) {
       setError(err.message || 'Authentication rejected. Verify authorization credentials.');
-      setShowLoginModal(true);
-      setPassword(''); // Clear invalid passcode so operator can immediately re-enter
     } finally {
       setLoading(false);
     }
@@ -125,13 +103,13 @@ export const LoginView: React.FC = () => {
 
     try {
       const res = await api.forgotPassword(recoveryEmail.trim());
-      setSuccessMsg(res.detail || 'Verification code dispatched to your verified security channel.');
-      setRecoveryCode(''); // Ready for manual entry or instant autofill
-      if (res.username) setOperatorCallSign(res.username);
-      if (res.email) setOperatorEmail(res.email);
+      setSuccessMsg(res.detail || 'Recovery code generated.');
+      if (res.dev_code) {
+        setRecoveryCode(res.dev_code);
+      }
       setModalView('reset');
     } catch (err: any) {
-      setError(err.message || 'Failed to dispatch verification code.');
+      setError(err.message || 'Failed to dispatch recovery code.');
     } finally {
       setLoading(false);
     }
@@ -140,7 +118,7 @@ export const LoginView: React.FC = () => {
   const handleResetSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!recoveryCode.trim()) {
-      setError('Please enter the 6-digit verification code.');
+      setError('Please enter the 6-digit recovery code.');
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -163,12 +141,12 @@ export const LoginView: React.FC = () => {
         new_password: newPassword,
         confirm_password: confirmPassword,
       });
-      setSuccessMsg(res.detail || 'Passcode successfully reset! You may now sign in.');
+      setSuccessMsg(res.detail || 'Passcode successfully reset. You may now sign in.');
       setPassword('');
       setNewPassword('');
       setConfirmPassword('');
       setRecoveryCode('');
-        setModalView('login');
+      setModalView('login');
     } catch (err: any) {
       setError(err.message || 'Failed to reset password. Verify code and try again.');
     } finally {
@@ -176,10 +154,22 @@ export const LoginView: React.FC = () => {
     }
   };
 
-  const handleBriefingSubmit = (e: React.FormEvent) => {
+  const handleBriefingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!briefingEmail.trim()) return;
-    setBriefingSubmitted(true);
+    try {
+      await sendBriefingEmail({
+        fullName: briefingName || 'Prospective Operator',
+        email: briefingEmail,
+        organization: briefingOrg,
+        jobRole: briefingRole,
+        targetScale: briefingNodes,
+      });
+      setBriefingSubmitted(true);
+    } catch (err) {
+      console.warn('Briefing email dispatch warning:', err);
+      setBriefingSubmitted(true);
+    }
   };
 
   const handleNewsletterSubmit = (e: React.FormEvent) => {
@@ -216,11 +206,16 @@ export const LoginView: React.FC = () => {
 
       {/* ── Top Navbar (Acalvio-style Clean Enterprise Header) ── */}
       <header style={{
-        position: 'sticky',
+        position: 'fixed',
         top: 0,
-        zIndex: 50,
-        background: 'rgba(5, 11, 19, 0.88)',
+        left: 0,
+        right: 0,
+        width: '100%',
+        boxSizing: 'border-box',
+        zIndex: 100,
+        background: 'rgba(5, 11, 19, 0.92)',
         backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
         borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
         padding: '14px 36px',
         display: 'flex',
@@ -324,8 +319,8 @@ export const LoginView: React.FC = () => {
         </div>
       </header>
 
-      {/* ── Main Content Container ── */}
-      <main style={{ position: 'relative', zIndex: 10 }}>
+      {/* ── Main Content Container (Padded down to account for fixed header) ── */}
+      <main style={{ position: 'relative', zIndex: 10, paddingTop: '68px' }}>
 
         {/* ── 1. Hero Section (Acalvio-style Left Copy + Right Cyber Exposure Showcase) ── */}
         <section id="hero" style={{
@@ -460,7 +455,7 @@ export const LoginView: React.FC = () => {
                 position: 'relative',
               }}>
                 <img
-                  src="/images/soc_command.jpg"
+                  src="/images/cyber_grid.jpg"
                   alt="ARGUS Panoptes Command Console"
                   style={{
                     width: '100%',
@@ -2410,13 +2405,13 @@ export const LoginView: React.FC = () => {
                       marginBottom: '8px',
                       fontFamily: "'Chakra Petch', sans-serif",
                     }}>
-                      Operator Call-Sign (Username) or Registered Email
+                      Registered Email Address
                     </label>
                     <input
-                      type="text"
+                      type="email"
                       value={recoveryEmail}
                       onChange={(e) => setRecoveryEmail(e.target.value)}
-                      placeholder="e.g. argus_admin or operator@gmail.com"
+                      placeholder="operator@argus-defense.local"
                       required
                       autoFocus
                       style={{
@@ -2517,34 +2512,8 @@ export const LoginView: React.FC = () => {
                     Set New Passcode
                   </h2>
                   <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '6px', lineHeight: 1.4 }}>
-                    Verify credentials for the registered operator enclave account below:
+                    Enter the code dispatched to <strong style={{ color: '#fff' }}>{recoveryEmail}</strong>.
                   </p>
-                </div>
-
-                {/* Real Registered Operator Identity Badge */}
-                <div style={{
-                  background: 'rgba(7, 16, 26, 0.85)',
-                  border: '1px solid rgba(56, 189, 248, 0.25)',
-                  borderRadius: '6px',
-                  padding: '10px 14px',
-                  marginBottom: '14px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '5px',
-                  fontSize: '0.76rem',
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: '#94a3b8', fontFamily: "'Chakra Petch', sans-serif", textTransform: 'uppercase' }}>Operator Call-Sign:</span>
-                    <strong style={{ color: '#ffffff', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.04em' }}>
-                      {operatorCallSign || username || 'argus_admin'}
-                    </strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: '#94a3b8', fontFamily: "'Chakra Petch', sans-serif", textTransform: 'uppercase' }}>Registered Email:</span>
-                    <strong style={{ color: '#38bdf8', fontFamily: "'JetBrains Mono', monospace" }}>
-                      {operatorEmail || recoveryEmail}
-                    </strong>
-                  </div>
                 </div>
 
                 {successMsg && (
@@ -2583,62 +2552,6 @@ export const LoginView: React.FC = () => {
                   </div>
                 )}
 
-                {/* 30-Second Countdown Indicator */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  background: countdown > 20 ? 'rgba(56, 189, 248, 0.08)' : 'rgba(239, 68, 68, 0.12)',
-                  border: `1px solid ${countdown > 20 ? 'rgba(56, 189, 248, 0.3)' : 'rgba(239, 68, 68, 0.4)'}`,
-                  borderRadius: '6px',
-                  padding: '9px 14px',
-                  marginBottom: '14px',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Clock size={15} color={countdown > 20 ? '#38bdf8' : '#ef4444'} />
-                    <span style={{ fontSize: '0.78rem', color: countdown > 20 ? '#cbd5e1' : '#fca5a5', fontWeight: 600 }}>
-                      {countdown > 0 ? 'Verification code expires in:' : 'Verification code expired!'}
-                    </span>
-                  </div>
-                  <div style={{
-                    fontFamily: "'JetBrains Mono', monospace",
-                    fontSize: '0.98rem',
-                    fontWeight: 800,
-                    color: countdown > 20 ? '#38bdf8' : '#ef4444',
-                    letterSpacing: '0.04em',
-                  }}>
-                    {Math.floor(countdown / 60)}:{(countdown % 60).toString().padStart(2, '0')}
-                  </div>
-                </div>
-
-                {countdown === 0 && (
-                  <button
-                    type="button"
-                    onClick={(e) => handleForgotSubmit(e)}
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      background: 'rgba(56, 189, 248, 0.15)',
-                      border: '1px solid #38bdf8',
-                      borderRadius: '6px',
-                      color: '#38bdf8',
-                      fontFamily: "'Chakra Petch', sans-serif",
-                      fontSize: '0.82rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      marginBottom: '14px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    <RotateCcw size={14} />
-                    <span>DISPATCH NEW VERIFICATION CODE</span>
-                  </button>
-                )}
-
                 <form onSubmit={handleResetSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                   <div>
                     <label style={{
@@ -2657,7 +2570,7 @@ export const LoginView: React.FC = () => {
                       type="text"
                       value={recoveryCode}
                       onChange={(e) => setRecoveryCode(e.target.value)}
-                      placeholder="Enter 6-digit code from Telegram"
+                      placeholder="e.g. 549210"
                       required
                       autoFocus
                       maxLength={12}
