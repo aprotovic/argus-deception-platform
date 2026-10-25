@@ -28,7 +28,7 @@ ARGUS is an active cyber deception and threat-monitoring platform designed to de
 - Goitom Shumey — CTC-5128-26 | Backend & Core Ingestion
 - Muaz Muhammed — CTC-XXXX-XX | Decoy Frontend Architecture
 - Zyad — CTC-XXXX-XX | Security Engineering & Forensic Reporting
-- Bereket Worana — CTC-XXXX-XX | Cyber Deception & Threat Intelligence
+- Bereket Worana — CTC-5170-26 | Cyber Deception & Threat Intelligence
 
 ---
 
