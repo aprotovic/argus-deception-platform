@@ -125,7 +125,7 @@ function Card3D({ card, index }: { card: typeof CARDS[0]; index: number }) {
             <div className="relative p-5 flex flex-col justify-between h-full">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-white/50 text-[9px] tracking-[0.2em] font-bold uppercase">ገብረው ባንክ</p>
+                  <p className="text-white/50 text-[9px] tracking-[0.2em] font-bold uppercase">ገበሬው ባንክ</p>
                   <p className="text-white font-bold text-sm mt-0.5">{card.tag}</p>
                 </div>
                 {/* EMV Chip */}

@@ -63,7 +63,7 @@ export function NavBar() {
               <BankLogo size={38}/>
               <div className="leading-tight">
                 <div className="font-bold text-primary text-sm tracking-tight group-hover:text-gold transition-colors">
-                  {lang === 'am' ? 'ገብረው ባንክ' : 'Geberew Bank'}
+                  {lang === 'am' ? 'ገበሬው ባንክ' : 'Geberew Bank'}
                 </div>
                 <div className="text-[10px] text-text-muted">
                   {lang === 'am' ? 'ወደፊት ከናንተ ጋር' : 'Forward Together With You'}

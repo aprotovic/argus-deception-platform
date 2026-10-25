@@ -441,7 +441,7 @@ function FeatureSections() {
               <div className="bg-gradient-to-br from-primary to-primary-dark rounded-3xl p-10 w-full max-w-xs shadow-2xl text-center relative overflow-hidden">
                 <div className="absolute inset-0 opacity-5"><svg width="100%" height="100%"><defs><pattern id="ip2" width="50" height="50" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="25" height="25" fill="none" stroke="white" strokeWidth="0.8"/></pattern></defs><rect width="100%" height="100%" fill="url(#ip2)"/></svg></div>
                 <div className="relative">
-                  <div className="text-gold font-serif text-2xl font-bold mb-1 animate-float">ገብረው አሜን</div>
+                  <div className="text-gold font-serif text-2xl font-bold mb-1 animate-float">ገበሬው አሜን</div>
                   <div className="text-white/50 font-serif text-base mb-4">GeberewAmeen</div>
                   <div className="w-12 h-px bg-white/20 mx-auto mb-4"/>
                   <div className="grid grid-cols-4 gap-2 justify-items-center mb-4">
@@ -488,7 +488,7 @@ function CardShowcase() {
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"/>
                 <div className="relative flex flex-col justify-between h-full">
                   <div className="flex justify-between items-start">
-                    <div className="text-[10px] font-bold text-white/70 uppercase tracking-widest">ገብረው ባንክ</div>
+                    <div className="text-[10px] font-bold text-white/70 uppercase tracking-widest">ገበሬው ባንክ</div>
                     <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center"><svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" className="w-4 h-4"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
                   </div>
                   <div>
@@ -612,7 +612,7 @@ function CTABanner() {
 }
 
 export function LandingPage() {
-  useEffect(() => { document.title = 'Geberew Bank — Home | ገብረው ባንክ' }, [])
+  useEffect(() => { document.title = 'Geberew Bank — Home | ገበሬው ባንክ' }, [])
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <NavBar/>
