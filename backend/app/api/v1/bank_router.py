@@ -200,6 +200,7 @@ router = APIRouter(tags=["Bank Portal"])
 
 
 @router.get("/bank/static/bank.css")
+@router.get("/static/bank.css")
 async def bank_css() -> FileResponse:
     """Serves the shared Meridian Trust Bank stylesheet."""
     css_path = BANK_TEMPLATES_DIR / "bank.css"
@@ -212,6 +213,7 @@ async def bank_css() -> FileResponse:
 
 
 @router.get("/bank/login")
+@router.get("/login")
 async def bank_login_page() -> HTMLResponse:
     """Renders the Meridian Trust Bank login page with OTP overlay."""
     return HTMLResponse(content=_read_template("login.html"))

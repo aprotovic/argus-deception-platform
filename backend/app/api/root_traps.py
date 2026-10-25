@@ -88,23 +88,28 @@ async def record_root_trap(
 # ============================================================================
 @router.get("/", tags=["Decoy Interface"])
 @router.get("/decoy", tags=["Decoy Interface"])
-async def serve_decoy_portal():
-    """Serves the authentic-looking decoy defense contractor portal."""
-    # __file__ is backend/app/api/root_traps.py
-    # .parent      -> backend/app/api/
-    # .parent      -> backend/app/
-    # .parent      -> backend/
-    # .parent      -> repo root
-    # / "decoy" / "templates" / "index.html"
-    template_path = (
+async def serve_decoy_portal(request: Request):
+    """Serves the authentic-looking Gebrew Bank decoy portal (Muaz's decoy)."""
+    bank_landing = (
+        Path(__file__).resolve().parent.parent.parent.parent
+        / "decoy"
+        / "templates"
+        / "bank"
+        / "landing.html"
+    )
+    if bank_landing.exists():
+        await record_root_trap(request, request.url.path, severity="low", summary="Gebrew Bank decoy portal visit")
+        return HTMLResponse(content=bank_landing.read_text(encoding="utf-8"))
+
+    fallback_path = (
         Path(__file__).resolve().parent.parent.parent.parent
         / "decoy"
         / "templates"
         / "index.html"
     )
-    if template_path.exists():
-        return HTMLResponse(content=template_path.read_text(encoding="utf-8"))
-    return {"message": "Nexis Defense Systems - Secure Portal"}
+    if fallback_path.exists():
+        return HTMLResponse(content=fallback_path.read_text(encoding="utf-8"))
+    return {"message": "Gebrew Bank - Secure Portal"}
 
 
 @router.get("/robots.txt", tags=["Decoy Interface"])

@@ -83,7 +83,7 @@ async def test_decoy_portal_serves_html(decoy_client):
     """/ must serve the decoy portal HTML."""
     response = await decoy_client.get("/")
     assert response.status_code == 200
-    assert "Nexis Defense Systems" in response.text
+    assert "Gebrew Bank" in response.text or "Nexis Defense Systems" in response.text
 
 
 @pytest.mark.asyncio
