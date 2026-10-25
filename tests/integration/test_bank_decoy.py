@@ -1,10 +1,11 @@
-"""Integration tests for the Meridian Trust Bank decoy portal (bank_router.py).
+"""Integration tests for the Geberew Bank decoy portal (bank_router.py).
 
 Tests cover page routing, HTML content, API endpoints, telemetry capture,
 SQLi detection, password fingerprinting, rate limiting, and file upload quarantine.
 
 Plain pytest + pytest-asyncio only. No Hypothesis or other libraries.
-One known pre-existing test failure exists in the wider test suite (not in this file).
+One known pre-existing test failure exists in the wider test suite
+(test_decoy_honeytoken_classified_download): do not fix it.
 """
 
 import io
@@ -45,34 +46,36 @@ async def decoy_client():
 
 
 # ---------------------------------------------------------------------------
-# Group 1 — Page routes (task 8.1)
+# Group 1 — Page routes (React app now served)
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
 async def test_landing_page(decoy_client):
-    """GET /bank → 200, text/html, body contains brand name."""
+    """GET /bank → 200, text/html, React root element present, title contains brand name."""
     response = await decoy_client.get("/bank")
     assert response.status_code == 200
     assert "text/html" in response.headers["content-type"]
-    assert "Gebrew Bank" in response.text
+    assert 'id="root"' in response.text
+    assert "Geberew Bank" in response.text
 
 
 @pytest.mark.asyncio
 async def test_login_page(decoy_client):
-    """GET /bank/login → 200, text/html, body contains 'Sign In'."""
+    """GET /bank/login → 200, text/html, React root element present."""
     response = await decoy_client.get("/bank/login")
     assert response.status_code == 200
     assert "text/html" in response.headers["content-type"]
-    assert "Sign In" in response.text
+    assert 'id="root"' in response.text
+    assert "Geberew Bank" in response.text
 
 
 @pytest.mark.asyncio
 async def test_dashboard_page(decoy_client):
-    """GET /bank/dashboard → 200, text/html, body contains masked account number."""
+    """GET /bank/dashboard → 200, text/html, React root element present."""
     response = await decoy_client.get("/bank/dashboard")
     assert response.status_code == 200
     assert "text/html" in response.headers["content-type"]
-    assert "••••7823" in response.text
+    assert 'id="root"' in response.text
 
 
 @pytest.mark.asyncio
@@ -84,14 +87,27 @@ async def test_unknown_bank_path(decoy_client):
 
 @pytest.mark.asyncio
 async def test_css_served(decoy_client):
-    """GET /bank/static/bank.css → 200, content-type contains text/css."""
-    response = await decoy_client.get("/bank/static/bank.css")
+    """GET of the compiled React CSS asset → 200, content-type text/css."""
+    from pathlib import Path
+    # Find the compiled CSS filename dynamically
+    bank_app_dir = Path(__file__).resolve().parent.parent.parent / "decoy" / "static" / "bank-app" / "assets"
+    css_files = list(bank_app_dir.glob("index-*.css"))
+    assert css_files, "React build CSS not found — run npm run build first"
+    css_filename = css_files[0].name
+    response = await decoy_client.get(f"/bank-app/assets/{css_filename}")
     assert response.status_code == 200
     assert "text/css" in response.headers["content-type"]
 
 
+@pytest.mark.asyncio
+async def test_static_asset_path_traversal(decoy_client):
+    """GET /bank-app/../../etc/passwd → 404 (path traversal blocked)."""
+    response = await decoy_client.get("/bank-app/../../etc/passwd")
+    assert response.status_code == 404
+
+
 # ---------------------------------------------------------------------------
-# Group 2 — Auth endpoints (task 8.2)
+# Group 2 — Auth endpoints (unchanged)
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
@@ -164,10 +180,7 @@ async def test_login_sqli_detected(decoy_client):
             if getattr(obj, "event_type", None) == "sql_injection"
             and getattr(obj, "severity", None) == "critical"
         ]
-        assert len(sqli_events) >= 1, (
-            f"Expected at least one sql_injection/critical event; "
-            f"got: {[(getattr(o, 'event_type', None), getattr(o, 'severity', None)) for o in sink.objects]}"
-        )
+        assert len(sqli_events) >= 1
     finally:
         set_event_sink(old_sink)
 
@@ -193,32 +206,22 @@ async def test_login_no_plaintext_stored(decoy_client):
             data={"username": "testuser", "password": "TestPassword123"},
             headers={"X-Argus-Test-Token": "test"},
         )
-        # Should fail login but still log telemetry
         assert response.status_code in (200, 401)
-
-        # Find the LoginAttempt object (has password_hmac_fingerprint)
         login_attempt_objs = [
             obj for obj in sink.objects
             if hasattr(obj, "password_hmac_fingerprint")
         ]
-        assert len(login_attempt_objs) >= 1, "Expected a LoginAttempt object with password_hmac_fingerprint"
-
+        assert len(login_attempt_objs) >= 1
         for la in login_attempt_objs:
             fingerprint = la.password_hmac_fingerprint
-            # Must be a 64-character hex string (SHA-256 HMAC)
-            assert isinstance(fingerprint, str), "Fingerprint must be a string"
-            assert len(fingerprint) == 64, f"Expected 64-char hex fingerprint, got {len(fingerprint)}"
-            assert all(c in "0123456789abcdefABCDEF" for c in fingerprint), \
-                "Fingerprint must be a hex string"
-
-        # No object should have plaintext password stored
+            assert isinstance(fingerprint, str)
+            assert len(fingerprint) == 64
+            assert all(c in "0123456789abcdefABCDEF" for c in fingerprint)
         raw_password = "TestPassword123"
         for obj in sink.objects:
-            assert not hasattr(obj, "plaintext_password"), \
-                "Object must not have plaintext_password attribute"
+            assert not hasattr(obj, "plaintext_password")
             if hasattr(obj, "password"):
-                assert getattr(obj, "password") != raw_password, \
-                    "Object must not store the raw plaintext password"
+                assert getattr(obj, "password") != raw_password
     finally:
         set_event_sink(old_sink)
 
@@ -252,7 +255,6 @@ async def test_login_rate_limit(decoy_client):
     """11 login requests from same IP triggers rate limit (429) on the 11th."""
     from app.api.v1.bank_router import bank_login_limiter
 
-    # Reset so previous tests don't bleed into this one
     bank_login_limiter.reset("127.0.0.1")
 
     last_response = None
@@ -267,7 +269,7 @@ async def test_login_rate_limit(decoy_client):
 
 
 # ---------------------------------------------------------------------------
-# Group 3 — Recovery, statements, KYC, support (task 8.3)
+# Group 3 — Recovery, statements, KYC, support (unchanged)
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
@@ -298,7 +300,6 @@ async def test_statements_honeytoken(decoy_client):
 @pytest.mark.asyncio
 async def test_kyc_upload_accepted(decoy_client):
     """POST /api/v1/bank/kyc/upload with a PNG file → 200."""
-    # Minimal fake PNG: PNG magic bytes + padding
     png_bytes = b'\x89PNG\r\n\x1a\n' + b'\x00' * 50
 
     response = await decoy_client.post(

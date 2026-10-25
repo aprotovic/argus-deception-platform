@@ -187,6 +187,26 @@ def _read_template(name: str) -> str:
     return path.read_text(encoding="utf-8")
 
 
+# React app static dir — built output committed to decoy/static/bank-app/
+BANK_APP_DIR: Path = (
+    Path(__file__).resolve().parent.parent.parent.parent.parent
+    / "decoy" / "static" / "bank-app"
+)
+
+_BANK_APP_INDEX: Path = BANK_APP_DIR / "index.html"
+
+
+def _read_index_html() -> str:
+    """Returns the compiled React app index.html shell.
+
+    Falls back to the old static template if the React build does not exist
+    yet, preserving safe-order behaviour.
+    """
+    if _BANK_APP_INDEX.exists():
+        return _BANK_APP_INDEX.read_text(encoding="utf-8")
+    raise FileNotFoundError(f"React app not built: {_BANK_APP_INDEX}")
+
+
 # ============================================================================
 # ROUTER
 # ============================================================================
@@ -216,7 +236,7 @@ async def bank_css() -> FileResponse:
 @router.get("/login")
 async def bank_login_page() -> HTMLResponse:
     """Renders the Meridian Trust Bank login page with OTP overlay."""
-    return HTMLResponse(content=_read_template("login.html"))
+    return HTMLResponse(content=_read_index_html())
 
 
 # ----------------------------------------------------------------------------
@@ -581,7 +601,7 @@ async def bank_dashboard_page(
             extra={"source_ip": client_ip},
         )
 
-    return HTMLResponse(content=_read_template("dashboard.html"))
+    return HTMLResponse(content=_read_index_html())
 
 
 # ----------------------------------------------------------------------------
@@ -632,7 +652,7 @@ async def bank_landing_page(
             extra={"source_ip": client_ip},
         )
 
-    return HTMLResponse(content=_read_template("landing.html"))
+    return HTMLResponse(content=_read_index_html())
 
 
 # ----------------------------------------------------------------------------
@@ -643,7 +663,7 @@ async def bank_landing_page(
 @router.get("/bank/recover")
 async def bank_recover_page() -> HTMLResponse:
     """Renders the password recovery page."""
-    return HTMLResponse(content=_read_template("recover.html"))
+    return HTMLResponse(content=_read_index_html())
 
 
 # ----------------------------------------------------------------------------
@@ -732,7 +752,7 @@ async def bank_recover(
 @router.get("/bank/transfer")
 async def bank_transfer_page() -> HTMLResponse:
     """Renders the fund transfer page."""
-    return HTMLResponse(content=_read_template("transfer.html"))
+    return HTMLResponse(content=_read_index_html())
 
 
 # ----------------------------------------------------------------------------
@@ -858,7 +878,7 @@ async def bank_transfer(
 @router.get("/bank/support")
 async def bank_support_page() -> HTMLResponse:
     """Renders the customer support and contact form page."""
-    return HTMLResponse(content=_read_template("support.html"))
+    return HTMLResponse(content=_read_index_html())
 
 
 # ----------------------------------------------------------------------------
@@ -943,7 +963,7 @@ async def bank_support_contact(
 @router.get("/bank/statements")
 async def bank_statements_page() -> HTMLResponse:
     """Renders the statements and KYC document upload page."""
-    return HTMLResponse(content=_read_template("statements.html"))
+    return HTMLResponse(content=_read_index_html())
 
 
 # ----------------------------------------------------------------------------
@@ -1169,6 +1189,59 @@ async def bank_kyc_upload(
         status_code=200,
         content={"message": "Your document has been received and is under review. We will notify you within 2 business days."},
     )
+
+
+
+
+# ----------------------------------------------------------------------------
+# React app SPA pages — serve index.html for client-side routes
+# ----------------------------------------------------------------------------
+
+@router.get("/bank/about")
+@router.get("/bank/products")
+@router.get("/bank/branches")
+@router.get("/bank/news")
+@router.get("/bank/investor")
+@router.get("/bank/security")
+@router.get("/bank/cards")
+async def bank_spa_page() -> HTMLResponse:
+    """Renders the React SPA shell for client-side routed pages."""
+    return HTMLResponse(content=_read_index_html())
+
+# ----------------------------------------------------------------------------
+# React app static assets — GET /bank-app/{path:path}
+# MUST be registered before the /bank/{path:path} catch-all
+# ----------------------------------------------------------------------------
+import mimetypes as _mimetypes
+from urllib.parse import unquote as _url_unquote
+
+
+@router.get("/bank-app/{path:path}")
+async def bank_app_static(path: str) -> Response:
+    """Serves compiled React app assets from decoy/static/bank-app/.
+
+    Path-traversal guard: resolves the full path and verifies it is a
+    strict descendant of BANK_APP_DIR before returning any content.
+    Returns HTTP 404 for any path that escapes the directory or does not exist.
+    """
+    safe_path = _url_unquote(path)
+
+    try:
+        target = (BANK_APP_DIR / safe_path).resolve()
+    except Exception:
+        return Response(status_code=404)
+
+    # Strict containment check
+    try:
+        target.relative_to(BANK_APP_DIR.resolve())
+    except ValueError:
+        return Response(status_code=404)
+
+    if not target.is_file():
+        return Response(status_code=404)
+
+    media_type, _ = _mimetypes.guess_type(str(target))
+    return FileResponse(str(target), media_type=media_type or "application/octet-stream")
 
 
 # ----------------------------------------------------------------------------

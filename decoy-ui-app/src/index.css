@@ -1,0 +1,164 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color: #374151;
+    background: #F9FAFB;
+    overflow-x: hidden;
+  }
+  input, select, textarea, button { font-size: 16px; }
+  *:focus-visible { outline: 2px solid #D4930A; outline-offset: 2px; }
+}
+
+/* ── 3D card flip ─────────────────────────────────────────── */
+.card-scene  { perspective: 1200px; }
+.card-wrap   { transform-style: preserve-3d; transition: transform 0.7s cubic-bezier(.4,0,.2,1); }
+.card-wrap.flipped { transform: rotateY(180deg); }
+.card-face   { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.card-back   { backface-visibility: hidden; -webkit-backface-visibility: hidden; transform: rotateY(180deg); }
+
+/* ── Tilt / hover-lift ───────────────────────────────────── */
+.tilt-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  will-change: transform;
+}
+.tilt-card:hover {
+  box-shadow: 0 20px 60px rgba(27,43,94,0.18);
+}
+
+/* ── Floating animation ──────────────────────────────────── */
+@keyframes float {
+  0%,100% { transform: translateY(0px); }
+  50%      { transform: translateY(-14px); }
+}
+@keyframes floatSlow {
+  0%,100% { transform: translateY(0px) rotate(0deg); }
+  50%      { transform: translateY(-10px) rotate(3deg); }
+}
+@keyframes floatX {
+  0%,100% { transform: translateX(0px); }
+  50%      { transform: translateX(12px); }
+}
+.animate-float      { animation: float     3s ease-in-out infinite; }
+.animate-float-slow { animation: floatSlow 5s ease-in-out infinite; }
+.animate-float-x    { animation: floatX    4s ease-in-out infinite; }
+
+/* ── Shimmer skeleton ────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position:  600px 0; }
+}
+.shimmer {
+  background: linear-gradient(90deg, #e8eaf0 25%, #f5f6fa 50%, #e8eaf0 75%);
+  background-size: 600px 100%;
+  animation: shimmer 1.6s infinite linear;
+}
+
+/* ── Glow pulse ──────────────────────────────────────────── */
+@keyframes glowPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(212,147,10,0); }
+  50%      { box-shadow: 0 0 0 10px rgba(212,147,10,0.12); }
+}
+.glow-pulse { animation: glowPulse 2.5s ease-in-out infinite; }
+
+/* ── Typewriter cursor ───────────────────────────────────── */
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+.typewriter-cursor::after {
+  content: '|';
+  animation: blink 0.9s infinite;
+  color: #D4930A;
+  font-weight: 300;
+}
+
+/* ── Marquee scroll ──────────────────────────────────────── */
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.marquee-track { animation: marquee 28s linear infinite; }
+.marquee-track:hover { animation-play-state: paused; }
+
+/* ── Reveal on scroll ────────────────────────────────────── */
+.reveal        { opacity: 0; transform: translateY(28px); transition: opacity 0.65s ease, transform 0.65s ease; }
+.reveal.visible{ opacity: 1; transform: translateY(0); }
+.reveal-left   { opacity: 0; transform: translateX(-30px); transition: opacity 0.65s ease, transform 0.65s ease; }
+.reveal-left.visible { opacity: 1; transform: translateX(0); }
+.reveal-right  { opacity: 0; transform: translateX(30px); transition: opacity 0.65s ease, transform 0.65s ease; }
+.reveal-right.visible { opacity: 1; transform: translateX(0); }
+.reveal-scale  { opacity: 0; transform: scale(0.92); transition: opacity 0.6s ease, transform 0.6s ease; }
+.reveal-scale.visible{ opacity: 1; transform: scale(1); }
+
+/* ── Gradient text ───────────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, #ffffff 0%, #D4930A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.gradient-text-gold {
+  background: linear-gradient(135deg, #D4930A 0%, #E8B03C 60%, #D4930A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Magnetic button effect ──────────────────────────────── */
+.btn-magnetic {
+  transition: transform 0.2s cubic-bezier(.4,0,.2,1), box-shadow 0.2s ease;
+}
+.btn-magnetic:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 12px 30px rgba(212,147,10,0.35);
+}
+.btn-magnetic:active { transform: scale(0.97); }
+
+/* ── Number counter ──────────────────────────────────────── */
+@keyframes countUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+.count-up { animation: countUp 0.7s ease forwards; }
+
+/* ── Ripple on click ─────────────────────────────────────── */
+.ripple-btn { position:relative; overflow:hidden; }
+.ripple-btn::after {
+  content:'';
+  position:absolute;
+  border-radius:50%;
+  background:rgba(255,255,255,0.3);
+  width:0; height:0;
+  top:50%; left:50%;
+  transform:translate(-50%,-50%) scale(0);
+  transition: width 0.5s ease, height 0.5s ease, opacity 0.5s ease;
+  pointer-events:none;
+}
+.ripple-btn:active::after { width:300px; height:300px; opacity:0; }
+
+/* ── Progress bar animate ─────────────────────────────────── */
+@keyframes progressIn { from{width:0} to{width:var(--w)} }
+.progress-bar { animation: progressIn 1.2s cubic-bezier(.4,0,.2,1) forwards; }
+
+/* ── Particle dots ───────────────────────────────────────── */
+@keyframes particle1 { 0%{transform:translate(0,0) scale(1)}50%{transform:translate(30px,-25px) scale(1.4)}100%{transform:translate(0,0) scale(1)} }
+@keyframes particle2 { 0%{transform:translate(0,0)}50%{transform:translate(-25px,20px)}100%{transform:translate(0,0)} }
+@keyframes particle3 { 0%{transform:translate(0,0) rotate(0deg)}100%{transform:translate(-20px,-30px) rotate(360deg)} }
+.particle-1 { animation: particle1 6s ease-in-out infinite; }
+.particle-2 { animation: particle2 8s ease-in-out infinite; }
+.particle-3 { animation: particle3 12s linear infinite; }
+
+/* ── Smooth underline link ────────────────────────────────── */
+.underline-anim {
+  background-image: linear-gradient(#D4930A,#D4930A);
+  background-size: 0 2px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  transition: background-size 0.3s ease;
+}
+.underline-anim:hover { background-size: 100% 2px; }
+
+/* ── Ethiopic font ─────────────────────────────────────── */
+body.font-ethiopic,body.font-ethiopic input,body.font-ethiopic select,
+body.font-ethiopic textarea,body.font-ethiopic button {
+  font-family: 'Noto Sans Ethiopic', system-ui, sans-serif !important;
+}
