@@ -9,37 +9,41 @@
 
 ---
 
-## 📌 Overview
+## Overview
 
-**ARGUS** is an active cyber deception and threat-monitoring platform. It deploys isolated decoy services to attract, detect, and analyze unauthorized reconnaissance and attacks in real time without exposing production infrastructure.
+ARGUS is an active cyber deception and threat-monitoring platform designed to detect, analyze, and respond to unauthorized reconnaissance and attack activity in real time. The system deploys isolated decoy services to lure adversaries, collect telemetry, and surface high-value forensic signals without exposing production assets.
 
 ### Key Capabilities
-- **Isolated Decoys**: Decoy services have zero database access or ORM credentials.
-- **Zero-Plaintext Policy**: Passwords are never logged in plaintext; only length and HMAC-SHA256 fingerprints are stored.
-- **Retail Banking Decoy**: Realistic banking interface (**Geberew Bank — ገበሬው ባንክ**) with English/Amharic support and simulated 2FA challenges.
-- **MySQL Protocol Decoy**: Low-interaction TCP service on port 3306 capturing unauthorized database queries and authentication attempts.
-- **Live SOC Dashboard**: Real-time WebSocket event streaming, MITRE ATT&CK mapping, GeoIP threat map, and PDF export.
+
+- Isolated decoy services with no database access or ORM credentials.
+- Zero-plaintext policy for sensitive data; credentials are logged only as length and HMAC-SHA256 fingerprints.
+- Realistic retail banking decoy experience with English and Amharic support, including simulated 2FA challenges.
+- Low-interaction MySQL TCP decoy for capturing unauthorized database queries and authentication attempts.
+- Real-time SOC dashboard with WebSocket event streaming, MITRE ATT&CK mapping, GeoIP visualization, and PDF reporting.
 
 ---
 
-## 👥 Team Members
+## Team Members
 
-- **Goitom Shumey Gebremariam** — Backend & Core Ingestion
-- **Muaz Muhammed** — Decoy Frontend Architecture
-- **Zyad** — Security Engineering & Forensic Reporting
-- **Bereket Worana** — Cyber Deception & Threat Intelligence
+- Goitom Shumey — CTC-5128-26 | Backend & Core Ingestion
+- Muaz Muhammed — CTC-XXXX-XX | Decoy Frontend Architecture
+- Zyad — CTC-XXXX-XX | Security Engineering & Forensic Reporting
+- Bereket Worana — CTC-XXXX-XX | Cyber Deception & Threat Intelligence
 
 ---
 
-## 🚀 Quickstart
+## Quickstart
 
 ### 1. Run with Windows Launcher
+
 Double-click `start_argus.bat` or run:
+
 ```powershell
 python scripts/run_all.py
 ```
 
 ### 2. Run with Docker Compose
+
 ```bash
 cp .env.example .env
 docker compose up --build
@@ -47,33 +51,37 @@ docker compose up --build
 
 ---
 
-## 🌐 Services & Ports
+## Services & Ports
 
 | Service | Address | Description |
 |---|---|---|
-| **SOC Dashboard** | `http://127.0.0.1:3000` | Incident monitoring interface |
-| **Geberew Bank Decoy** | `http://127.0.0.1:8081` | Web honeypot portal |
-| **Backend API Docs** | `http://127.0.0.1:8000/docs` | OpenAPI documentation |
-| **MySQL Decoy** | `127.0.0.1:3306` | Emulated MySQL TCP service |
+| SOC Dashboard | `http://127.0.0.1:3000` | Incident monitoring interface |
+| Geberew Bank Decoy | `http://127.0.0.1:8081` | Web honeypot portal |
+| Backend API Docs | `http://127.0.0.1:8000/docs` | OpenAPI documentation |
+| MySQL Decoy | `127.0.0.1:3306` | Emulated MySQL TCP service |
 
-> Default configuration and environment variables can be configured in `.env.example`.
+> Default configuration and environment variables are managed through `.env.example`.
 
 ---
 
-## 🧪 Simulation & Automated Tests
+## Simulation & Automated Tests
 
-Generate simulated attack traffic (scanner recon, SQL injection, credential stuffing, and MySQL probes):
+Generate simulated attack traffic including scanner reconnaissance, SQL injection attempts, credential stuffing, and MySQL probes:
+
 ```bash
 python scripts/simulate_traffic.py --count 16
 ```
 
-Run test suite:
+Run the test suite:
+
 ```bash
 pytest
 ```
-*Result: 372 passed, 0 failed.*
+
+Result: 372 passed, 0 failed.
 
 ---
 
-## 📄 License
+## License
+
 MIT License — Academic Graduation Capstone Project
