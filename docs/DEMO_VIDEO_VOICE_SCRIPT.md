@@ -26,6 +26,7 @@
 > - *Goitom Shumey Gebremariam — Team Lead and Backend Architect.*
 > - *Muaz Muhammed — Frontend Architect and Decoy UI Lead.*
 > - *Zyad — Security Engineer and Forensics Lead.*
+> - *Bereket Worana — Cyber Deception & Threat Intelligence Analyst.*
 > 
 > *Traditional cybersecurity relies heavily on passive perimeter defenses like firewalls and intrusion detection systems. Once an attacker breaches the perimeter, they can move laterally undetected. ARGUS flips this dynamic by deploying believable, fully isolated decoy surfaces that lure adversaries away from real infrastructure, slowing them down and capturing tamper-evident forensic intelligence in real time."*
 
@@ -99,7 +100,7 @@
 > *The entire codebase, Docker orchestration, documentation, and evaluation guides are publicly available on GitHub at:*
 > **`https://github.com/aprotovic/argus-deception-platform`**
 > 
-> *On behalf of Goitom, Muaz, and Zyad, thank you to our project mentors and the INSA Cyber Talent Center evaluation committee for your guidance and support throughout this capstone journey."*
+> *On behalf of Goitom, Muaz, Zyad, and Bereket, thank you to our project mentors and the INSA Cyber Talent Center evaluation committee for your guidance and support throughout this capstone journey."*
 
 ---
 

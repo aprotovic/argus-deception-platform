@@ -19,7 +19,7 @@
       width: 1920px;
       height: 1080px;
       display: none;
-      padding: 80px 100px;
+      padding: 70px 90px;
       position: relative;
     }
     .slide.active { display: flex; flex-direction: column; }
@@ -37,14 +37,14 @@
       letter-spacing: 2px;
       text-transform: uppercase;
       width: fit-content;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
     h1 {
-      font-size: 64px;
+      font-size: 58px;
       font-weight: 900;
       letter-spacing: -1.5px;
       line-height: 1.15;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       background: linear-gradient(135deg, #FFFFFF 0%, #94A3B8 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -55,11 +55,11 @@
       -webkit-text-fill-color: transparent;
     }
     .subtitle {
-      font-size: 24px;
+      font-size: 22px;
       color: #94A3B8;
-      max-width: 1200px;
+      max-width: 1300px;
       line-height: 1.5;
-      margin-bottom: 48px;
+      margin-bottom: 40px;
     }
     .grid-3 {
       display: grid;
@@ -67,43 +67,50 @@
       gap: 32px;
       flex: 1;
     }
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      flex: 1;
+    }
     .card {
       background: rgba(30, 41, 59, 0.7);
       border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 20px;
-      padding: 36px;
+      border-radius: 18px;
+      padding: 28px;
       display: flex;
       flex-direction: column;
       box-shadow: 0 20px 40px rgba(0,0,0,0.4);
       backdrop-filter: blur(12px);
     }
     .card h3 {
-      font-size: 22px;
+      font-size: 20px;
       color: #F8FAFC;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
     .card p {
-      font-size: 16px;
+      font-size: 15px;
       color: #94A3B8;
       line-height: 1.6;
     }
     .team-badge {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       color: #38BDF8;
       background: rgba(56, 189, 248, 0.1);
       border: 1px solid rgba(56, 189, 248, 0.3);
-      padding: 4px 12px;
+      padding: 4px 10px;
       border-radius: 6px;
       width: fit-content;
-      margin-top: 16px;
+      margin-top: auto;
+      padding-top: 6px;
     }
     .footer-bar {
       margin-top: auto;
-      padding-top: 24px;
+      padding-top: 20px;
       border-top: 1px solid rgba(255, 255, 255, 0.08);
       display: flex;
       justify-content: space-between;
@@ -121,9 +128,9 @@
     <h1>ARGUS: <span class="gold-text">Cyber Deception</span> &amp; Attack Monitoring Platform</h1>
     <p class="subtitle">An enterprise-grade active defense platform that traps unauthorized actors in isolated, realistic deception environments to capture tamper-evident security telemetry in real time.</p>
     
-    <div class="grid-3">
+    <div class="grid-4">
       <div class="card">
-        <h3>Goitom Shumey Gebremariam</h3>
+        <h3>Goitom Shumey</h3>
         <p>Core Ingestion Backend Architecture, Raw TCP MySQL 3306 Protocol Decoy, Rate Limiting, and Telemetry Engine.</p>
         <div class="team-badge">Team Lead / Backend Architect</div>
       </div>
@@ -136,6 +143,11 @@
         <h3>Zyad</h3>
         <p>Evidence Locker File Quarantine, Out-of-Band Telegram Incident Dispatching, and PDF Forensic Dossier Generation.</p>
         <div class="team-badge">Security Engineer / Forensics</div>
+      </div>
+      <div class="card">
+        <h3>Bereket Worana</h3>
+        <p>Cyber Deception Strategy, Threat Intelligence Classification, MITRE ATT&amp;CK Mapping, and Telemetry Verification.</p>
+        <div class="team-badge">Security Analyst / Threat Intel</div>
       </div>
     </div>
 

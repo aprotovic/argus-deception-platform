@@ -15,7 +15,7 @@
 |---|---|
 | **Project Title** | **ARGUS: Cyber Deception & Attack-Monitoring System** |
 | **GitHub Repository** | `https://github.com/aprotovic/argus-deception-platform` |
-| **Team Members** | • **Goitom Shumey Gebremariam** (Team Lead / Backend)<br>• **Muaz Muhammed** (Frontend / Decoy UI)<br>• **Zyad** (Security Engineer / Forensics) |
+| **Team Members** | • **Goitom Shumey Gebremariam** (Team Lead / Backend)<br>• **Muaz Muhammed** (Frontend / Decoy UI)<br>• **Zyad** (Security Engineer / Forensics)<br>• **Bereket Worana** (Cyber Deception / Security Analyst) |
 | **Video Presentation** | • Full HD (1080p) Video: [`output/argus_presentation_demo.mp4`](output/argus_presentation_demo.mp4)<br>• Presentation Voice Script: [`docs/DEMO_VIDEO_VOICE_SCRIPT.md`](docs/DEMO_VIDEO_VOICE_SCRIPT.md) |
 | **Evaluation Guide** | [`docs/MENTOR_GUIDE.md`](docs/MENTOR_GUIDE.md) |
 | **Automated Verification** | **372 / 372 Passed (100%)** via `pytest` |

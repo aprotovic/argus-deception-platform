@@ -146,6 +146,7 @@ Cloudflare will provide instant public HTTPS URLs that can be shared with mentor
 ---
 
 ## 👥 Student Team & Contact
-- **Muaz**: Decoy Frontend Architecture & Geberew Bank Single-Page Application
+- **Goitom Shumey Gebremariam**: Team Lead, Core Ingestion Backend & MySQL Protocol Decoy
+- **Muaz Muhammed**: Decoy Frontend Architecture & Geberew Bank Single-Page Application
 - **Zyad**: Evidence Locker, Email/Telegram Dispatchers, and Forensic Reporting
-- **Goitom**: Core Ingestion Backend, MySQL Protocol Decoy, and Security Architecture
+- **Bereket Worana**: Cyber Deception Analysis, Threat Intelligence & Telemetry Verification
