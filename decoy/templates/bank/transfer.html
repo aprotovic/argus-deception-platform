@@ -3,20 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Transfer funds between your Meridian Trust Bank accounts.">
-  <title>Transfer Funds — Meridian Trust Bank</title>
+  <meta name="description" content="Transfer funds between your Gebrew Bank accounts.">
+  <title>Transfer Funds — Gebrew Bank | ገብረው ባንክ</title>
   <link rel="stylesheet" href="/bank/static/bank.css">
 </head>
 <body>
 
   <!-- Navigation -->
   <nav class="nav" role="navigation" aria-label="Main navigation">
-    <a href="/bank" class="nav-brand" aria-label="Meridian Trust Bank home">
-      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <path d="M16 2L4 7V16C4 22.6 9.4 28.6 16 30C22.6 28.6 28 22.6 28 16V7L16 2Z" fill="#0d9488"/>
-        <path d="M10 22V10L16 17.5L22 10V22H20V14.5L16 20.5L12 14.5V22H10Z" fill="#ffffff"/>
+    <a href="/bank" class="nav-brand" aria-label="Gebrew Bank home">
+      <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="5" y="5" width="26" height="26" rx="4" transform="rotate(45 18 18)" fill="#1a4731"/>
+        <path d="M18 9 L18 27 M9 18 L27 18" stroke="#c8860a" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="18" cy="18" r="3" fill="#c8860a"/>
       </svg>
-      Meridian Trust Bank
+      Gebrew Bank
     </a>
 
     <button class="nav-hamburger" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-links" id="nav-hamburger">
@@ -49,8 +50,8 @@
               From Account <span class="required" aria-hidden="true">*</span>
             </label>
             <select name="from_acct" id="from_acct" class="input" required aria-required="true">
-              <option value="checking7823">Checking &#x2022;&#x2022;&#x2022;&#x2022;7823 &#x2014; $12,450.88</option>
-              <option value="savings3341">Savings &#x2022;&#x2022;&#x2022;&#x2022;3341 &#x2014; $34,009.14</option>
+              <option value="checking7823">Checking &#x2022;&#x2022;&#x2022;&#x2022;7823 &#x2014; Br 12,450.50</option>
+              <option value="savings3341">Savings &#x2022;&#x2022;&#x2022;&#x2022;3341 &#x2014; Br 34,009.00</option>
             </select>
           </div>
 
@@ -140,6 +141,10 @@
         <!-- Status message (shown after submission) -->
         <div id="transfer-status" class="hidden" role="status" aria-live="polite" style="margin-top:var(--s2);"></div>
 
+        <p class="text-sm text-muted" style="margin-top:var(--s3);text-align:center;">
+          For large transfers, please visit a Gebrew Bank branch in Bole, Piassa, Kazanchis, or Megenagna.
+        </p>
+
       </div>
     </div>
   </main>
@@ -150,11 +155,12 @@
       <div class="footer-top">
         <div>
           <div class="footer-brand">
-            <svg width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <path d="M16 2L4 7V16C4 22.6 9.4 28.6 16 30C22.6 28.6 28 22.6 28 16V7L16 2Z" fill="#0d9488"/>
-              <path d="M10 22V10L16 17.5L22 10V22H20V14.5L16 20.5L12 14.5V22H10Z" fill="#ffffff"/>
+            <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="5" y="5" width="26" height="26" rx="4" transform="rotate(45 18 18)" fill="#1a4731"/>
+              <path d="M18 9 L18 27 M9 18 L27 18" stroke="#c8860a" stroke-width="2.5" stroke-linecap="round"/>
+              <circle cx="18" cy="18" r="3" fill="#c8860a"/>
             </svg>
-            Meridian Trust Bank
+            Gebrew Bank
           </div>
           <p class="footer-tagline">
             Your trusted financial partner. Secure, reliable, and always available when you need us.
@@ -162,19 +168,19 @@
           <div class="badge-row" style="margin-top:16px;flex-wrap:wrap;">
             <span class="badge">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-              SSL Secured
+              NBE Regulated
             </span>
             <span class="badge">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              FDIC Insured
+              256-bit Encrypted
             </span>
             <span class="badge">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2L3 7l9 5 9-5-9-5z"/><path d="M3 17l9 5 9-5M3 12l9 5 9-5"/></svg>
-              256-bit Encryption
+              Mobile *841#
             </span>
             <span class="badge">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              24/7 Fraud Monitoring
+              24/7 Support
             </span>
           </div>
         </div>
@@ -214,17 +220,16 @@
 
       <div class="footer-bottom">
         <p class="footer-legal">
-          Meridian Trust Bank, Member FDIC. Equal Housing Lender. NMLS #1234567.<br>
-          &copy; 2024 Meridian Trust Bank, N.A. All rights reserved.
+          Gebrew Bank S.C. — Licensed and regulated by the National Bank of Ethiopia. Reg. No. GB-2019-ET. &copy; 2024 Gebrew Bank S.C. All rights reserved.
         </p>
         <div class="footer-badges">
           <span class="footer-badge">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-            FDIC Insured
+            NBE Regulated
           </span>
           <span class="footer-badge">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-            Equal Housing Lender
+            NBE Supervised
           </span>
         </div>
       </div>
