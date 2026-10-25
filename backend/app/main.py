@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from app.api.root_traps import router as root_traps_router
-from app.api.v1 import api_v1_router
+from app.api.v1 import api_v1_router, bank_router
 from app.config import settings
 from app.database import Base, engine
 from app.logging_config import logger, setup_logging
@@ -94,6 +94,7 @@ async def readiness_probe():
 
 # Root-level scanner traps, honeytoken breadcrumbs, and decoy portal routes
 app.include_router(root_traps_router)
+app.include_router(bank_router.router)
 
 # Core API v1 (admin + decoy endpoints)
 app.include_router(api_v1_router)
