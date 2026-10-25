@@ -269,7 +269,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Link to Decoy Portal */}
         <a
-          href="/decoy"
+          href="/bank"
           target="_blank"
           rel="noopener noreferrer"
           className="nav-decoy-link"

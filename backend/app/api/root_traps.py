@@ -11,7 +11,7 @@ and logging call is identical to the original main.py implementation.
 from pathlib import Path
 
 from fastapi import APIRouter, Request, status
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
 
 from app.core.event_sink import get_event_sink
 from app.logging_config import logger
@@ -90,6 +90,10 @@ async def record_root_trap(
 @router.get("/decoy", tags=["Decoy Interface"])
 async def serve_decoy_portal(request: Request):
     """Serves the authentic-looking Geberew Bank React decoy portal (Muaz's decoy)."""
+    if request.url.path.rstrip("/") == "/decoy":
+        await record_root_trap(request, request.url.path, severity="low", summary="Geberew Bank decoy portal visit")
+        return RedirectResponse(url="/bank", status_code=302)
+
     react_bank_landing = (
         Path(__file__).resolve().parent.parent.parent.parent
         / "decoy"
