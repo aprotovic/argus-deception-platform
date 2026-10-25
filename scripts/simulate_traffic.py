@@ -1,112 +1,172 @@
-"""Controlled traffic simulator for validating the ARGUS cyber deception pipeline."""
+"""Controlled traffic simulator for validating the ARGUS cyber deception pipeline.
+
+Generates realistic adversary interactions across all ARGUS surfaces:
+1. Reconnaissance scanner probes (robots.txt, .env, .git, actuator, wp-login)
+2. Geberew Bank credential stuffing & brute-force attempts
+3. SQL Injection attacks targeting bank authentication
+4. Honeytoken file access & quarantine uploads
+5. MySQL protocol honeypot probes
+"""
 
 import argparse
 import io
+import socket
 import sys
 import time
 import httpx
 
-PROBE_PATHS = [
+RECON_PATHS = [
+    "/robots.txt",
     "/.env",
-    "/wp-login.php",
     "/.git/config",
-    "/admin",
-    "/api/v1/debug",
+    "/wp-login.php",
     "/actuator/health",
-    "/phpinfo.php",
-    "/etc/passwd",
+    "/admin-console",
+    "/internal/backups/db.sql",
+    "/satcom/uplink-keys/comm.key",
+    "/firmware/releases/v2.1.bin",
 ]
 
-USERNAMES = [
-    "admin",
-    "root",
-    "sysadmin",
-    "secops_lead",
-    "defense_contractor_84",
-    "j.smith",
-    "oracle",
-]
-
-PASSWORDS = [
-    "Winter2026!Password",
-    "Admin12345",
-    "P@ssw0rdSecureEnclave",
-    "SuperSecretKey99",
-    "toor",
-    "nexis_internal_operator_key",
+BANK_USERS = [
+    ("j.hartwell", "Hartwell2024!", True),    # Fake bait account (triggers OTP challenge)
+    ("m.chen", "Chen@Banking1", True),        # Fake bait account
+    ("admin", "Admin12345!", False),          # Brute-force
+    ("root", "toor", False),                  # Brute-force
+    ("operator_bank", "Winter2026!", False),   # Brute-force
+    ("' OR 1=1 --", "password123", False),    # SQL Injection attempt
+    ("test_user'; DROP TABLE accounts;--", "x", False), # SQLi
 ]
 
 SAMPLE_FILES = [
-    ("kernel_crash.dmp", b"MEMORY DUMP HEADER: 0x89421A\n[STACKTRACE] simulated crash kernel 6.8", "application/octet-stream"),
-    ("sysdiagnose_node4.log", b"LOG: 2026-10-19T14:00:00Z Node-4 active connections: 42\nError code: ERR_NET_CONN", "text/plain"),
-    ("patch_update.sh", b"#!/bin/bash\n# Diagnostic validation probe script\necho 'Test probe active'", "text/x-shellscript"),
+    ("payroll_export_2026.xlsx", b"FAKE SPREADSHEET CONTENT: Employee,Salary\nJohn,5000", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+    ("backup_config.conf", b"DB_HOST=10.0.0.1\nDB_PASS=SuperSecret123!", "text/plain"),
+    ("patch_installer.sh", b"#!/bin/bash\necho 'Deploying mock patch'", "text/x-shellscript"),
 ]
 
 
-def run_simulation(target_url: str, count: int, test_mode: bool = True):
-    print(f"[*] Connecting to ARGUS target: {target_url}")
-    print(f"[*] Generating {count} simulated interactions (Test Flag: {test_mode})...\n")
+def test_mysql_probe(host: str = "127.0.0.1", port: int = 3306):
+    """Sends a raw handshake probe to the MySQL decoy honeypot."""
+    try:
+        s = socket.create_connection((host, port), timeout=3)
+        banner = s.recv(100)
+        s.close()
+        return True, len(banner)
+    except Exception as e:
+        return False, str(e)
+
+
+def run_simulation(
+    backend_url: str = "http://127.0.0.1:8000",
+    decoy_url: str = "http://127.0.0.1:8081",
+    count: int = 15,
+    test_mode: bool = True,
+):
+    print("=" * 70)
+    print("  ARGUS Cyber Deception Platform - Automated Traffic Simulator")
+    print("=" * 70)
+    print(f"[*] Core Backend Ingestion Target : {backend_url}")
+    print(f"[*] Public Decoy Target           : {decoy_url}")
+    print(f"[*] Simulation Batch Size         : {count} events")
+    print(f"[*] Evaluator Test Mode Flag       : {test_mode}")
+    print("-" * 70)
 
     client = httpx.Client(timeout=10.0)
     headers = {"X-Argus-Test-Token": "controlled_evaluator_run"} if test_mode else {}
-
     success_count = 0
 
+    # 1. Test MySQL Honeypot Probe
+    print("\n--- [Phase 1: MySQL Honeypot Network Probe] ---")
+    mysql_ok, banner_info = test_mysql_probe()
+    if mysql_ok:
+        print(f"[+] MySQL Decoy (Port 3306) Connected -> Captured Server Greeting ({banner_info} bytes)")
+        success_count += 1
+    else:
+        print(f"[-] MySQL Decoy not reachable on 3306 ({banner_info}) — skipping TCP probe.")
+
+    # 2. Main Simulation Loop
+    print("\n--- [Phase 2: Web Reconnaissance & Bank Decoy Interactions] ---")
     for i in range(count):
-        action_type = i % 3
+        action = i % 4
 
         try:
-            if action_type == 0:
-                # 1. Recon Scanner Probe
-                probe_path = PROBE_PATHS[i % len(PROBE_PATHS)]
-                url = f"{target_url}/api/v1/decoy/probe{probe_path}"
-                res = client.get(url, headers=headers, params={"test": "1"} if test_mode else {})
-                print(f"[{i+1}/{count}] PROBE -> {probe_path} (HTTP {res.status_code})")
+            if action == 0:
+                # Recon Probe on Decoy
+                path = RECON_PATHS[i % len(RECON_PATHS)]
+                target = f"{decoy_url}{path}"
+                res = client.get(target, headers=headers)
+                print(f"[{i+1}/{count}] RECON SCANNER -> GET {path} -> HTTP {res.status_code}")
                 success_count += 1
 
-            elif action_type == 1:
-                # 2. Credential Stuffing Attempt
-                username = USERNAMES[i % len(USERNAMES)]
-                password = PASSWORDS[i % len(PASSWORDS)]
-                url = f"{target_url}/api/v1/decoy/auth/login"
+            elif action == 1:
+                # Bank Decoy Login
+                user, pwd, is_bait = BANK_USERS[i % len(BANK_USERS)]
                 res = client.post(
-                    url,
-                    data={"username": username, "password": password},
+                    f"{decoy_url}/api/v1/bank/auth/login",
+                    data={"username": user, "password": pwd},
                     headers=headers,
-                    params={"test": "1"} if test_mode else {},
                 )
-                print(f"[{i+1}/{count}] LOGIN ATTEMPT -> user: '{username}' (pwd len: {len(password)}) -> HTTP {res.status_code}")
+                status = res.status_code
+                payload = res.json() if status == 200 else {}
+                requires_otp = payload.get("requires_otp", False)
+                print(
+                    f"[{i+1}/{count}] BANK LOGIN    -> user: '{user}' -> HTTP {status} "
+                    f"(Bait OTP: {requires_otp})"
+                )
+
+                # If bait account triggered OTP, simulate attacker attempting OTP submission
+                if requires_otp and "session_token" in payload:
+                    time.sleep(0.1)
+                    otp_res = client.post(
+                        f"{decoy_url}/api/v1/bank/auth/otp",
+                        data={"session_token": payload["session_token"], "otp": "999999"},
+                        headers=headers,
+                    )
+                    print(f"      -> BANK OTP      -> submitted '999999' -> HTTP {otp_res.status_code}")
+
+                success_count += 1
+
+            elif action == 2:
+                # SQL Injection Probe
+                sqli_payload = "sensor_id = 'RADAR-01' OR '1'='1'"
+                res = client.post(
+                    f"{backend_url}/api/v1/decoy/query/telemetry",
+                    data={"query_filter": sqli_payload},
+                    headers=headers,
+                )
+                print(f"[{i+1}/{count}] SQL INJECTION -> POST /decoy/query/telemetry -> HTTP {res.status_code}")
                 success_count += 1
 
             else:
-                # 3. Quarantined Diagnostic Upload
+                # Quarantined Upload
                 fname, content, mime = SAMPLE_FILES[i % len(SAMPLE_FILES)]
-                url = f"{target_url}/api/v1/decoy/upload/diagnostics"
                 files = {"file": (fname, io.BytesIO(content), mime)}
                 res = client.post(
-                    url,
+                    f"{backend_url}/api/v1/decoy/upload/diagnostics",
                     files=files,
                     headers=headers,
-                    params={"test": "1"} if test_mode else {},
                 )
                 res_data = res.json() if res.status_code == 200 else {}
-                sha = res_data.get("artifact_hash", "")[:12]
-                print(f"[{i+1}/{count}] PAYLOAD UPLOAD -> file: '{fname}' (SHA: {sha}...) -> HTTP {res.status_code}")
+                sha = res_data.get("artifact_hash", "none")[:12]
+                print(f"[{i+1}/{count}] FILE UPLOAD   -> '{fname}' -> HTTP {res.status_code} (Quarantine SHA: {sha}...)")
                 success_count += 1
 
         except Exception as e:
-            print(f"[!] Error transmitting interaction #{i+1}: {str(e)}")
+            print(f"[!] Error simulating action #{i+1}: {e}")
 
-        time.sleep(0.1)
+        time.sleep(0.15)
 
-    print(f"\n[OK] Simulation completed. {success_count}/{count} interactions successfully ingested into ARGUS telemetry pipeline.")
+    print("-" * 70)
+    print(f"[OK] Simulation completed: {success_count}/{count + 1} interactions recorded.")
+    print("[*] Open the SOC Dashboard (http://127.0.0.1:3000) to view live ingested telemetry!")
+    print("=" * 70)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="ARGUS Controlled Traffic Simulation Tool")
-    parser.add_argument("--target", default="http://localhost:8000", help="Target URL for ARGUS service")
-    parser.add_argument("--count", type=int, default=15, help="Number of interactions to simulate")
-    parser.add_argument("--genuine", action="store_true", help="Simulate without test flag (genuine traffic simulation)")
+    parser.add_argument("--backend", default="http://127.0.0.1:8000", help="Core Backend URL")
+    parser.add_argument("--decoy", default="http://127.0.0.1:8081", help="Decoy Portal URL")
+    parser.add_argument("--count", type=int, default=16, help="Number of interactions to simulate")
+    parser.add_argument("--genuine", action="store_true", help="Simulate without test flag (live SOC alert)")
 
     args = parser.parse_args()
-    run_simulation(args.target, args.count, test_mode=not args.genuine)
+    run_simulation(args.backend, args.decoy, args.count, test_mode=not args.genuine)

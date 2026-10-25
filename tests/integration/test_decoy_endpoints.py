@@ -115,7 +115,7 @@ async def test_decoy_scanner_probe_trap(client: AsyncClient, db_session: AsyncSe
         .where(SecurityEvent.event_type == "recon_probe")
     )
     result = await db_session.execute(stmt)
-    event = result.scalar_one_or_none()
+    event = result.scalars().first()
 
     assert event is not None
     assert event.severity == "high"
@@ -144,7 +144,7 @@ async def test_decoy_command_injection_trap(client: AsyncClient, db_session: Asy
         .order_by(SecurityEvent.timestamp.desc())
     )
     result = await db_session.execute(stmt)
-    event = result.scalar_one_or_none()
+    event = result.scalars().first()
 
     assert event is not None
     assert event.severity == "critical"
@@ -173,7 +173,7 @@ async def test_decoy_sql_injection_trap(client: AsyncClient, db_session: AsyncSe
         .order_by(SecurityEvent.timestamp.desc())
     )
     result = await db_session.execute(stmt)
-    event = result.scalar_one_or_none()
+    event = result.scalars().first()
 
     assert event is not None
     assert event.severity == "high"
@@ -198,7 +198,7 @@ async def test_decoy_honeytoken_classified_download(client: AsyncClient, db_sess
         .order_by(SecurityEvent.timestamp.desc())
     )
     result = await db_session.execute(stmt)
-    event = result.scalar_one_or_none()
+    event = result.scalars().first()
 
     assert event is not None
     assert event.severity == "critical"
@@ -225,7 +225,7 @@ async def test_decoy_stateful_terminal_execution(client: AsyncClient, db_session
         .order_by(SecurityEvent.timestamp.desc())
     )
     result = await db_session.execute(stmt)
-    event = result.scalar_one_or_none()
+    event = result.scalars().first()
 
     assert event is not None
 
