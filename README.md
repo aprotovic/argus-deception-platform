@@ -75,11 +75,5 @@ pytest
 
 ---
 
-## 🎥 Video Demonstration
-
-Full 1080p demonstration video is available at [`output/argus_presentation_demo.mp4`](output/argus_presentation_demo.mp4).
-
----
-
 ## 📄 License
 MIT License — Academic Graduation Capstone Project

@@ -64,3 +64,8 @@ Thumbs.db
 
 .venv*/
 *.zip
+
+# Local recordings & output
+output/
+*.mp4
+*.webm
