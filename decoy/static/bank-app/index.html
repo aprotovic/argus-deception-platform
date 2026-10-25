@@ -6,10 +6,15 @@
     <meta name="description" content="Geberew Bank — ገበሬው ባንክ | Ethiopia's Bank for Every Family" />
     <title>Geberew Bank – Online Banking</title>
     <link rel="icon" type="image/svg+xml" href="/bank-app/favicon.svg" />
+    <script>
+      if (window.location.pathname === '/') {
+        window.history.replaceState(null, '', '/bank');
+      }
+    </script>
     <script type="module" crossorigin src="/bank-app/assets/index-D6akquq6.js"></script>
     <link rel="modulepreload" crossorigin href="/bank-app/assets/vendor-react-BNWpuHxn.js">
     <link rel="modulepreload" crossorigin href="/bank-app/assets/vendor-icons-Cte6mEC3.js">
-    <link rel="stylesheet" crossorigin href="/bank-app/assets/index-Dfh6yhSy.css">
+    <link rel="stylesheet" href="/bank-app/assets/index-Dfh6yhSy.css">
   </head>
   <body>
     <div id="root"></div>

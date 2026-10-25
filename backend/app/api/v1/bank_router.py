@@ -1198,12 +1198,26 @@ async def bank_kyc_upload(
 # ----------------------------------------------------------------------------
 
 @router.get("/bank/about")
+@router.get("/about")
 @router.get("/bank/products")
+@router.get("/products")
+@router.get("/bank/products-services")
+@router.get("/products-services")
 @router.get("/bank/branches")
+@router.get("/branches")
 @router.get("/bank/news")
+@router.get("/news")
 @router.get("/bank/investor")
+@router.get("/investor")
 @router.get("/bank/security")
+@router.get("/security")
 @router.get("/bank/cards")
+@router.get("/cards")
+@router.get("/dashboard")
+@router.get("/transfer")
+@router.get("/statements")
+@router.get("/support")
+@router.get("/recover")
 async def bank_spa_page() -> HTMLResponse:
     """Renders the React SPA shell for client-side routed pages."""
     return HTMLResponse(content=_read_index_html())

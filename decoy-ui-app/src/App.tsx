@@ -16,8 +16,13 @@ import { SecurityPage }   from './pages/SecurityPage'
 import { CardsPage }      from './pages/CardsPage'
 
 export default function App() {
+  const basename =
+    typeof window !== 'undefined' && window.location.pathname.startsWith('/bank')
+      ? '/bank'
+      : ''
+
   return (
-    <BrowserRouter basename="/bank">
+    <BrowserRouter basename={basename}>
       <Routes>
         <Route path="/"                   element={<LandingPage />} />
         <Route path="/login"              element={<LoginPage />} />
