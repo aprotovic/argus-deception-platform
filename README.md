@@ -7,34 +7,56 @@
 [![Tests Passing](https://img.shields.io/badge/tests-372%20passed-brightgreen.svg)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
----
+ARGUS is a modern cyber deception and attack-monitoring platform built to detect, analyze, and respond to unauthorized reconnaissance and malicious activity in real time.
 
-## Overview
-
-ARGUS is an active cyber deception and threat-monitoring platform designed to detect, analyze, and respond to unauthorized reconnaissance and attack activity in real time. The system deploys isolated decoy services to lure adversaries, collect telemetry, and surface high-value forensic signals without exposing production assets.
-
-### Key Capabilities
-
-- Isolated decoy services with no database access or ORM credentials.
-- Zero-plaintext policy for sensitive data; credentials are logged only as length and HMAC-SHA256 fingerprints.
-- Realistic retail banking decoy experience with English and Amharic support, including simulated 2FA challenges.
-- Low-interaction MySQL TCP decoy for capturing unauthorized database queries and authentication attempts.
-- Real-time SOC dashboard with WebSocket event streaming, MITRE ATT&CK mapping, GeoIP visualization, and PDF reporting.
+It combines realistic decoy environments, attacker telemetry collection, and a live SOC dashboard to help security teams observe behavior, identify threats, and investigate incidents without exposing real production systems.
 
 ---
 
-## Team Members
+## Why ARGUS?
 
-- Goitom Shumey — CTC-5128-26 | Backend & Core Ingestion
-- Muaz Muhammed — CTC-3666-26 | Decoy Frontend Architecture
-- Ziyad Seyoum— CTC-7694-26 | Security Engineering & Forensic Reporting
-- Bereket Worana — CTC-5170-26 | Cyber Deception & Threat Intelligence
+Most organizations detect attacks too late. ARGUS helps you see the early signals:
+
+- Reconnaissance and scanning activity before critical systems are touched
+- Credential abuse and login attempts against deceptive services
+- SQL injection and database probing against fake targets
+- Attack behavior mapped to MITRE ATT&CK techniques
+- High-signal investigation workflows for analysts and researchers
 
 ---
 
-## Quickstart
+## Key Capabilities
 
-### 1. Run with Windows Launcher
+- Isolated decoy services with no database access or ORM credentials
+- Zero-plaintext security policy for sensitive data; credentials are logged only as length and HMAC-SHA256 fingerprints
+- Realistic retail banking decoy environment with English and Amharic support, including simulated 2FA challenges
+- Low-interaction MySQL TCP decoy for capturing unauthorized database queries and authentication attempts
+- Real-time SOC dashboard with WebSocket event streaming, MITRE ATT&CK mapping, GeoIP visualization, and PDF reporting
+- Simulated attack traffic generation for reconnaissance, SQL injection, credential stuffing, and MySQL probing
+
+---
+
+## Platform Overview
+
+ARGUS brings together multiple components to create a convincing attacker trap and a powerful monitoring layer:
+
+- SOC Dashboard — real-time incident monitoring and threat analysis
+- Geberew Bank Decoy — deceptive banking portal designed to attract suspicious activity
+- Backend API — event ingestion, processing, and dashboard data services
+- MySQL Decoy — fake database service that captures probing and authentication attempts
+- Reporting Layer — PDF and forensic summaries for investigations
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- Python 3.11+
+- Docker and Docker Compose
+- Node.js / React runtime for frontend services
+
+### Option 1: Run with Windows Launcher
 
 Double-click `start_argus.bat` or run:
 
@@ -42,7 +64,7 @@ Double-click `start_argus.bat` or run:
 python scripts/run_all.py
 ```
 
-### 2. Run with Docker Compose
+### Option 2: Run with Docker Compose
 
 ```bash
 cp .env.example .env
@@ -51,7 +73,7 @@ docker compose up --build
 
 ---
 
-## Services & Ports
+## Services and Ports
 
 | Service | Address | Description |
 |---|---|---|
@@ -64,24 +86,35 @@ docker compose up --build
 
 ---
 
-## Simulation & Automated Tests
+## Simulated Attacks and Testing
 
-Generate simulated attack traffic including scanner reconnaissance, SQL injection attempts, credential stuffing, and MySQL probes:
+Generate attack traffic to validate detection and monitoring workflows:
 
 ```bash
 python scripts/simulate_traffic.py --count 16
 ```
 
-Run the test suite:
+Run the automated test suite:
 
 ```bash
 pytest
 ```
 
-Result: 372 passed, 0 failed.
+Current status: 372 passed, 0 failed.
+
+---
+
+## Team
+
+- Goitom Shumey — CTC-5128-26 | Backend & Core Ingestion
+- Muaz Muhammed — CTC-3666-26 | Decoy Frontend Architecture
+- Ziyad Seyoum — CTC-7694-26 | Security Engineering & Forensic Reporting
+- Bereket Worana — CTC-5170-26 | Cyber Deception & Threat Intelligence
 
 ---
 
 ## License
 
-MIT License — Academic Graduation Capstone Project
+This project is licensed under the [MIT License](LICENSE).
+
+Academic Graduation Capstone Project.
