@@ -7,6 +7,21 @@
 [![Docker Ready](https://img.shields.io/badge/Docker-Ready-2496ED.svg)](https://www.docker.com/)
 [![Tests Passing](https://img.shields.io/badge/tests-372%20passed-brightgreen.svg)]()
 
+---
+
+## 🎓 INSA Cyber Talent Center (CTC) — Project Submission Metadata
+
+| Requirement | Project Submission Details |
+|---|---|
+| **Project Title** | **ARGUS: Cyber Deception & Attack-Monitoring System** |
+| **GitHub Repository** | `https://github.com/aprotovic/argus-deception-platform` |
+| **Team Members** | • **Goitom Shumey Gebremariam** (Team Lead / Backend)<br>• **Muaz Muhammed** (Frontend / Decoy UI)<br>• **Zyad** (Security Engineer / Forensics) |
+| **Video Presentation** | • Full HD (1080p) Video: [`output/argus_presentation_demo.mp4`](output/argus_presentation_demo.mp4)<br>• Presentation Voice Script: [`docs/DEMO_VIDEO_VOICE_SCRIPT.md`](docs/DEMO_VIDEO_VOICE_SCRIPT.md) |
+| **Evaluation Guide** | [`docs/MENTOR_GUIDE.md`](docs/MENTOR_GUIDE.md) |
+| **Automated Verification** | **372 / 372 Passed (100%)** via `pytest` |
+
+---
+
 **ARGUS** is an enterprise-grade cyber deception and telemetry capture platform designed as a Software Engineering graduation capstone project. It deploys isolated decoy surfaces—including a realistic retail banking portal (**Geberew Bank — ገበሬው ባንክ**) and a low-interaction MySQL honeypot—to divert unauthorized actors away from production assets, capture tamper-evident security telemetry, quarantine uploaded malicious artifacts, and visualize genuine interaction metrics in a real-time Security Operations Center (SOC) dashboard.
 
 ---
