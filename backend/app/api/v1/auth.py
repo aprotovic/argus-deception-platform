@@ -213,7 +213,7 @@ async def forgot_password(
         # Generate 6-digit cryptographic security code
         code = f"{secrets.randbelow(900000) + 100000}"
         user.reset_token = code
-        user.reset_token_expires_at = now + timedelta(minutes=15)
+        user.reset_token_expires_at = now + timedelta(seconds=45)  # 30s client countdown + 15s grace period
 
         audit = AuditLog(
             user_id=user.id,
@@ -291,7 +291,7 @@ async def reset_password(
     if now > expires_at:
         raise HTTPException(
             status_code=400,
-            detail="Recovery code has expired (15 minute validity). Please request a new code.",
+            detail="Recovery code has expired (30-second validity). Please request a new code.",
         )
 
     if not hmac.compare_digest(user.reset_token.strip(), body.token.strip()):

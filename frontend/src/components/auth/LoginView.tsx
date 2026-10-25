@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import {
   Shield,
+  Clock,
   Eye,
   EyeOff,
   KeyRound,
@@ -37,6 +38,7 @@ export const LoginView: React.FC = () => {
   const [recoveryEmail, setRecoveryEmail] = useState<string>('');
   const [recoveryCode, setRecoveryCode] = useState<string>('');
   const [devCodeHint, setDevCodeHint] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState<number>(30);
   const [newPassword, setNewPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
   const [showNewPassword, setShowNewPassword] = useState<boolean>(false);
@@ -57,6 +59,22 @@ export const LoginView: React.FC = () => {
   // Newsletter state
   const [newsletterEmail, setNewsletterEmail] = useState<string>('');
   const [newsletterSubmitted, setNewsletterSubmitted] = useState<boolean>(false);
+
+  // Decreasing 30-second countdown timer for passcode recovery code
+  useEffect(() => {
+    if (modalView !== 'reset') return;
+    setCountdown(30);
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [modalView, devCodeHint]);
 
   // Close modal on Escape key
   useEffect(() => {
@@ -2605,6 +2623,62 @@ export const LoginView: React.FC = () => {
                       Dispatched to Telegram (@Deception_argusBot) &bull; No phone verification required.
                     </div>
                   </div>
+                )}
+
+                {/* 30-Second Countdown Indicator */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  background: countdown > 10 ? 'rgba(56, 189, 248, 0.08)' : 'rgba(239, 68, 68, 0.12)',
+                  border: `1px solid ${countdown > 10 ? 'rgba(56, 189, 248, 0.3)' : 'rgba(239, 68, 68, 0.4)'}`,
+                  borderRadius: '6px',
+                  padding: '9px 14px',
+                  marginBottom: '14px',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Clock size={15} color={countdown > 10 ? '#38bdf8' : '#ef4444'} />
+                    <span style={{ fontSize: '0.78rem', color: countdown > 10 ? '#cbd5e1' : '#fca5a5', fontWeight: 600 }}>
+                      {countdown > 0 ? 'Verification code expires in:' : 'Verification code expired!'}
+                    </span>
+                  </div>
+                  <div style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: '0.98rem',
+                    fontWeight: 800,
+                    color: countdown > 10 ? '#38bdf8' : '#ef4444',
+                    letterSpacing: '0.04em',
+                  }}>
+                    {countdown}s
+                  </div>
+                </div>
+
+                {countdown === 0 && (
+                  <button
+                    type="button"
+                    onClick={(e) => handleForgotSubmit(e)}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      background: 'rgba(56, 189, 248, 0.15)',
+                      border: '1px solid #38bdf8',
+                      borderRadius: '6px',
+                      color: '#38bdf8',
+                      fontFamily: "'Chakra Petch', sans-serif",
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      marginBottom: '14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    <RotateCcw size={14} />
+                    <span>DISPATCH NEW 30s CODE</span>
+                  </button>
                 )}
 
                 <form onSubmit={handleResetSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
