@@ -254,10 +254,9 @@ async def forgot_password(
             "detail": detail_msg,
             "email": real_email,
             "username": real_callsign,
-            "code": code,
-            "dev_code": code,
             "sent_via_telegram": sent_via_tg,
             "sent_via_smtp": sent_via_smtp,
+            "dev_code": code if settings.ENVIRONMENT in ("testing", "development") else None,
         }
 
     # Standard security practice: generic message to prevent email enumeration

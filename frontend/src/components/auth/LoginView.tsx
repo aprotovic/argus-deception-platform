@@ -37,7 +37,6 @@ export const LoginView: React.FC = () => {
   // Recovery form state
   const [recoveryEmail, setRecoveryEmail] = useState<string>('');
   const [recoveryCode, setRecoveryCode] = useState<string>('');
-  const [devCodeHint, setDevCodeHint] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<number>(120);
   const [operatorCallSign, setOperatorCallSign] = useState<string>('');
   const [operatorEmail, setOperatorEmail] = useState<string>('');
@@ -76,7 +75,7 @@ export const LoginView: React.FC = () => {
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [modalView, devCodeHint]);
+  }, [modalView]);
 
   // Close modal on Escape key
   useEffect(() => {
@@ -93,7 +92,6 @@ export const LoginView: React.FC = () => {
     setError(null);
     setSuccessMsg(null);
     setLoading(false);
-    setDevCodeHint(null);
     setModalView('login');
   };
 
@@ -123,7 +121,6 @@ export const LoginView: React.FC = () => {
     }
     setError(null);
     setSuccessMsg(null);
-    setDevCodeHint(null);
     setLoading(true);
 
     try {
@@ -132,10 +129,6 @@ export const LoginView: React.FC = () => {
       setRecoveryCode(''); // Ready for manual entry or instant autofill
       if (res.username) setOperatorCallSign(res.username);
       if (res.email) setOperatorEmail(res.email);
-      const code = res.code || res.dev_code;
-      if (code) {
-        setDevCodeHint(code);
-      }
       setModalView('reset');
     } catch (err: any) {
       setError(err.message || 'Failed to dispatch verification code.');
@@ -175,8 +168,7 @@ export const LoginView: React.FC = () => {
       setNewPassword('');
       setConfirmPassword('');
       setRecoveryCode('');
-      setDevCodeHint(null);
-      setModalView('login');
+        setModalView('login');
     } catch (err: any) {
       setError(err.message || 'Failed to reset password. Verify code and try again.');
     } finally {
@@ -2591,70 +2583,6 @@ export const LoginView: React.FC = () => {
                   </div>
                 )}
 
-                {devCodeHint && (
-                  <div style={{
-                    background: 'rgba(16, 185, 129, 0.12)',
-                    border: '1px solid rgba(16, 185, 129, 0.38)',
-                    borderRadius: '8px',
-                    padding: '12px 14px',
-                    marginBottom: '16px',
-                  }}>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginBottom: '6px',
-                    }}>
-                      <span style={{
-                        fontSize: '0.7rem',
-                        fontFamily: "'JetBrains Mono', monospace",
-                        color: '#10b981',
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.06em',
-                      }}>
-                        🛡️ SECURITY DISPATCH CODE:
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setRecoveryCode(devCodeHint)}
-                        style={{
-                          background: 'rgba(16, 185, 129, 0.22)',
-                          border: '1px solid rgba(16, 185, 129, 0.5)',
-                          borderRadius: '4px',
-                          color: '#ffffff',
-                          fontSize: '0.7rem',
-                          fontFamily: "'Chakra Petch', sans-serif",
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          padding: '3px 8px',
-                          textTransform: 'uppercase',
-                        }}
-                      >
-                        Autofill Code
-                      </button>
-                    </div>
-                    <div style={{
-                      fontFamily: "'JetBrains Mono', monospace",
-                      fontSize: '1.25rem',
-                      fontWeight: 800,
-                      color: '#34d399',
-                      letterSpacing: '0.2em',
-                      textAlign: 'center',
-                    }}>
-                      {devCodeHint}
-                    </div>
-                    <div style={{
-                      fontSize: '0.68rem',
-                      color: '#94a3b8',
-                      textAlign: 'center',
-                      marginTop: '4px',
-                    }}>
-                      Dispatched to Telegram (@Deception_argusBot) &bull; No phone verification required.
-                    </div>
-                  </div>
-                )}
-
                 {/* 30-Second Countdown Indicator */}
                 <div style={{
                   display: 'flex',
@@ -2729,7 +2657,7 @@ export const LoginView: React.FC = () => {
                       type="text"
                       value={recoveryCode}
                       onChange={(e) => setRecoveryCode(e.target.value)}
-                      placeholder="e.g. 549210"
+                      placeholder="Enter 6-digit code from Telegram"
                       required
                       autoFocus
                       maxLength={12}
