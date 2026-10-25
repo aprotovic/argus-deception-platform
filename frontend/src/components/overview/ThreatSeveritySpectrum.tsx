@@ -52,35 +52,35 @@ export const ThreatSeveritySpectrum: React.FC<ThreatSeveritySpectrumProps> = ({
       return {
         level: 1,
         code: 'DEFCON 1',
-        status: 'CRITICAL INTRUSION',
+        status: 'CRITICAL',
         color: '#ef4444',
-        glow: 'rgba(239, 68, 68, 0.6)',
+        glow: 'rgba(239, 68, 68, 0.2)',
       };
     }
     if (highCount > 0) {
       return {
         level: 2,
         code: 'DEFCON 2',
-        status: 'ELEVATED THREAT',
+        status: 'ELEVATED',
         color: '#f97316',
-        glow: 'rgba(249, 115, 22, 0.6)',
+        glow: 'rgba(249, 115, 22, 0.2)',
       };
     }
     if (mediumCount > 0) {
       return {
         level: 3,
         code: 'DEFCON 3',
-        status: 'ADVISORY MONITORING',
+        status: 'ADVISORY',
         color: '#f59e0b',
-        glow: 'rgba(245, 158, 11, 0.6)',
+        glow: 'rgba(245, 158, 11, 0.2)',
       };
     }
     return {
       level: 4,
       code: 'DEFCON 4',
-      status: 'PERIMETER NOMINAL',
+      status: 'NOMINAL',
       color: '#10b981',
-      glow: 'rgba(16, 185, 129, 0.6)',
+      glow: 'rgba(16, 185, 129, 0.2)',
     };
   }, [criticalCount, highCount, mediumCount]);
 
@@ -91,52 +91,42 @@ export const ThreatSeveritySpectrum: React.FC<ThreatSeveritySpectrumProps> = ({
     count: number;
     color: string;
     glow: string;
-    action: string;
-    wavelengthBand: string;
     icon: React.ReactNode;
   }> = [
     {
       key: 'critical',
       code: 'CRIT-01',
-      label: 'Critical Breaches',
+      label: 'Critical',
       count: criticalCount,
       color: '#ef4444',
-      glow: 'rgba(239, 68, 68, 0.65)',
-      action: 'ISOLATE IMMEDIATE // AIR-GAP',
-      wavelengthBand: '700 - 850 nm',
+      glow: 'rgba(239, 68, 68, 0.2)',
       icon: <Flame size={15} color="#ef4444" />,
     },
     {
       key: 'high',
       code: 'HIGH-02',
-      label: 'High Incursions',
+      label: 'High',
       count: highCount,
       color: '#f97316',
-      glow: 'rgba(249, 115, 22, 0.65)',
-      action: 'ENCLAVE LOCKDOWN // TRAP',
-      wavelengthBand: '600 - 700 nm',
+      glow: 'rgba(249, 115, 22, 0.2)',
       icon: <AlertTriangle size={15} color="#f97316" />,
     },
     {
       key: 'medium',
       code: 'MED-03',
-      label: 'Medium Probes',
+      label: 'Medium',
       count: mediumCount,
       color: '#f59e0b',
-      glow: 'rgba(245, 158, 11, 0.65)',
-      action: 'TRACE SOURCE // HONEYTOKEN',
-      wavelengthBand: '500 - 600 nm',
+      glow: 'rgba(245, 158, 11, 0.2)',
       icon: <Zap size={15} color="#f59e0b" />,
     },
     {
       key: 'low',
       code: 'LOW-04',
-      label: 'Low Surveillance',
+      label: 'Low',
       count: lowCount,
       color: '#10b981',
-      glow: 'rgba(16, 185, 129, 0.65)',
-      action: 'PASSIVE TELEMETRY LOG',
-      wavelengthBand: '400 - 500 nm',
+      glow: 'rgba(16, 185, 129, 0.2)',
       icon: <CheckCircle2 size={15} color="#10b981" />,
     },
   ];
@@ -280,22 +270,8 @@ export const ThreatSeveritySpectrum: React.FC<ThreatSeveritySpectrumProps> = ({
                   margin: 0,
                 }}
               >
-                THREAT SEVERITY SPECTRUM
+                SEVERITY SPECTRUM
               </h2>
-              <span
-                style={{
-                  fontSize: '0.62rem',
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontWeight: 600,
-                  padding: '2px 6px',
-                  borderRadius: '3px',
-                  background: 'rgba(16, 185, 129, 0.15)',
-                  border: '1px solid rgba(16, 185, 129, 0.35)',
-                  color: '#10b981',
-                }}
-              >
-                FULL SPECTRAL ANALYSIS
-              </span>
             </div>
             <span
               style={{
@@ -306,7 +282,7 @@ export const ThreatSeveritySpectrum: React.FC<ThreatSeveritySpectrumProps> = ({
                 marginTop: '2px',
               }}
             >
-              ELECTROMAGNETIC INTRUSION SPECTRUM // 400nm - 850nm WAVELENGTH CORRELATION
+              Threat distribution by severity level
             </span>
           </div>
         </div>
@@ -345,9 +321,9 @@ export const ThreatSeveritySpectrum: React.FC<ThreatSeveritySpectrumProps> = ({
               gap: '6px',
               padding: '4px 10px',
               borderRadius: '4px',
-              background: `rgba(${defconInfo.level === 1 ? '239, 68, 68' : '16, 185, 129'}, 0.12)`,
-              border: `1px solid ${defconInfo.color}`,
-              boxShadow: `0 0 12px ${defconInfo.glow}`,
+              background: `rgba(${defconInfo.level === 1 ? '239, 68, 68' : '16, 185, 129'}, 0.08)`,
+              border: `1px solid ${defconInfo.color}60`,
+              boxShadow: `0 0 6px ${defconInfo.glow}`,
               fontSize: '0.72rem',
               fontFamily: "'JetBrains Mono', monospace",
               color: defconInfo.color,
@@ -372,7 +348,7 @@ export const ThreatSeveritySpectrum: React.FC<ThreatSeveritySpectrumProps> = ({
       <div
         style={{
           background: 'rgba(4, 7, 5, 0.95)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          border: '1px solid rgba(255, 255, 255, 0.06)',
           borderRadius: '8px',
           padding: '14px 18px',
           marginBottom: '22px',
@@ -401,9 +377,9 @@ export const ThreatSeveritySpectrum: React.FC<ThreatSeveritySpectrumProps> = ({
             }}
           >
             <Activity size={12} color="#10b981" />
-            <span>SPECTRAL EMISSION DENSITY (VU FREQUENCY SPECTRUM)</span>
+            <span>FREQUENCY SPECTRUM</span>
           </div>
-          {hoveredWavelength ? (
+          {hoveredWavelength && (
             <div
               style={{
                 fontSize: '0.7rem',
@@ -412,17 +388,7 @@ export const ThreatSeveritySpectrum: React.FC<ThreatSeveritySpectrumProps> = ({
                 fontWeight: 600,
               }}
             >
-              λ = {hoveredWavelength.nm} nm [{hoveredWavelength.label}]
-            </div>
-          ) : (
-            <div
-              style={{
-                fontSize: '0.66rem',
-                fontFamily: "'JetBrains Mono', monospace",
-                color: '#64748b',
-              }}
-            >
-              HOVER BARS TO PROBE WAVELENGTH
+              {hoveredWavelength.nm}nm • {hoveredWavelength.label}
             </div>
           )}
         </div>
@@ -460,12 +426,12 @@ export const ThreatSeveritySpectrum: React.FC<ThreatSeveritySpectrumProps> = ({
                   flex: 1,
                   height: `${bar.height}%`,
                   background: isHovered
-                    ? '#ffffff'
-                    : `linear-gradient(180deg, ${bar.bandColor} 0%, rgba(4, 7, 5, 0.4) 100%)`,
+                    ? bar.bandColor
+                    : `linear-gradient(180deg, ${bar.bandColor}b3 0%, rgba(4, 7, 5, 0.4) 100%)`,
                   borderRadius: '1px',
                   boxShadow: isHovered
-                    ? `0 0 12px ${bar.bandColor}, 0 0 20px #ffffff`
-                    : `0 0 6px ${bar.bandColor}40`,
+                    ? `0 0 6px ${bar.bandColor}`
+                    : 'none',
                   opacity: isDimmed ? 0.25 : 1,
                   transform: isHovered ? 'scaleY(1.08)' : 'scaleY(1)',
                   transformOrigin: 'bottom',
@@ -480,10 +446,9 @@ export const ThreatSeveritySpectrum: React.FC<ThreatSeveritySpectrumProps> = ({
         {/* Continuous Gradient Track Beneath Bars */}
         <div
           style={{
-            height: '6px',
-            borderRadius: '3px',
-            background: 'linear-gradient(90deg, #10b981 0%, #34d399 22%, #f59e0b 46%, #f97316 72%, #ef4444 100%)',
-            boxShadow: '0 0 12px rgba(16, 185, 129, 0.4)',
+            height: '4px',
+            borderRadius: '2px',
+            background: 'linear-gradient(90deg, #059669 0%, #10b981 22%, #d97706 46%, #ea580c 72%, #dc2626 100%)',
             marginTop: '4px',
             position: 'relative',
           }}
@@ -500,10 +465,10 @@ export const ThreatSeveritySpectrum: React.FC<ThreatSeveritySpectrumProps> = ({
             color: 'var(--text-dim)',
           }}
         >
-          <span style={{ color: '#10b981', fontWeight: 600 }}>400nm (LOW)</span>
-          <span style={{ color: '#f59e0b', fontWeight: 600 }}>540nm (MEDIUM)</span>
-          <span style={{ color: '#f97316', fontWeight: 600 }}>660nm (HIGH)</span>
-          <span style={{ color: '#ef4444', fontWeight: 600 }}>850nm (CRITICAL)</span>
+          <span style={{ color: '#10b981', fontWeight: 600 }}>LOW</span>
+          <span style={{ color: '#f59e0b', fontWeight: 600 }}>MEDIUM</span>
+          <span style={{ color: '#f97316', fontWeight: 600 }}>HIGH</span>
+          <span style={{ color: '#ef4444', fontWeight: 600 }}>CRITICAL</span>
         </div>
       </div>
 
@@ -526,7 +491,7 @@ export const ThreatSeveritySpectrum: React.FC<ThreatSeveritySpectrumProps> = ({
               inset: '6px',
               borderRadius: '50%',
               background:
-                'conic-gradient(from 0deg, rgba(16, 185, 129, 0.22) 0deg, rgba(16, 185, 129, 0.04) 40deg, transparent 60deg)',
+                'conic-gradient(from 0deg, rgba(16, 185, 129, 0.08) 0deg, rgba(16, 185, 129, 0.02) 40deg, transparent 60deg)',
               animation: 'radarSweep 4.5s linear infinite',
               pointerEvents: 'none',
               zIndex: 1,
@@ -637,10 +602,9 @@ export const ThreatSeveritySpectrum: React.FC<ThreatSeveritySpectrumProps> = ({
                 fontFamily: "'JetBrains Mono', monospace",
                 fontWeight: 700,
                 color: activeFocus
-                  ? severitiesList.find((s) => s.key === activeFocus)?.color || '#ffffff'
-                  : '#ffffff',
+                  ? severitiesList.find((s) => s.key === activeFocus)?.color || '#e2e8f0'
+                  : '#e2e8f0',
                 lineHeight: 1,
-                textShadow: '0 0 14px rgba(16, 185, 129, 0.5)',
                 transition: 'color 0.2s',
               }}
             >
@@ -694,10 +658,10 @@ export const ThreatSeveritySpectrum: React.FC<ThreatSeveritySpectrumProps> = ({
                   padding: '9px 14px',
                   borderRadius: '6px',
                   background: isHovered
-                    ? 'rgba(255, 255, 255, 0.05)'
+                    ? 'rgba(255, 255, 255, 0.04)'
                     : 'rgba(255, 255, 255, 0.015)',
                   border: `1px solid ${isHovered ? sev.color : 'rgba(255, 255, 255, 0.06)'}`,
-                  boxShadow: isHovered ? `0 0 16px ${sev.glow}40` : 'none',
+                  boxShadow: isHovered ? `0 0 8px ${sev.glow}` : 'none',
                   opacity: isDimmed ? 0.35 : 1,
                   transition: 'all 0.2s ease',
                   cursor: 'pointer',
@@ -711,7 +675,7 @@ export const ThreatSeveritySpectrum: React.FC<ThreatSeveritySpectrumProps> = ({
                     marginBottom: '4px',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     {sev.icon}
                     <span
                       style={{
@@ -723,19 +687,6 @@ export const ThreatSeveritySpectrum: React.FC<ThreatSeveritySpectrumProps> = ({
                       }}
                     >
                       {sev.label}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: '0.6rem',
-                        fontFamily: "'JetBrains Mono', monospace",
-                        color: '#64748b',
-                        padding: '1px 5px',
-                        borderRadius: '3px',
-                        background: 'rgba(255, 255, 255, 0.03)',
-                        border: '1px solid rgba(255, 255, 255, 0.05)',
-                      }}
-                    >
-                      {sev.wavelengthBand}
                     </span>
                   </div>
                   <div
@@ -753,17 +704,6 @@ export const ThreatSeveritySpectrum: React.FC<ThreatSeveritySpectrumProps> = ({
                   </div>
                 </div>
 
-                <div
-                  style={{
-                    fontSize: '0.62rem',
-                    fontFamily: "'JetBrains Mono', monospace",
-                    color: '#94a3b8',
-                    marginBottom: '6px',
-                  }}
-                >
-                  DIRECTIVE: <span style={{ color: sev.color }}>{sev.action}</span>
-                </div>
-
                 {/* 16 Discrete LED Segmented Phosphor Blocks */}
                 <div style={{ display: 'flex', gap: '3px' }}>
                   {Array.from({ length: totalBlocks }).map((_, blockIdx) => {
@@ -776,7 +716,6 @@ export const ThreatSeveritySpectrum: React.FC<ThreatSeveritySpectrumProps> = ({
                           height: '6px',
                           borderRadius: '1px',
                           background: isFilled ? sev.color : 'rgba(255, 255, 255, 0.05)',
-                          boxShadow: isFilled ? `0 0 6px ${sev.glow}` : 'none',
                           transition: 'all 0.25s ease',
                         }}
                       />
