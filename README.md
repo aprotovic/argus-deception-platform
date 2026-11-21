@@ -19,8 +19,7 @@ It combines realistic decoy environments, attacker telemetry collection, and a l
 
 - **Goitom Shumey**: https://drive.google.com/file/d/1VWY-WnG7bgZi069Py_NDa0DODGbx3cy4/view?usp=drive_link
 - **Muaz Muhammed**: https://drive.google.com/file/d/1TRa1Jj0W6da4-xxK-Usg0Du-ZD6oQ_d9/view?usp=sharing
-
----
+- **Ziyad Seyoum**: https://drive.google.com/file/d/1skm07WHB_r5s3OTm0AhNjFj1az06IWXt/view?usp=sharing
 
 ## Why ARGUS?
 
