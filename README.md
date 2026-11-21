@@ -15,9 +15,10 @@ It combines realistic decoy environments, attacker telemetry collection, and a l
 
 ---
 
-Video Link
+## Video Links
 
-Muaz Muhammed :  https://drive.google.com/file/d/1TRa1Jj0W6da4-xxK-Usg0Du-ZD6oQ_d9/view?usp=sharing
+- **Goitom Shumey**: https://drive.google.com/file/d/1VWY-WnG7bgZi069Py_NDa0DODGbx3cy4/view?usp=drive_link
+- **Muaz Muhammed**: https://drive.google.com/file/d/1TRa1Jj0W6da4-xxK-Usg0Du-ZD6oQ_d9/view?usp=sharing
 
 ---
 
